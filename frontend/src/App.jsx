@@ -13,6 +13,11 @@ function App() {
 const [mahalleVisible, setMahalleVisible] =
   useState(false);
 
+  const [searchText, setSearchText] =
+  useState("");
+
+  const mahalleDataRef = useRef(null);
+
 
     const [toplanmaVisible, setToplanmaVisible] = useState(true);
 
@@ -81,7 +86,8 @@ const ilceData = await ilceResponse.json();
 const mahalleData =
   await mahalleResponse.json();
 
-
+mahalleDataRef.current =
+  mahalleData.features;
 
 const toplanmaResponse = await fetch(
   "http://localhost:8000/toplanma-alanlari"
@@ -434,195 +440,363 @@ useEffect(() => {
       }}
     />
 
-    {/* Legend */}
-    <div
-      style={{
-        position: "absolute",
-        bottom: 30,
-        left: 30,
-        background: "white",
-        padding: "12px",
-        borderRadius: "10px",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-        zIndex: 1,
-        minWidth: "180px"
-      }}
-    >
-
-      <h4
-        style={{
-          margin: 0,
-          marginBottom: "10px"
-        }}
-      >
-        Katmanlar
-      </h4>
-
-      <div
-        style={{
-
-         display: "flex",
-flexDirection: "column",
-alignItems: "flex-start",
-gap: "10px"
-        }}
-      >
-
-
-
-        <label
+{/* Header */}
+<div
   style={{
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "72px",
+
+    background:
+      "rgba(255,255,255,0.12)",
+
+    backdropFilter: "blur(10px)",
+
+    borderBottom:
+      "1px solid rgba(255,255,255,0.18)",
+
     display: "flex",
     alignItems: "center",
-    gap: "8px",
-    cursor: "pointer"
+
+    padding: "0 28px",
+
+    zIndex: 5,
+
+    boxShadow:
+      "0 8px 32px rgba(0,0,0,0.12)"
   }}
 >
 
+  {/* Logo */}
   <div
     style={{
-      width: "20px",
-      height: "3px",
-      background: "red"
+      display: "flex",
+      flexDirection: "column"
     }}
-  />
+  >
 
-  <input
-    type="checkbox"
-    checked={layerVisible}
-    onChange={() =>
-      setLayerVisible(!layerVisible)
-    }
-  />
+    <div
+      style={{
+        fontSize: "34px",
+        fontWeight: "800",
+        fontStyle: "italic",
+        letterSpacing: "1px",
+        display: "flex",
+        alignItems: "center"
+      }}
+    >
 
-  İlçe Sınırları
+      <span
+        style={{
+          color: "#c7d2fe"
+        }}
+      >
+        KOR-
+      </span>
 
+      <span
+        style={{
+          color: "#ef4444"
+        }}
+      >
+        İZ
+      </span>
 
+    </div>
 
-</label>
+    <span
+      style={{
+        color: "#cbd5e1",
+        fontSize: "13px",
+        marginTop: "-2px"
+      }}
+    >
+      Acil Durumda Koruma ve İzleme Sistemi
+    </span>
+
+  </div>
+
+  {/* Search */}
+  <div
+    style={{
+      position: "absolute",
+      left: "50%",
+      transform: "translateX(-50%)"
+    }}
+  >
+
+    <input
+      type="text"
+
+      placeholder="Mahalle ara..."
+
+      value={searchText}
+
+      onChange={(e) =>
+        setSearchText(e.target.value)
+      }
+
+      onKeyDown={(e) => {
+
+        if (e.key !== "Enter") return;
+
+        const mahalleler =
+          mahalleDataRef.current;
+
+        if (!mahalleler) return;
+
+        const found =
+          mahalleler.find((m) =>
+            m.properties.adi_numara
+              ?.toLowerCase()
+              .includes(
+                searchText.toLowerCase()
+              )
+          );
+
+        if (!found) return;
+
+        let coords = [];
+
+if (
+  found.geometry.type === "Polygon"
+) {
+
+  coords =
+    found.geometry.coordinates[0];
+
+} else if (
+  found.geometry.type === "MultiPolygon"
+) {
+
+  coords =
+    found.geometry.coordinates[0][0];
+
+}
+
+const bounds =
+  coords.reduce(
+
+    (b, coord) =>
+      b.extend(coord),
+
+    new maplibregl.LngLatBounds(
+      coords[0],
+      coords[0]
+    )
+
+  );
+
+        mapRef.current.fitBounds(bounds, {
+          padding: 40,
+          duration: 1500
+        });
+
+      }}
+
+      style={{
+        width: "320px",
+        padding: "12px 18px",
+
+        borderRadius: "999px",
+
+        border:
+          "1px solid rgba(255,255,255,0.18)",
+
+        background:
+          "rgba(255,255,255,0.14)",
+
+        backdropFilter: "blur(10px)",
+
+        color: "#111827",
+
+        fontSize: "14px",
+
+        outline: "none",
+
+        boxShadow:
+          "0 4px 20px rgba(0,0,0,0.15)"
+      }}
+    />
+
+  </div>
+
+</div>
+
+{/* Legend */}
+<div
+  style={{
+    position: "absolute",
+    bottom: 30,
+    left: 30,
+    background: "white",
+    padding: "12px",
+    borderRadius: "10px",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+    zIndex: 1,
+    minWidth: "180px"
+  }}
+>
+
+  <h4
+    style={{
+      margin: 0,
+      marginBottom: "10px"
+    }}
+  >
+    Katmanlar
+  </h4>
 
 <div
   style={{
     display: "flex",
     flexDirection: "column",
-    marginTop: "10px"
+    gap: "12px"
   }}
 >
 
+  {/* İlçe */}
   <label
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
-      cursor: "pointer"
-    }}
-  >
+  style={{
+    display: "grid",
+    gridTemplateColumns: "24px 20px 1fr",
+    alignItems: "center",
+    columnGap: "10px",
+    cursor: "pointer"
+  }}
+>
 
-  <div
-    style={{
-      width: "20px",
-      height: "3px",
-      background: "#2563eb"
-    }}
-  />
+    <div
+      style={{
+        width: "22px",
+        height: "3px",
+        borderRadius: "2px",
+        background: "#ef4444",
+        flexShrink: 0
+      }}
+    />
 
     <input
-  type="checkbox"
-  checked={mahalleVisible}
+      type="checkbox"
+      checked={layerVisible}
+      onChange={() =>
+        setLayerVisible(!layerVisible)
+      }
+    />
 
-  onChange={() => {
-
-    const newValue = !mahalleVisible;
-
-    setMahalleVisible(newValue);
-
-    mapRef.current.setLayoutProperty(
-      "mahalle-outline",
-      "visibility",
-      newValue ? "visible" : "none"
-    );
-
-    mapRef.current.setLayoutProperty(
-      "mahalle-fill",
-      "visibility",
-      newValue ? "visible" : "none"
-    );
-
-  }}
-/>
-
-    Mahalle Sınırları
+    <span>İlçe Sınırları</span>
 
   </label>
 
+  {/* Mahalle */}
+  <label
+  style={{
+    display: "grid",
+    gridTemplateColumns: "24px 20px 1fr",
+    alignItems: "center",
+    columnGap: "10px",
+    cursor: "pointer"
+  }}
+>
 
+    <div
+      style={{
+        width: "22px",
+        height: "3px",
+        borderRadius: "2px",
+        background: "#2563eb",
+        flexShrink: 0
+      }}
+    />
+
+    <input
+      type="checkbox"
+      checked={mahalleVisible}
+      onChange={() =>
+        setMahalleVisible(!mahalleVisible)
+      }
+    />
+
+    <span>Mahalle Sınırları</span>
+
+  </label>
+
+  {/* Toplanma */}
+  <label
+  style={{
+    display: "grid",
+    gridTemplateColumns: "24px 20px 1fr",
+    alignItems: "center",
+    columnGap: "10px",
+    cursor: "pointer"
+  }}
+>
+
+    <div
+      style={{
+        width: "12px",
+        height: "12px",
+        borderRadius: "50%",
+        background: "#16a34a",
+        flexShrink: 0
+      }}
+    />
+
+    <input
+      type="checkbox"
+      checked={toplanmaVisible}
+      onChange={() =>
+        setToplanmaVisible(!toplanmaVisible)
+      }
+    />
+
+    <span>Toplanma Alanları</span>
+
+  </label>
+
+  {/* Yollar */}
+  <label
+  style={{
+    display: "grid",
+    gridTemplateColumns: "24px 20px 1fr",
+    alignItems: "center",
+    columnGap: "10px",
+    cursor: "pointer"
+  }}
+>
+
+    <div
+      style={{
+        width: "22px",
+        height: "3px",
+        borderRadius: "2px",
+        background: "#f59e0b",
+        flexShrink: 0
+      }}
+    />
+
+    <input
+      type="checkbox"
+      checked={yollarVisible}
+      onChange={() =>
+        setYollarVisible(!yollarVisible)
+      }
+    />
+
+    <span>Yol Ağı</span>
+
+  </label>
 
 </div>
 
-<label
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    cursor: "pointer"
-  }}
->
 
-  <div
-    style={{
-      width: "12px",
-      height: "12px",
-      borderRadius: "50%",
-      background: "#16a34a"
-    }}
-  />
-
-  <input
-    type="checkbox"
-    checked={toplanmaVisible}
-    onChange={() =>
-      setToplanmaVisible(!toplanmaVisible)
-    }
-  />
-
-  Toplanma Alanları
-
-</label>
-
-<label
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    cursor: "pointer"
-  }}
->
-
-  <div
-    style={{
-      width: "20px",
-      height: "3px",
-      background: "#f59e0b"
-    }}
-  />
-
-  <input
-    type="checkbox"
-    checked={yollarVisible}
-    onChange={() =>
-      setYollarVisible(!yollarVisible)
-    }
-  />
-
-  Yol Ağı
-
-</label>
 
       </div>
 
     </div>
 
-  </div>
 );
 }
 
