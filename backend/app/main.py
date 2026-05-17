@@ -148,3 +148,41 @@ def toplanma_alanlari():
         geojson = result.scalar()
 
     return geojson
+
+@app.get("/yollar")
+def yollar():
+
+    query = text("""
+
+        SELECT json_build_object(
+            'type', 'FeatureCollection',
+            'features', json_agg(features.feature)
+        )
+        FROM (
+
+            SELECT json_build_object(
+                'type', 'Feature',
+
+                'geometry',
+                ST_AsGeoJSON(geom)::json,
+
+                'properties',
+                json_build_object(
+                    'id', id
+                )
+
+            ) AS feature
+
+            FROM konya_yollar
+
+        ) AS features;
+
+    """)
+
+    with engine.connect() as conn:
+
+        result = conn.execute(query)
+
+        geojson = result.scalar()
+
+    return geojson

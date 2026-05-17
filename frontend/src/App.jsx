@@ -4,6 +4,9 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 function App() {
 
+    const [yollarVisible, setYollarVisible] =
+  useState(true);
+
     const [layerVisible, setLayerVisible] =
   useState(true);
 
@@ -87,6 +90,13 @@ const toplanmaResponse = await fetch(
 const toplanmaData =
   await toplanmaResponse.json();
 
+  const yollarResponse = await fetch(
+  "http://localhost:8000/yollar"
+);
+
+const yollarData =
+  await yollarResponse.json();
+
 
 map.addSource("mahalleler", {
   type: "geojson",
@@ -96,6 +106,11 @@ map.addSource("mahalleler", {
 map.addSource("toplanma", {
   type: "geojson",
   data: toplanmaData
+});
+
+map.addSource("yollar", {
+  type: "geojson",
+  data: yollarData
 });
 
       // Polygon fill layer
@@ -144,6 +159,18 @@ map.addLayer({
   paint: {
     "line-color": "#2563eb",
     "line-width": 1
+  }
+});
+
+map.addLayer({
+  id: "yollar-line",
+  type: "line",
+  source: "yollar",
+
+  paint: {
+    "line-color": "#f59e0b",
+    "line-width": 0.5,
+    "line-opacity": 0.8
   }
 });
 
@@ -372,6 +399,23 @@ useEffect(() => {
 
 }, [toplanmaVisible]);
 
+useEffect(() => {
+
+  const map = mapRef.current;
+
+  if (
+    !map ||
+    !map.getLayer("yollar-line")
+  ) return;
+
+  map.setLayoutProperty(
+    "yollar-line",
+    "visibility",
+    yollarVisible ? "visible" : "none"
+  );
+
+}, [yollarVisible]);
+
   return (
   <div
     style={{
@@ -542,6 +586,35 @@ gap: "10px"
   />
 
   Toplanma Alanları
+
+</label>
+
+<label
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    cursor: "pointer"
+  }}
+>
+
+  <div
+    style={{
+      width: "20px",
+      height: "3px",
+      background: "#f59e0b"
+    }}
+  />
+
+  <input
+    type="checkbox"
+    checked={yollarVisible}
+    onChange={() =>
+      setYollarVisible(!yollarVisible)
+    }
+  />
+
+  Yol Ağı
 
 </label>
 
