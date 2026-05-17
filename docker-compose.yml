@@ -1,0 +1,19 @@
+services:
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - postgis
+
+  postgis:
+    image: postgis/postgis
+    environment:
+      POSTGRES_DB: webgis
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
