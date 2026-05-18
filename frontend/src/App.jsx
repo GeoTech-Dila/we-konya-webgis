@@ -4,6 +4,15 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 function App() {
 
+    const [service5Visible, setService5Visible] =
+  useState(true);
+
+const [service10Visible, setService10Visible] =
+  useState(true);
+
+const [service15Visible, setService15Visible] =
+  useState(true);
+
     const [yollarVisible, setYollarVisible] =
   useState(true);
 
@@ -24,6 +33,7 @@ const [mahalleVisible, setMahalleVisible] =
 const mapRef = useRef(null);
 
   useEffect(() => {
+
 
     const map = new maplibregl.Map({
       container: "map",
@@ -65,6 +75,34 @@ mapRef.current = map;
     );
 
     map.on("load", async () => {
+
+         const service5Response =
+    await fetch(
+      "http://localhost:8000/service-5"
+    );
+
+  const service5Data =
+    await service5Response.json();
+
+
+
+  const service10Response =
+    await fetch(
+      "http://localhost:8000/service-10"
+    );
+
+  const service10Data =
+    await service10Response.json();
+
+
+
+  const service15Response =
+    await fetch(
+      "http://localhost:8000/service-15"
+    );
+
+  const service15Data =
+    await service15Response.json();
 
       // GeoJSON verisini yükle
       const ilceResponse = await fetch(
@@ -117,6 +155,21 @@ map.addSource("toplanma", {
 map.addSource("yollar", {
   type: "geojson",
   data: yollarData
+});
+
+map.addSource("service-5", {
+  type: "geojson",
+  data: service5Data
+});
+
+map.addSource("service-10", {
+  type: "geojson",
+  data: service10Data
+});
+
+map.addSource("service-15", {
+  type: "geojson",
+  data: service15Data
 });
 
       // Polygon fill layer
@@ -199,6 +252,37 @@ map.addLayer({
 
   "circle-blur": 0.2
 }
+});
+
+map.addLayer({
+  id: "service-5-line",
+  type: "line",
+  source: "service-5",
+
+  paint: {
+    "line-color": "#22c55e",
+    "line-width": 3
+  }
+});
+map.addLayer({
+  id: "service-10-line",
+  type: "line",
+  source: "service-10",
+
+  paint: {
+    "line-color": "#eab308",
+    "line-width": 3
+  }
+});
+map.addLayer({
+  id: "service-15-line",
+  type: "line",
+  source: "service-15",
+
+  paint: {
+    "line-color": "#ef4444",
+    "line-width": 3
+  }
 });
 
       // Hover layer
@@ -421,6 +505,60 @@ useEffect(() => {
   );
 
 }, [yollarVisible]);
+
+useEffect(() => {
+
+  if (
+  !mapRef.current ||
+  !mapRef.current.isStyleLoaded() ||
+  !mapRef.current.getLayer("service-5-line")
+) return;
+
+  mapRef.current.setLayoutProperty(
+    "service-5-line",
+    "visibility",
+    service5Visible
+      ? "visible"
+      : "none"
+  );
+
+}, [service5Visible]);
+
+useEffect(() => {
+
+  if (
+  !mapRef.current ||
+  !mapRef.current.isStyleLoaded() ||
+  !mapRef.current.getLayer("service-10-line")
+) return;
+
+  mapRef.current.setLayoutProperty(
+    "service-10-line",
+    "visibility",
+    service10Visible
+      ? "visible"
+      : "none"
+  );
+
+}, [service10Visible]);
+
+useEffect(() => {
+
+  if (
+  !mapRef.current ||
+  !mapRef.current.isStyleLoaded() ||
+  !mapRef.current.getLayer("service-15-line")
+) return;
+
+  mapRef.current.setLayoutProperty(
+    "service-15-line",
+    "visibility",
+    service15Visible
+      ? "visible"
+      : "none"
+  );
+
+}, [service15Visible]);
 
   return (
   <div
@@ -791,11 +929,165 @@ const bounds =
 
 </div>
 
+</div>
+
+{/* Analysis Panel */}
+<div
+  style={{
+    position: "absolute",
+    top: 100,
+    right: 30,
+
+    background:
+      "rgba(255,255,255,0.92)",
+
+    padding: "14px",
+
+    borderRadius: "14px",
+
+    boxShadow:
+      "0 4px 20px rgba(0,0,0,0.15)",
+
+    zIndex: 2,
+
+    minWidth: "220px"
+  }}
+>
+
+  <h4
+    style={{
+      margin: 0,
+      marginBottom: "12px"
+    }}
+  >
+    Analizler
+  </h4>
+
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "12px"
+    }}
+  >
+
+    {/* 5 DK */}
+    <label
+      style={{
+        display: "grid",
+        gridTemplateColumns:
+          "24px 20px 1fr",
+
+        alignItems: "center",
+
+        columnGap: "10px",
+
+        cursor: "pointer"
+      }}
+    >
+
+      <div
+        style={{
+          width: "22px",
+          height: "3px",
+          background: "#22c55e"
+        }}
+      />
+
+      <input
+        type="checkbox"
+        checked={service5Visible}
+        onChange={() =>
+          setService5Visible(
+            !service5Visible
+          )
+        }
+      />
+
+      <span>5 DK Service Area</span>
+
+    </label>
+
+    {/* 10 DK */}
+    <label
+      style={{
+        display: "grid",
+        gridTemplateColumns:
+          "24px 20px 1fr",
+
+        alignItems: "center",
+
+        columnGap: "10px",
+
+        cursor: "pointer"
+      }}
+    >
+
+      <div
+        style={{
+          width: "22px",
+          height: "3px",
+          background: "#eab308"
+        }}
+      />
+
+      <input
+        type="checkbox"
+        checked={service10Visible}
+        onChange={() =>
+          setService10Visible(
+            !service10Visible
+          )
+        }
+      />
+
+      <span>10 DK Service Area</span>
+
+    </label>
+
+    {/* 15 DK */}
+    <label
+      style={{
+        display: "grid",
+        gridTemplateColumns:
+          "24px 20px 1fr",
+
+        alignItems: "center",
+
+        columnGap: "10px",
+
+        cursor: "pointer"
+      }}
+    >
+
+      <div
+        style={{
+          width: "22px",
+          height: "3px",
+          background: "#ef4444"
+        }}
+      />
+
+      <input
+        type="checkbox"
+        checked={service15Visible}
+        onChange={() =>
+          setService15Visible(
+            !service15Visible
+          )
+        }
+      />
+
+        <span>15 DK Service Area</span>
+
+    </label>
+
+  </div>
 
 
-      </div>
+</div>
 
-    </div>
+</div>
 
 );
 }

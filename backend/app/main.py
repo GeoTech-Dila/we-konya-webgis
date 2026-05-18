@@ -45,7 +45,9 @@ def mahalleler():
                 'type', 'Feature',
 
                 'geometry',
-                ST_AsGeoJSON(geom)::json,
+                ST_AsGeoJSON(
+    ST_Transform(geom, 4326)
+)::json,
 
                 'properties',
                 json_build_object(
@@ -87,7 +89,9 @@ def ilceler():
                 'type', 'Feature',
 
                 'geometry',
-                ST_AsGeoJSON(geom)::json,
+                ST_AsGeoJSON(
+    ST_Transform(geom, 4326)
+)::json,
 
                 'properties',
 json_build_object(
@@ -126,7 +130,9 @@ def toplanma_alanlari():
                 'type', 'Feature',
 
                 'geometry',
-                ST_AsGeoJSON(geom)::json,
+                ST_AsGeoJSON(
+    ST_Transform(geom, 4326)
+)::json,
 
                 'properties',
                 json_build_object(
@@ -164,7 +170,9 @@ def yollar():
                 'type', 'Feature',
 
                 'geometry',
-                ST_AsGeoJSON(geom)::json,
+                ST_AsGeoJSON(
+    ST_Transform(geom, 4326)
+)::json,
 
                 'properties',
                 json_build_object(
@@ -174,6 +182,126 @@ def yollar():
             ) AS feature
 
             FROM konya_yollar
+
+        ) AS features;
+
+    """)
+
+    with engine.connect() as conn:
+
+        result = conn.execute(query)
+
+        geojson = result.scalar()
+
+    return geojson
+
+@app.get("/service-5")
+def service_5():
+
+    query = text("""
+
+        SELECT json_build_object(
+            'type', 'FeatureCollection',
+            'features', json_agg(features.feature)
+        )
+        FROM (
+
+            SELECT json_build_object(
+                'type', 'Feature',
+
+                'geometry',
+                ST_AsGeoJSON(
+    ST_Transform(geom, 4326)
+)::json,
+
+                'properties',
+                json_build_object(
+                    'id', id
+                )
+
+            ) AS feature
+
+            FROM servis_alani_5dk
+
+        ) AS features;
+
+    """)
+
+    with engine.connect() as conn:
+
+        result = conn.execute(query)
+
+        geojson = result.scalar()
+
+    return geojson
+
+@app.get("/service-10")
+def service_10():
+
+    query = text("""
+
+        SELECT json_build_object(
+            'type', 'FeatureCollection',
+            'features', json_agg(features.feature)
+        )
+        FROM (
+
+            SELECT json_build_object(
+                'type', 'Feature',
+
+                'geometry',
+                ST_AsGeoJSON(
+    ST_Transform(geom, 4326)
+)::json,
+
+                'properties',
+                json_build_object(
+                    'id', id
+                )
+
+            ) AS feature
+
+            FROM servis_alani_10dk
+
+        ) AS features;
+
+    """)
+
+    with engine.connect() as conn:
+
+        result = conn.execute(query)
+
+        geojson = result.scalar()
+
+    return geojson
+
+@app.get("/service-15")
+def service_15():
+
+    query = text("""
+
+        SELECT json_build_object(
+            'type', 'FeatureCollection',
+            'features', json_agg(features.feature)
+        )
+        FROM (
+
+            SELECT json_build_object(
+                'type', 'Feature',
+
+                'geometry',
+                ST_AsGeoJSON(
+    ST_Transform(geom, 4326)
+)::json,
+
+                'properties',
+                json_build_object(
+                    'id', id
+                )
+
+            ) AS feature
+
+            FROM servis_alani_15dk
 
         ) AS features;
 

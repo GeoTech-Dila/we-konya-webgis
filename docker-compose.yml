@@ -10,10 +10,15 @@ services:
       - postgis
 
   postgis:
-    image: postgis/postgis
+    image: pgrouting/pgrouting
     environment:
       POSTGRES_DB: webgis
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+volumes:
+  postgis_data:
+
