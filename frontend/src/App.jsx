@@ -32,6 +32,24 @@ const [mahalleVisible, setMahalleVisible] =
 
 const mapRef = useRef(null);
 
+
+const [mahalleOpacity, setMahalleOpacity] =
+  useState(1);
+
+const [yollarOpacity, setYollarOpacity] =
+  useState(1);
+
+const [serviceOpacity, setServiceOpacity] =
+  useState(1);
+
+  const [toplanmaOpacity,
+setToplanmaOpacity] =
+  useState(1);
+
+  const [districtOpacity,
+setDistrictOpacity] =
+  useState(1);
+
   useEffect(() => {
 
 
@@ -172,6 +190,7 @@ map.addSource("service-15", {
   data: service15Data
 });
 
+
       // Polygon fill layer
       map.addLayer({
         id: "district-fill",
@@ -284,6 +303,8 @@ map.addLayer({
     "line-width": 3
   }
 });
+
+reorderServiceLayers();
 
       // Hover layer
       map.addLayer({
@@ -449,6 +470,8 @@ useEffect(() => {
 
 }, [layerVisible]);
 
+
+
 useEffect(() => {
 
   const map = mapRef.current;
@@ -559,6 +582,142 @@ useEffect(() => {
   );
 
 }, [service15Visible]);
+
+useEffect(() => {
+
+  const map = mapRef.current;
+
+  if (
+    !map ||
+    !map.getLayer("toplanma-points")
+  ) return;
+
+  map.setPaintProperty(
+    "toplanma-points",
+    "circle-opacity",
+    toplanmaOpacity
+  );
+
+}, [toplanmaOpacity]);
+
+useEffect(() => {
+
+  const map = mapRef.current;
+
+  if (
+    !map ||
+    !map.getLayer("mahalle-outline")
+  ) return;
+
+  map.setPaintProperty(
+    "mahalle-outline",
+    "line-opacity",
+    mahalleOpacity
+  );
+
+}, [mahalleOpacity]);
+
+useEffect(() => {
+
+  const map = mapRef.current;
+
+  if (
+    !map ||
+    !map.getLayer("yollar-line")
+  ) return;
+
+  map.setPaintProperty(
+    "yollar-line",
+    "line-opacity",
+    yollarOpacity
+  );
+
+}, [yollarOpacity]);
+
+useEffect(() => {
+
+  const map = mapRef.current;
+
+  if (
+    !map ||
+    !map.getLayer("service-5-line")
+  ) return;
+
+  map.setPaintProperty(
+    "service-5-line",
+    "line-opacity",
+    serviceOpacity
+  );
+
+  map.setPaintProperty(
+    "service-10-line",
+    "line-opacity",
+    serviceOpacity
+  );
+
+  map.setPaintProperty(
+    "service-15-line",
+    "line-opacity",
+    serviceOpacity
+  );
+
+}, [serviceOpacity]);
+
+useEffect(() => {
+
+  const map = mapRef.current;
+
+  if (
+    !map ||
+    !map.getLayer("toplanma-circle")
+  ) return;
+
+  map.setPaintProperty(
+    "toplanma-circle",
+    "circle-opacity",
+    toplanmaOpacity
+  );
+
+}, [toplanmaOpacity]);
+
+const moveLayerToTop = (
+  layerIds
+) => {
+
+  const map = mapRef.current;
+
+  if (!map) return;
+
+  layerIds.forEach((id) => {
+
+    if (map.getLayer(id)) {
+
+      map.moveLayer(id);
+
+    }
+
+  });
+
+};
+const reorderServiceLayers = () => {
+
+  const map = mapRef.current;
+
+  if (!map) return;
+
+  if (map.getLayer("service-15-line")) {
+    map.moveLayer("service-15-line");
+  }
+
+  if (map.getLayer("service-10-line")) {
+    map.moveLayer("service-10-line");
+  }
+
+  if (map.getLayer("service-5-line")) {
+    map.moveLayer("service-5-line");
+  }
+
+};
 
   return (
   <div
@@ -755,7 +914,7 @@ const bounds =
         outline: "none",
 
         boxShadow:
-          "0 4px 20px rgba(0,0,0,0.15)"
+  "0 8px 32px rgba(0,0,0,0.12)",
       }}
     />
 
@@ -769,7 +928,12 @@ const bounds =
     position: "absolute",
     bottom: 30,
     left: 30,
-    background: "white",
+    background:
+  "rgba(255,255,255,0.12)",
+  backdropFilter: "blur(10px)",
+
+border:
+  "1px solid rgba(255,255,255,0.18)",
     padding: "12px",
     borderRadius: "10px",
     boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
@@ -796,23 +960,34 @@ const bounds =
 >
 
   {/* İlçe */}
-  <label
+<div
   style={{
-    display: "grid",
-    gridTemplateColumns: "24px 20px 1fr",
-    alignItems: "center",
-    columnGap: "10px",
-    cursor: "pointer"
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px"
   }}
 >
+
+  <label
+    style={{
+      display: "grid",
+      gridTemplateColumns:
+        "24px 20px 1fr 30px",
+
+      alignItems: "center",
+
+      columnGap: "10px",
+
+      cursor: "pointer"
+    }}
+  >
 
     <div
       style={{
         width: "22px",
         height: "3px",
         borderRadius: "2px",
-        background: "#ef4444",
-        flexShrink: 0
+        background: "#ef4444"
       }}
     />
 
@@ -820,32 +995,70 @@ const bounds =
       type="checkbox"
       checked={layerVisible}
       onChange={() =>
-        setLayerVisible(!layerVisible)
+        setLayerVisible(
+          !layerVisible
+        )
       }
     />
 
     <span>İlçe Sınırları</span>
 
+    <button
+      onClick={() =>
+        moveLayerToTop([
+          "district-outline"
+        ])
+      }
+    >
+      ↑
+    </button>
+
   </label>
 
+  <input
+    type="range"
+    min="0"
+    max="1"
+    step="0.1"
+    value={districtOpacity}
+    onChange={(e) =>
+       setDistrictOpacity(
+        Number(e.target.value)
+      )
+    }
+  />
+
+</div>
+
   {/* Mahalle */}
-  <label
+<div
   style={{
-    display: "grid",
-    gridTemplateColumns: "24px 20px 1fr",
-    alignItems: "center",
-    columnGap: "10px",
-    cursor: "pointer"
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px"
   }}
 >
+
+  <label
+    style={{
+      display: "grid",
+      gridTemplateColumns:
+        "24px 20px 1fr 30px",
+
+      alignItems: "center",
+
+      columnGap: "10px",
+
+      cursor: "pointer"
+    }}
+  >
 
     <div
       style={{
         width: "22px",
         height: "3px",
         borderRadius: "2px",
-        background: "#2563eb",
-        flexShrink: 0
+        background: "#2563eb"
       }}
     />
 
@@ -853,32 +1066,70 @@ const bounds =
       type="checkbox"
       checked={mahalleVisible}
       onChange={() =>
-        setMahalleVisible(!mahalleVisible)
+        setMahalleVisible(
+          !mahalleVisible
+        )
       }
     />
 
     <span>Mahalle Sınırları</span>
 
+    <button
+      onClick={() =>
+        moveLayerToTop([
+          "mahalle-outline"
+        ])
+      }
+    >
+      ↑
+    </button>
+
   </label>
 
+  <input
+    type="range"
+    min="0"
+    max="1"
+    step="0.1"
+    value={mahalleOpacity}
+    onChange={(e) =>
+      setMahalleOpacity(
+        Number(e.target.value)
+      )
+    }
+  />
+
+</div>
+
   {/* Toplanma */}
-  <label
+<div
   style={{
-    display: "grid",
-    gridTemplateColumns: "24px 20px 1fr",
-    alignItems: "center",
-    columnGap: "10px",
-    cursor: "pointer"
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px"
   }}
 >
+
+  <label
+    style={{
+      display: "grid",
+      gridTemplateColumns:
+        "24px 20px 1fr 30px",
+
+      alignItems: "center",
+
+      columnGap: "10px",
+
+      cursor: "pointer"
+    }}
+  >
 
     <div
       style={{
         width: "12px",
         height: "12px",
         borderRadius: "50%",
-        background: "#16a34a",
-        flexShrink: 0
+        background: "#16a34a"
       }}
     />
 
@@ -886,32 +1137,72 @@ const bounds =
       type="checkbox"
       checked={toplanmaVisible}
       onChange={() =>
-        setToplanmaVisible(!toplanmaVisible)
+        setToplanmaVisible(
+          !toplanmaVisible
+        )
       }
     />
 
     <span>Toplanma Alanları</span>
 
+    <button
+      onClick={() =>
+        moveLayerToTop([
+          "toplanma-circle"
+        ])
+      }
+    >
+      ↑
+    </button>
+
   </label>
 
+  <input
+  type="range"
+  min="0"
+  max="1"
+  step="0.1"
+
+  value={toplanmaOpacity}
+
+  onChange={(e) =>
+    setToplanmaOpacity(
+      Number(e.target.value)
+    )
+  }
+/>
+
+</div>
+
   {/* Yollar */}
-  <label
+<div
   style={{
-    display: "grid",
-    gridTemplateColumns: "24px 20px 1fr",
-    alignItems: "center",
-    columnGap: "10px",
-    cursor: "pointer"
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px"
   }}
 >
+
+  <label
+    style={{
+      display: "grid",
+      gridTemplateColumns:
+        "24px 20px 1fr 30px",
+
+      alignItems: "center",
+
+      columnGap: "10px",
+
+      cursor: "pointer"
+    }}
+  >
 
     <div
       style={{
         width: "22px",
         height: "3px",
         borderRadius: "2px",
-        background: "#f59e0b",
-        flexShrink: 0
+        background: "#f59e0b"
       }}
     />
 
@@ -919,39 +1210,71 @@ const bounds =
       type="checkbox"
       checked={yollarVisible}
       onChange={() =>
-        setYollarVisible(!yollarVisible)
+        setYollarVisible(
+          !yollarVisible
+        )
       }
     />
 
     <span>Yol Ağı</span>
 
+    <button
+      onClick={() =>
+        moveLayerToTop([
+          "yollar-line"
+        ])
+      }
+    >
+      ↑
+    </button>
+
   </label>
+
+  <input
+    type="range"
+    min="0"
+    max="1"
+    step="0.1"
+    value={yollarOpacity}
+    onChange={(e) =>
+      setYollarOpacity(
+        Number(e.target.value)
+      )
+    }
+  />
 
 </div>
 
+</div>
 </div>
 
 {/* Analysis Panel */}
 <div
   style={{
-    position: "absolute",
-    top: 100,
-    right: 30,
+  position: "absolute",
 
-    background:
-      "rgba(255,255,255,0.92)",
+  top: 100,
+  right: 30,
 
-    padding: "14px",
+  background:
+    "rgba(255,255,255,0.12)",
 
-    borderRadius: "14px",
+  backdropFilter: "blur(10px)",
 
-    boxShadow:
-      "0 4px 20px rgba(0,0,0,0.15)",
+  border:
+    "1px solid rgba(255,255,255,0.18)",
 
-    zIndex: 2,
+  padding: "14px",
 
-    minWidth: "220px"
-  }}
+  borderRadius: "14px",
+
+  boxShadow:
+    "0 8px 32px rgba(0,0,0,0.12)",
+
+  zIndex: 2,
+
+  minWidth: "220px"
+}}
 >
 
   <h4

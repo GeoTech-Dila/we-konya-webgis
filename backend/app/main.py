@@ -195,8 +195,12 @@ def yollar():
 
     return geojson
 
-@app.get("/service-5")
-def service_5():
+
+
+
+
+@app.get("/service-15")
+def service_15():
 
     query = text("""
 
@@ -221,7 +225,7 @@ def service_5():
 
             ) AS feature
 
-            FROM servis_alani_5dk
+            FROM servis_alani_15dk
 
         ) AS features;
 
@@ -275,8 +279,8 @@ def service_10():
 
     return geojson
 
-@app.get("/service-15")
-def service_15():
+@app.get("/service-5")
+def service_5():
 
     query = text("""
 
@@ -301,7 +305,7 @@ def service_15():
 
             ) AS feature
 
-            FROM servis_alani_15dk
+            FROM servis_alani_5dk
 
         ) AS features;
 
