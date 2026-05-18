@@ -4,58 +4,34 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 function App() {
 
-    const [service5Visible, setService5Visible] =
-  useState(true);
+  const [service5Visible, setService5Visible] = useState(true);
+  const [service10Visible, setService10Visible] = useState(true);
+  const [service15Visible, setService15Visible] = useState(true);
+  const [yollarVisible, setYollarVisible] = useState(true);
+  const [layerVisible, setLayerVisible] = useState(true);
+  const [mahalleVisible, setMahalleVisible] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [toplanmaVisible, setToplanmaVisible] = useState(true);
+  const [mahalleOpacity, setMahalleOpacity] = useState(1);
+  const [yollarOpacity, setYollarOpacity] = useState(1);
+  const [serviceOpacity, setServiceOpacity] = useState(1);
+  const [toplanmaOpacity, setToplanmaOpacity] = useState(1);
+  const [districtOpacity, setDistrictOpacity] = useState(1);
 
-const [service10Visible, setService10Visible] =
-  useState(true);
-
-const [service15Visible, setService15Visible] =
-  useState(true);
-
-    const [yollarVisible, setYollarVisible] =
-  useState(true);
-
-    const [layerVisible, setLayerVisible] =
-  useState(true);
-
-const [mahalleVisible, setMahalleVisible] =
-  useState(false);
-
-  const [searchText, setSearchText] =
-  useState("");
+  const [isPlaying, setIsPlaying] = useState(true);
 
   const mahalleDataRef = useRef(null);
-
-
-    const [toplanmaVisible, setToplanmaVisible] = useState(true);
-
-const mapRef = useRef(null);
-
-
-const [mahalleOpacity, setMahalleOpacity] =
-  useState(1);
-
-const [yollarOpacity, setYollarOpacity] =
-  useState(1);
-
-const [serviceOpacity, setServiceOpacity] =
-  useState(1);
-
-  const [toplanmaOpacity,
-setToplanmaOpacity] =
-  useState(1);
-
-  const [districtOpacity,
-setDistrictOpacity] =
-  useState(1);
+  const mapRef = useRef(null);
+  const animationIdRef = useRef(null);
+  const isPausedRef = useRef(false);
+  const topTimerRef = useRef(null);
+  const [analysisOpen, setAnalysisOpen] =
+  useState(false);
 
   useEffect(() => {
 
-
     const map = new maplibregl.Map({
       container: "map",
-
       style: {
         version: 8,
         sources: {
@@ -69,7 +45,6 @@ setDistrictOpacity] =
             tileSize: 256
           }
         },
-
         layers: [
           {
             id: "carto-light-layer",
@@ -78,1341 +53,966 @@ setDistrictOpacity] =
           }
         ]
       },
-
       center: [32.49, 37.87],
       zoom: 11,
       pitch: 60,
       bearing: -20
     });
 
-mapRef.current = map;
+    mapRef.current = map;
 
-    // Navigation controls
-    map.addControl(
-      new maplibregl.NavigationControl()
-    );
+    map.addControl(new maplibregl.NavigationControl());
 
     map.on("load", async () => {
 
-         const service5Response =
-    await fetch(
-      "http://localhost:8000/service-5"
-    );
+      // --- VERİ FETCH ---
+      const service5Data = await fetch("http://localhost:8000/service-5").then(r => r.json());
+      const service10Data = await fetch("http://localhost:8000/service-10").then(r => r.json());
+      const service15Data = await fetch("http://localhost:8000/service-15").then(r => r.json());
+      const ilceData = await fetch("http://localhost:8000/ilceler").then(r => r.json());
+      const mahalleData = await fetch("http://localhost:8000/mahalleler").then(r => r.json());
+      const toplanmaData = await fetch("http://localhost:8000/toplanma-alanlari").then(r => r.json());
+      const yollarData = await fetch("http://localhost:8000/yollar").then(r => r.json());
 
-  const service5Data =
-    await service5Response.json();
+      mahalleDataRef.current = mahalleData.features;
 
+      // --- SOURCES ---
+      map.addSource("districts", { type: "geojson", data: ilceData });
+      map.addSource("mahalleler", { type: "geojson", data: mahalleData });
+      map.addSource("toplanma", { type: "geojson", data: toplanmaData });
+      map.addSource("yollar", { type: "geojson", data: yollarData });
+      map.addSource("service-5", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addSource("service-10", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addSource("service-15", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addSource("flow-point", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addSource("flow-pulse", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
 
-
-  const service10Response =
-    await fetch(
-      "http://localhost:8000/service-10"
-    );
-
-  const service10Data =
-    await service10Response.json();
-
-
-
-  const service15Response =
-    await fetch(
-      "http://localhost:8000/service-15"
-    );
-
-  const service15Data =
-    await service15Response.json();
-
-      // GeoJSON verisini yükle
-      const ilceResponse = await fetch(
-  "http://localhost:8000/ilceler"
-);
-
-const ilceData = await ilceResponse.json();
-
-
-      map.addSource("districts", {
-  type: "geojson",
-  data: ilceData
-});
-
-  const mahalleResponse = await fetch(
-  "http://localhost:8000/mahalleler"
-);
-
-const mahalleData =
-  await mahalleResponse.json();
-
-mahalleDataRef.current =
-  mahalleData.features;
-
-const toplanmaResponse = await fetch(
-  "http://localhost:8000/toplanma-alanlari"
-);
-
-const toplanmaData =
-  await toplanmaResponse.json();
-
-  const yollarResponse = await fetch(
-  "http://localhost:8000/yollar"
-);
-
-const yollarData =
-  await yollarResponse.json();
-
-
-map.addSource("mahalleler", {
-  type: "geojson",
-  data: mahalleData
-});
-
-map.addSource("toplanma", {
-  type: "geojson",
-  data: toplanmaData
-});
-
-map.addSource("yollar", {
-  type: "geojson",
-  data: yollarData
-});
-
-map.addSource("service-5", {
-  type: "geojson",
-  data: service5Data
-});
-
-map.addSource("service-10", {
-  type: "geojson",
-  data: service10Data
-});
-
-map.addSource("service-15", {
-  type: "geojson",
-  data: service15Data
-});
-
-
-      // Polygon fill layer
+      // --- LAYERS (sıralama önemli: altta kalanlar önce eklenir) ---
       map.addLayer({
         id: "district-fill",
         type: "fill",
         source: "districts",
-
-        paint: {
-          "fill-color": "#ff0000",
-          "fill-opacity": 0
-        }
+        paint: { "fill-color": "#ff0000", "fill-opacity": 0 }
       });
 
-      // Polygon outline layer
       map.addLayer({
-
-
         id: "district-outline",
         type: "line",
         source: "districts",
+        paint: { "line-color": "#ff0000", "line-width": 1.5 }
+      });
 
+      map.addLayer({
+        id: "mahalle-fill",
+        type: "fill",
+        source: "mahalleler",
+        paint: { "fill-color": "#2563eb", "fill-opacity": 0 }
+      });
+
+      map.addLayer({
+        id: "mahalle-outline",
+        type: "line",
+        source: "mahalleler",
+        paint: { "line-color": "#2563eb", "line-width": 1 }
+      });
+
+      map.addLayer({
+        id: "yollar-line",
+        type: "line",
+        source: "yollar",
+        paint: { "line-color": "#f59e0b", "line-width": 0.5, "line-opacity": 0.8 }
+      });
+
+      map.addLayer({
+        id: "toplanma-points",
+        type: "circle",
+        source: "toplanma",
         paint: {
-          "line-color": "#ff0000",
-          "line-width": 1.5
+          "circle-radius": 4,
+          "circle-color": "#22c55e",
+          "circle-stroke-width": 1,
+          "circle-stroke-color": "#dcfce7",
+          "circle-opacity": 0.95,
+          "circle-blur": 0.2
         }
       });
 
-map.addLayer({
-  id: "mahalle-fill",
-  type: "fill",
-  source: "mahalleler",
+      // Service area layer'ları (hepsi burada, animasyondan önce)
+      map.addLayer({
+        id: "service-15-line",
+        type: "line",
+        source: "service-15",
+        paint: { "line-color": "#ef4444", "line-width": 1.5 }
+      });
 
-  paint: {
-    "fill-color": "#2563eb",
-    "fill-opacity": 0
-  }
-});
+      map.addLayer({
+        id: "service-10-line",
+        type: "line",
+        source: "service-10",
+        paint: { "line-color": "#eab308", "line-width": 1.5 }
+      });
 
-// Mahalle outline
-map.addLayer({
-  id: "mahalle-outline",
-  type: "line",
-  source: "mahalleler",
+      map.addLayer({
+        id: "service-5-line",
+        type: "line",
+        source: "service-5",
+        paint: { "line-color": "#22c55e", "line-width": 2.5 }
+      });
 
-  paint: {
-    "line-color": "#2563eb",
-    "line-width": 1
-  }
-});
-
-map.addLayer({
-  id: "yollar-line",
-  type: "line",
-  source: "yollar",
-
-  paint: {
-    "line-color": "#f59e0b",
-    "line-width": 0.5,
-    "line-opacity": 0.8
-  }
-});
-
-// Toplanma alanları
-map.addLayer({
-  id: "toplanma-points",
-  type: "circle",
-  source: "toplanma",
-
-  paint: {
-  "circle-radius": 4,
-
-  "circle-color": "#22c55e",
-
-  "circle-stroke-width": 1,
-
-  "circle-stroke-color": "#dcfce7",
-
-  "circle-opacity": 0.95,
-
-  "circle-blur": 0.2
-}
-});
-
-map.addLayer({
-  id: "service-5-line",
-  type: "line",
-  source: "service-5",
-
-  paint: {
-    "line-color": "#22c55e",
-    "line-width": 3
-  }
-});
-map.addLayer({
-  id: "service-10-line",
-  type: "line",
-  source: "service-10",
-
-  paint: {
-    "line-color": "#eab308",
-    "line-width": 3
-  }
-});
-map.addLayer({
-  id: "service-15-line",
-  type: "line",
-  source: "service-15",
-
-  paint: {
-    "line-color": "#ef4444",
-    "line-width": 3
-  }
-});
-
-reorderServiceLayers();
-
-      // Hover layer
+      // Hover district
       map.addLayer({
         id: "district-hover",
         type: "fill",
         source: "districts",
-
-        paint: {
-          "fill-color": "#ff0000",
-          "fill-opacity": 0.2
-        },
-
+        paint: { "fill-color": "#ff0000", "fill-opacity": 0.2 },
         filter: ["==", "NAME_2", ""]
       });
 
-      // Hover efekti
-      map.on("mousemove", "district-fill", (e) => {
-
-        const district =
-          e.features[0].properties.name;
-
-        map.setFilter(
-          "district-hover",
-          ["==", "name", district]
-        );
-
-        map.getCanvas().style.cursor = "pointer";
+      // Pulse ve top layer'ları (en üstte)
+      map.addLayer({
+        id: "flow-pulse-layer",
+        type: "circle",
+        source: "flow-pulse",
+        paint: {
+          "circle-radius": 18,
+          "circle-color": "transparent",
+          "circle-stroke-width": 2,
+          "circle-stroke-color": "#22c55e",
+          "circle-opacity": 0.4,
+          "circle-blur": 0.5
+        }
       });
 
-      // Mouse çıkışı
-      map.on("mouseleave", "district-fill", () => {
-
-        map.setFilter(
-          "district-hover",
-          ["==", "NAME_2", ""]
-        );
-
-        map.getCanvas().style.cursor = "";
+      map.addLayer({
+        id: "flow-point-layer",
+        type: "circle",
+        source: "flow-point",
+        paint: {
+          "circle-radius": 8,
+          "circle-color": "#ffffff",
+          "circle-stroke-width": 3,
+          "circle-stroke-color": "#22c55e",
+          "circle-blur": 0,
+          "circle-opacity": 1
+        }
       });
 
-      // Popup
-      map.on("click", "district-fill", (e) => {
+      // --- splitFeatures ve ANİMASYON ---
+      const splitFeatures = service5Data.features.sort(
+        (a, b) => a.properties.start - b.properties.start
+      );
+
+      // service-5 boş başlar, animasyon dolduracak
+      // (service-10 ve service-15 zaten boş source olarak eklendi)
+
+      // --- PROGRESSİVE ÇİZGİ ANİMASYONU ---
+      // service-5: LineString  → coordinates: [x,y][]
+      // service-10/15: MultiLineString → coordinates: [x,y][][]
+
+      function getPoints(feature) {
+        const geom = feature.geometry;
+        if (geom.type === "LineString") return geom.coordinates;
+        if (geom.type === "MultiLineString") return geom.coordinates.flat();
+        return [];
+      }
+
+      function buildGeometry(feature, points) {
+        const geom = feature.geometry;
+        if (geom.type === "LineString") return { type: "LineString", coordinates: points };
+        if (geom.type === "MultiLineString") return { type: "MultiLineString", coordinates: [points] };
+        return geom;
+      }
+
+      console.log("=== ANİMASYON DEBUG ===");
+      console.log("service5 features:", splitFeatures.length);
+      console.log("service10 features:", service10Data.features?.length);
+      console.log("service15 features:", service15Data.features?.length);
+
+      let idx5 = 0, idx10 = 0, idx15 = 0;
+
+      let cameraTick = 0;
+
+      // service-5: 25k feature var, her feature sadece 2 nokta → feature başına 1 adım yeterli
+      // service-10/15: çok adım var, toplu atlayacağız
+
+      function animateDraw() {
+        if (isPausedRef.current) {
+          topTimerRef.current = setTimeout(animateDraw, 100);
+          return;
+        }
+
+        const flowSrc  = map.getSource("flow-point");
+        const pulseSrc = map.getSource("flow-pulse");
+
+        // --- service-5: her turda 5 feature ekle ---
+        const BATCH_5 = 5;
+        let lastPt5 = null;
+        if (idx5 < splitFeatures.length) {
+          const end5 = Math.min(idx5 + BATCH_5, splitFeatures.length);
+          const visibleFeatures = splitFeatures.slice(0, end5);
+          map.getSource("service-5").setData({ type: "FeatureCollection", features: visibleFeatures });
+          const lastF = visibleFeatures[visibleFeatures.length - 1];
+          const pts = getPoints(lastF);
+          lastPt5 = pts[pts.length - 1];
+          idx5 = end5;
+        }
+
+        // --- service-10: her turda 1 feature ekle ---
+        let lastPt10 = null;
+        if (idx10 < service10Data.features.length) {
+          const visibleFeatures = service10Data.features.slice(0, idx10 + 1);
+          map.getSource("service-10").setData({ type: "FeatureCollection", features: visibleFeatures });
+          const lastF = visibleFeatures[visibleFeatures.length - 1];
+          const pts = getPoints(lastF);
+          lastPt10 = pts[pts.length - 1];
+          idx10++;
+        }
+
+        // --- service-15: her turda 1 feature ekle ---
+        let lastPt15 = null;
+        if (idx15 < service15Data.features.length) {
+          const visibleFeatures = service15Data.features.slice(0, idx15 + 1);
+          map.getSource("service-15").setData({ type: "FeatureCollection", features: visibleFeatures });
+          const lastF = visibleFeatures[visibleFeatures.length - 1];
+          const pts = getPoints(lastF);
+          lastPt15 = pts[pts.length - 1];
+          idx15++;
+        }
+
+        // Top: service-5 öncelikli
+        const topPt = lastPt5 ?? lastPt10 ?? lastPt15;
+        if (topPt && flowSrc && pulseSrc) {
+          const pd = {
+            type: "FeatureCollection",
+            features: [{ type: "Feature", geometry: { type: "Point", coordinates: topPt }, properties: {} }]
+          };
+          flowSrc.setData(pd);
+          pulseSrc.setData(pd);
+        }
+
+    cameraTick++;
+
+if (
+  topPt &&
+  cameraTick % 15 === 0
+) {
+
+  map.easeTo({
 
-        const props = e.features[0].properties;
+    center: topPt,
 
-        new maplibregl.Popup()
-          .setLngLat(e.lngLat)
-          .setHTML(`
-            <pre>
-${JSON.stringify(props, null, 2)}
-            </pre>
-          `)
-          .addTo(map);
-
-      });
-
-  // Mahalle hover popup
-const mahallePopup = new maplibregl.Popup({
-  closeButton: false,
-  closeOnClick: false
-});
-
-map.on("mousemove", "mahalle-fill", (e) => {
-
-  map.getCanvas().style.cursor = "pointer";
-
-  const props = e.features[0].properties;
+    zoom: 13,
 
-  mahallePopup
-    .setLngLat(e.lngLat)
-    .setHTML(`
-      <div style="
-        font-size:14px;
-        font-weight:600;
-      ">
-        ${props.adi_numara}
-      </div>
-    `)
-    .addTo(map);
+    duration: 800,
 
-});
-
-map.on("mouseleave", "mahalle-fill", () => {
-
-  map.getCanvas().style.cursor = "";
-
-  mahallePopup.remove();
-
-});
-
-map.setLayoutProperty(
-  "district-outline",
-  "visibility",
-  layerVisible ? "visible" : "none"
-);
-
-map.setLayoutProperty(
-  "district-fill",
-  "visibility",
-  layerVisible ? "visible" : "none"
-);
-
-map.setLayoutProperty(
-  "district-hover",
-  "visibility",
-  layerVisible ? "visible" : "none"
-);
-
-map.setLayoutProperty(
-  "mahalle-fill",
-  "visibility",
-  mahalleVisible ? "visible" : "none"
-);
-
-map.setLayoutProperty(
-  "mahalle-outline",
-  "visibility",
-  mahalleVisible ? "visible" : "none"
-);
-
-map.setLayoutProperty(
-  "toplanma-points",
-  "visibility",
-  toplanmaVisible ? "visible" : "none"
-);
-
-    });
-
-    return () => map.remove();
-
- }, []);
-
- // YENİ USEEFFECT
-useEffect(() => {
-
- const map = mapRef.current;
-
-  if (
-    !map ||
-    !map.getLayer("district-outline")
-  ) return;
-
-  const visibility =
-    layerVisible ? "visible" : "none";
-
-  map.setLayoutProperty(
-    "district-outline",
-    "visibility",
-    visibility
-  );
-
-  map.setLayoutProperty(
-    "district-fill",
-    "visibility",
-    visibility
-  );
-
-  map.setLayoutProperty(
-    "district-hover",
-    "visibility",
-    visibility
-  );
-
-}, [layerVisible]);
-
-
-
-useEffect(() => {
-
-  const map = mapRef.current;
-
-  if (
-    !map ||
-    !map.getLayer("mahalle-outline")
-  ) return;
-
-  map.setLayoutProperty(
-    "mahalle-outline",
-    "visibility",
-    mahalleVisible ? "visible" : "none"
-  );
-
-  map.setLayoutProperty(
-    "mahalle-fill",
-    "visibility",
-    mahalleVisible ? "visible" : "none"
-  );
-
-}, [mahalleVisible]);
-
-useEffect(() => {
-
-  const map = mapRef.current;
-
-  if (
-    !map ||
-    !map.getLayer("toplanma-points")
-  ) return;
-
-  map.setLayoutProperty(
-    "toplanma-points",
-    "visibility",
-    toplanmaVisible ? "visible" : "none"
-  );
-
-}, [toplanmaVisible]);
-
-useEffect(() => {
-
-  const map = mapRef.current;
-
-  if (
-    !map ||
-    !map.getLayer("yollar-line")
-  ) return;
-
-  map.setLayoutProperty(
-    "yollar-line",
-    "visibility",
-    yollarVisible ? "visible" : "none"
-  );
-
-}, [yollarVisible]);
-
-useEffect(() => {
-
-  if (
-  !mapRef.current ||
-  !mapRef.current.isStyleLoaded() ||
-  !mapRef.current.getLayer("service-5-line")
-) return;
-
-  mapRef.current.setLayoutProperty(
-    "service-5-line",
-    "visibility",
-    service5Visible
-      ? "visible"
-      : "none"
-  );
-
-}, [service5Visible]);
-
-useEffect(() => {
-
-  if (
-  !mapRef.current ||
-  !mapRef.current.isStyleLoaded() ||
-  !mapRef.current.getLayer("service-10-line")
-) return;
-
-  mapRef.current.setLayoutProperty(
-    "service-10-line",
-    "visibility",
-    service10Visible
-      ? "visible"
-      : "none"
-  );
-
-}, [service10Visible]);
-
-useEffect(() => {
-
-  if (
-  !mapRef.current ||
-  !mapRef.current.isStyleLoaded() ||
-  !mapRef.current.getLayer("service-15-line")
-) return;
-
-  mapRef.current.setLayoutProperty(
-    "service-15-line",
-    "visibility",
-    service15Visible
-      ? "visible"
-      : "none"
-  );
-
-}, [service15Visible]);
-
-useEffect(() => {
-
-  const map = mapRef.current;
-
-  if (
-    !map ||
-    !map.getLayer("toplanma-points")
-  ) return;
-
-  map.setPaintProperty(
-    "toplanma-points",
-    "circle-opacity",
-    toplanmaOpacity
-  );
-
-}, [toplanmaOpacity]);
-
-useEffect(() => {
-
-  const map = mapRef.current;
-
-  if (
-    !map ||
-    !map.getLayer("mahalle-outline")
-  ) return;
-
-  map.setPaintProperty(
-    "mahalle-outline",
-    "line-opacity",
-    mahalleOpacity
-  );
-
-}, [mahalleOpacity]);
-
-useEffect(() => {
-
-  const map = mapRef.current;
-
-  if (
-    !map ||
-    !map.getLayer("yollar-line")
-  ) return;
-
-  map.setPaintProperty(
-    "yollar-line",
-    "line-opacity",
-    yollarOpacity
-  );
-
-}, [yollarOpacity]);
-
-useEffect(() => {
-
-  const map = mapRef.current;
-
-  if (
-    !map ||
-    !map.getLayer("service-5-line")
-  ) return;
-
-  map.setPaintProperty(
-    "service-5-line",
-    "line-opacity",
-    serviceOpacity
-  );
-
-  map.setPaintProperty(
-    "service-10-line",
-    "line-opacity",
-    serviceOpacity
-  );
-
-  map.setPaintProperty(
-    "service-15-line",
-    "line-opacity",
-    serviceOpacity
-  );
-
-}, [serviceOpacity]);
-
-useEffect(() => {
-
-  const map = mapRef.current;
-
-  if (
-    !map ||
-    !map.getLayer("toplanma-circle")
-  ) return;
-
-  map.setPaintProperty(
-    "toplanma-circle",
-    "circle-opacity",
-    toplanmaOpacity
-  );
-
-}, [toplanmaOpacity]);
-
-const moveLayerToTop = (
-  layerIds
-) => {
-
-  const map = mapRef.current;
-
-  if (!map) return;
-
-  layerIds.forEach((id) => {
-
-    if (map.getLayer(id)) {
-
-      map.moveLayer(id);
-
-    }
+    essential: true
 
   });
 
-};
-const reorderServiceLayers = () => {
+}
 
-  const map = mapRef.current;
+        // Hepsi bittiyse sıfırla
+        const all5done  = idx5  >= splitFeatures.length;
+        const all10done = idx10 >= service10Data.features.length;
+        const all15done = idx15 >= service15Data.features.length;
 
-  if (!map) return;
+        if (all5done && all10done && all15done) {
+          idx5 = 0; idx10 = 0; idx15 = 0;
+          map.getSource("service-5").setData({ type: "FeatureCollection", features: [] });
+          map.getSource("service-10").setData({ type: "FeatureCollection", features: [] });
+          map.getSource("service-15").setData({ type: "FeatureCollection", features: [] });
+          if (flowSrc) flowSrc.setData({ type: "FeatureCollection", features: [] });
+          if (pulseSrc) pulseSrc.setData({ type: "FeatureCollection", features: [] });
+          topTimerRef.current = setTimeout(animateDraw, 1200);
+          return;
+        }
 
-  if (map.getLayer("service-15-line")) {
-    map.moveLayer("service-15-line");
-  }
+        topTimerRef.current = setTimeout(animateDraw, 200);
+      }
 
-  if (map.getLayer("service-10-line")) {
-    map.moveLayer("service-10-line");
-  }
+      animateDraw();
 
-  if (map.getLayer("service-5-line")) {
-    map.moveLayer("service-5-line");
-  }
+      // --- HOVER / POPUP ---
+      map.on("mousemove", "district-fill", (e) => {
+        const district = e.features[0].properties.name;
+        map.setFilter("district-hover", ["==", "name", district]);
+        map.getCanvas().style.cursor = "pointer";
+      });
 
-};
+      map.on("mouseleave", "district-fill", () => {
+        map.setFilter("district-hover", ["==", "NAME_2", ""]);
+        map.getCanvas().style.cursor = "";
+      });
+
+      map.on("click", "district-fill", (e) => {
+        const props = e.features[0].properties;
+        new maplibregl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(`<pre>${JSON.stringify(props, null, 2)}</pre>`)
+          .addTo(map);
+      });
+
+      const mahallePopup = new maplibregl.Popup({ closeButton: false, closeOnClick: false });
+
+      map.on("mousemove", "mahalle-fill", (e) => {
+        map.getCanvas().style.cursor = "pointer";
+        const props = e.features[0].properties;
+        mahallePopup.setLngLat(e.lngLat).setHTML(`<div style="font-size:14px;font-weight:600;">${props.adi_numara}</div>`).addTo(map);
+      });
+
+      map.on("mouseleave", "mahalle-fill", () => {
+        map.getCanvas().style.cursor = "";
+        mahallePopup.remove();
+      });
+
+      // --- İLK GÖRÜNÜRLÜK ---
+      map.setLayoutProperty("district-outline", "visibility", layerVisible ? "visible" : "none");
+      map.setLayoutProperty("district-fill", "visibility", layerVisible ? "visible" : "none");
+      map.setLayoutProperty("district-hover", "visibility", layerVisible ? "visible" : "none");
+      map.setLayoutProperty("mahalle-fill", "visibility", mahalleVisible ? "visible" : "none");
+      map.setLayoutProperty("mahalle-outline", "visibility", mahalleVisible ? "visible" : "none");
+      map.setLayoutProperty("toplanma-points", "visibility", toplanmaVisible ? "visible" : "none");
+
+    });
+
+    return () => {
+      if (animationIdRef.current) cancelAnimationFrame(animationIdRef.current);
+      if (topTimerRef.current) clearTimeout(topTimerRef.current);
+      map.remove();
+    };
+
+  }, []);
+
+  // Pause/Play senkronizasyonu
+  useEffect(() => {
+    isPausedRef.current = !isPlaying;
+  }, [isPlaying]);
+
+  // --- VISIBILITY EFFECTS ---
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer("district-outline")) return;
+    const v = layerVisible ? "visible" : "none";
+    map.setLayoutProperty("district-outline", "visibility", v);
+    map.setLayoutProperty("district-fill", "visibility", v);
+    map.setLayoutProperty("district-hover", "visibility", v);
+  }, [layerVisible]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer("district-outline")) return;
+    map.setPaintProperty("district-outline", "line-opacity", districtOpacity);
+  }, [districtOpacity]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer("mahalle-outline")) return;
+    map.setLayoutProperty("mahalle-outline", "visibility", mahalleVisible ? "visible" : "none");
+    map.setLayoutProperty("mahalle-fill", "visibility", mahalleVisible ? "visible" : "none");
+  }, [mahalleVisible]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer("toplanma-points")) return;
+    map.setLayoutProperty("toplanma-points", "visibility", toplanmaVisible ? "visible" : "none");
+  }, [toplanmaVisible]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer("yollar-line")) return;
+    map.setLayoutProperty("yollar-line", "visibility", yollarVisible ? "visible" : "none");
+  }, [yollarVisible]);
+
+  useEffect(() => {
+    if (!mapRef.current || !mapRef.current.isStyleLoaded() || !mapRef.current.getLayer("service-5-line")) return;
+    mapRef.current.setLayoutProperty("service-5-line", "visibility", service5Visible ? "visible" : "none");
+  }, [service5Visible]);
+
+  useEffect(() => {
+    if (!mapRef.current || !mapRef.current.isStyleLoaded() || !mapRef.current.getLayer("service-10-line")) return;
+    mapRef.current.setLayoutProperty("service-10-line", "visibility", service10Visible ? "visible" : "none");
+  }, [service10Visible]);
+
+  useEffect(() => {
+    if (!mapRef.current || !mapRef.current.isStyleLoaded() || !mapRef.current.getLayer("service-15-line")) return;
+    mapRef.current.setLayoutProperty("service-15-line", "visibility", service15Visible ? "visible" : "none");
+  }, [service15Visible]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer("toplanma-points")) return;
+    map.setPaintProperty("toplanma-points", "circle-opacity", toplanmaOpacity);
+  }, [toplanmaOpacity]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer("mahalle-outline")) return;
+    map.setPaintProperty("mahalle-outline", "line-opacity", mahalleOpacity);
+  }, [mahalleOpacity]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer("yollar-line")) return;
+    map.setPaintProperty("yollar-line", "line-opacity", yollarOpacity);
+  }, [yollarOpacity]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer("service-5-line")) return;
+    map.setPaintProperty("service-5-line", "line-opacity", serviceOpacity);
+    map.setPaintProperty("service-10-line", "line-opacity", serviceOpacity);
+    map.setPaintProperty("service-15-line", "line-opacity", serviceOpacity);
+  }, [serviceOpacity]);
+
+  // --- HELPERS ---
+  const moveLayerToTop = (layerIds) => {
+    const map = mapRef.current;
+    if (!map) return;
+    layerIds.forEach((id) => { if (map.getLayer(id)) map.moveLayer(id); });
+  };
 
   return (
-  <div
+    <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
+
+      <div id="map" style={{ width: "100%", height: "100%" }} />
+
+      {/* Header */}
+      <div style={{
+        position: "absolute", top: 0, left: 0, width: "100%", height: "72px",
+        background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)",
+        borderBottom: "1px solid rgba(255,255,255,0.18)",
+        display: "flex", alignItems: "center", padding: "0 28px",
+        zIndex: 5, boxShadow: "0 8px 32px rgba(0,0,0,0.12)"
+      }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ fontSize: "34px", fontWeight: "800", fontStyle: "italic", letterSpacing: "1px", display: "flex", alignItems: "center" }}>
+            <span style={{ color: "#c7d2fe" }}>KOR-</span>
+            <span style={{ color: "#ef4444" }}>İZ</span>
+          </div>
+          <span style={{ color: "#cbd5e1", fontSize: "13px", marginTop: "-2px" }}>
+            Acil Durumda Koruma ve İzleme Sistemi
+          </span>
+        </div>
+
+        <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+          <input
+            type="text"
+            placeholder="Mahalle ara..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              const mahalleler = mahalleDataRef.current;
+              if (!mahalleler) return;
+              const found = mahalleler.find((m) =>
+                m.properties.adi_numara?.toLowerCase().includes(searchText.toLowerCase())
+              );
+              if (!found) return;
+              let coords = [];
+              if (found.geometry.type === "Polygon") coords = found.geometry.coordinates[0];
+              else if (found.geometry.type === "MultiPolygon") coords = found.geometry.coordinates[0][0];
+              const bounds = coords.reduce(
+                (b, coord) => b.extend(coord),
+                new maplibregl.LngLatBounds(coords[0], coords[0])
+              );
+              mapRef.current.fitBounds(bounds, { padding: 40, duration: 1500 });
+            }}
+            style={{
+              width: "320px", padding: "12px 18px", borderRadius: "999px",
+              border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.14)",
+              backdropFilter: "blur(10px)", color: "#111827", fontSize: "14px",
+              outline: "none", boxShadow: "0 8px 32px rgba(0,0,0,0.12)"
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div style={{
+        position: "absolute", bottom: 30, left: 30,
+        background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)",
+        border: "1px solid rgba(255,255,255,0.18)", padding: "12px",
+        borderRadius: "10px", boxShadow: "0 2px 10px rgba(0,0,0,0.2)", zIndex: 1, minWidth: "180px"
+      }}>
+        <h4 style={{ margin: 0, marginBottom: "10px" }}>Katmanlar</h4>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+
+          {/* İlçe */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label style={{ display: "grid", gridTemplateColumns: "24px 20px 1fr 30px", alignItems: "center", columnGap: "10px", cursor: "pointer" }}>
+              <div style={{ width: "22px", height: "3px", borderRadius: "2px", background: "#ef4444" }} />
+              <input type="checkbox" checked={layerVisible} onChange={() => setLayerVisible(!layerVisible)} />
+              <span>İlçe Sınırları</span>
+              <button onClick={() => moveLayerToTop(["district-outline"])}>↑</button>
+            </label>
+            <input type="range" min="0" max="1" step="0.1" value={districtOpacity} onChange={(e) => setDistrictOpacity(Number(e.target.value))} />
+          </div>
+
+          {/* Mahalle */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label style={{ display: "grid", gridTemplateColumns: "24px 20px 1fr 30px", alignItems: "center", columnGap: "10px", cursor: "pointer" }}>
+              <div style={{ width: "22px", height: "3px", borderRadius: "2px", background: "#2563eb" }} />
+              <input type="checkbox" checked={mahalleVisible} onChange={() => setMahalleVisible(!mahalleVisible)} />
+              <span>Mahalle Sınırları</span>
+              <button onClick={() => moveLayerToTop(["mahalle-outline"])}>↑</button>
+            </label>
+            <input type="range" min="0" max="1" step="0.1" value={mahalleOpacity} onChange={(e) => setMahalleOpacity(Number(e.target.value))} />
+          </div>
+
+          {/* Toplanma */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label style={{ display: "grid", gridTemplateColumns: "24px 20px 1fr 30px", alignItems: "center", columnGap: "10px", cursor: "pointer" }}>
+              <div style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#16a34a" }} />
+              <input type="checkbox" checked={toplanmaVisible} onChange={() => setToplanmaVisible(!toplanmaVisible)} />
+              <span>Toplanma Alanları</span>
+              <button onClick={() => moveLayerToTop(["toplanma-points"])}>↑</button>
+            </label>
+            <input type="range" min="0" max="1" step="0.1" value={toplanmaOpacity} onChange={(e) => setToplanmaOpacity(Number(e.target.value))} />
+          </div>
+
+          {/* Yollar */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <label style={{ display: "grid", gridTemplateColumns: "24px 20px 1fr 30px", alignItems: "center", columnGap: "10px", cursor: "pointer" }}>
+              <div style={{ width: "22px", height: "3px", borderRadius: "2px", background: "#f59e0b" }} />
+              <input type="checkbox" checked={yollarVisible} onChange={() => setYollarVisible(!yollarVisible)} />
+              <span>Yol Ağı</span>
+              <button onClick={() => moveLayerToTop(["yollar-line"])}>↑</button>
+            </label>
+            <input type="range" min="0" max="1" step="0.1" value={yollarOpacity} onChange={(e) => setYollarOpacity(Number(e.target.value))} />
+          </div>
+
+        </div>
+      </div>
+
+{/* Floating Analysis Button */}
+<div
+  onClick={() =>
+    setAnalysisOpen(!analysisOpen)
+  }
+  style={{
+    position: "absolute",
+    top: 100,
+    right: 30,
+
+    width: "58px",
+    height: "58px",
+
+    borderRadius: "18px",
+
+    background:
+      "rgba(255,255,255,0.14)",
+
+    backdropFilter: "blur(14px)",
+
+    border:
+      "1px solid rgba(255,255,255,0.18)",
+
+    boxShadow:
+      "0 10px 35px rgba(0,0,0,0.18)",
+
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+
+    cursor: "pointer",
+
+    zIndex: 20,
+
+    transition: "all 0.25s"
+  }}
+>
+
+  <span
     style={{
-      width: "100vw",
-      height: "100vh",
-      position: "relative"
+      fontSize: "24px"
     }}
   >
+    📊
+  </span>
 
-    {/* Harita */}
-    <div
-      id="map"
-      style={{
-        width: "100%",
-        height: "100%"
-      }}
-    />
+</div>
 
-{/* Header */}
+     {/* Modern Analysis Panel */}
 <div
   style={{
     position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "72px",
+
+    top: 100,
+
+    right: analysisOpen
+      ? 100
+      : -420,
+
+    width: "340px",
+
+    maxHeight: "78vh",
+
+    overflowY: "auto",
 
     background:
       "rgba(255,255,255,0.12)",
 
-    backdropFilter: "blur(10px)",
+    backdropFilter: "blur(18px)",
 
-    borderBottom:
+    border:
       "1px solid rgba(255,255,255,0.18)",
 
-    display: "flex",
-    alignItems: "center",
+    borderRadius: "26px",
 
-    padding: "0 28px",
-
-    zIndex: 5,
+    padding: "22px",
 
     boxShadow:
-      "0 8px 32px rgba(0,0,0,0.12)"
+      "0 18px 55px rgba(0,0,0,0.22)",
+
+    transition: "all 0.35s ease",
+
+    zIndex: 15
   }}
 >
 
-  {/* Logo */}
+  {/* HEADER */}
   <div
     style={{
       display: "flex",
-      flexDirection: "column"
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "20px"
     }}
   >
 
-    <div
-      style={{
-        fontSize: "34px",
-        fontWeight: "800",
-        fontStyle: "italic",
-        letterSpacing: "1px",
-        display: "flex",
-        alignItems: "center"
-      }}
-    >
+    <div>
 
-      <span
+      <div
         style={{
-          color: "#c7d2fe"
+          fontSize: "20px",
+          fontWeight: "700"
         }}
       >
-        KOR-
-      </span>
+        Analiz Merkezi
+      </div>
 
-      <span
+      <div
         style={{
-          color: "#ef4444"
+          fontSize: "12px",
+          opacity: 0.7,
+          marginTop: "2px"
         }}
       >
-        İZ
-      </span>
+        WebGIS Analiz Katmanları
+      </div>
 
     </div>
 
-    <span
-      style={{
-        color: "#cbd5e1",
-        fontSize: "13px",
-        marginTop: "-2px"
-      }}
-    >
-      Acil Durumda Koruma ve İzleme Sistemi
-    </span>
-
-  </div>
-
-  {/* Search */}
-  <div
-    style={{
-      position: "absolute",
-      left: "50%",
-      transform: "translateX(-50%)"
-    }}
-  >
-
-    <input
-      type="text"
-
-      placeholder="Mahalle ara..."
-
-      value={searchText}
-
-      onChange={(e) =>
-        setSearchText(e.target.value)
+    <button
+      onClick={() =>
+        setAnalysisOpen(false)
       }
-
-      onKeyDown={(e) => {
-
-        if (e.key !== "Enter") return;
-
-        const mahalleler =
-          mahalleDataRef.current;
-
-        if (!mahalleler) return;
-
-        const found =
-          mahalleler.find((m) =>
-            m.properties.adi_numara
-              ?.toLowerCase()
-              .includes(
-                searchText.toLowerCase()
-              )
-          );
-
-        if (!found) return;
-
-        let coords = [];
-
-if (
-  found.geometry.type === "Polygon"
-) {
-
-  coords =
-    found.geometry.coordinates[0];
-
-} else if (
-  found.geometry.type === "MultiPolygon"
-) {
-
-  coords =
-    found.geometry.coordinates[0][0];
-
-}
-
-const bounds =
-  coords.reduce(
-
-    (b, coord) =>
-      b.extend(coord),
-
-    new maplibregl.LngLatBounds(
-      coords[0],
-      coords[0]
-    )
-
-  );
-
-        mapRef.current.fitBounds(bounds, {
-          padding: 40,
-          duration: 1500
-        });
-
-      }}
-
       style={{
-        width: "320px",
-        padding: "12px 18px",
+        width: "36px",
+        height: "36px",
 
-        borderRadius: "999px",
+        borderRadius: "12px",
 
-        border:
-          "1px solid rgba(255,255,255,0.18)",
+        border: "none",
 
         background:
-          "rgba(255,255,255,0.14)",
+          "rgba(255,255,255,0.12)",
 
-        backdropFilter: "blur(10px)",
+        cursor: "pointer",
 
-        color: "#111827",
-
-        fontSize: "14px",
-
-        outline: "none",
-
-        boxShadow:
-  "0 8px 32px rgba(0,0,0,0.12)",
+        fontSize: "16px"
       }}
-    />
+    >
+      ✕
+    </button>
 
   </div>
 
-</div>
-
-{/* Legend */}
-<div
-  style={{
-    position: "absolute",
-    bottom: 30,
-    left: 30,
-    background:
-  "rgba(255,255,255,0.12)",
-  backdropFilter: "blur(10px)",
-
-border:
-  "1px solid rgba(255,255,255,0.18)",
-    padding: "12px",
-    borderRadius: "10px",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-    zIndex: 1,
-    minWidth: "180px"
-  }}
->
-
-  <h4
-    style={{
-      margin: 0,
-      marginBottom: "10px"
-    }}
-  >
-    Katmanlar
-  </h4>
-
-<div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px"
-  }}
->
-
-  {/* İlçe */}
-<div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px"
-  }}
->
-
-  <label
-    style={{
-      display: "grid",
-      gridTemplateColumns:
-        "24px 20px 1fr 30px",
-
-      alignItems: "center",
-
-      columnGap: "10px",
-
-      cursor: "pointer"
-    }}
-  >
-
-    <div
-      style={{
-        width: "22px",
-        height: "3px",
-        borderRadius: "2px",
-        background: "#ef4444"
-      }}
-    />
-
-    <input
-      type="checkbox"
-      checked={layerVisible}
-      onChange={() =>
-        setLayerVisible(
-          !layerVisible
-        )
-      }
-    />
-
-    <span>İlçe Sınırları</span>
-
-    <button
-      onClick={() =>
-        moveLayerToTop([
-          "district-outline"
-        ])
-      }
-    >
-      ↑
-    </button>
-
-  </label>
-
-  <input
-    type="range"
-    min="0"
-    max="1"
-    step="0.1"
-    value={districtOpacity}
-    onChange={(e) =>
-       setDistrictOpacity(
-        Number(e.target.value)
-      )
+  {/* PLAY / PAUSE */}
+  <button
+    onClick={() =>
+      setIsPlaying((p) => !p)
     }
-  />
-
-</div>
-
-  {/* Mahalle */}
-<div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px"
-  }}
->
-
-  <label
     style={{
-      display: "grid",
-      gridTemplateColumns:
-        "24px 20px 1fr 30px",
+      width: "100%",
+
+      marginBottom: "18px",
+
+      padding: "10px 0",
+
+      borderRadius: "14px",
+
+      border:
+        "1px solid rgba(255,255,255,0.16)",
+
+      background: isPlaying
+        ? "rgba(34,197,94,0.16)"
+        : "rgba(239,68,68,0.16)",
+
+      color: isPlaying
+        ? "#22c55e"
+        : "#ef4444",
+
+      fontWeight: "700",
+
+      fontSize: "13px",
+
+      cursor: "pointer",
+
+      display: "flex",
 
       alignItems: "center",
 
-      columnGap: "10px",
+      justifyContent: "center",
 
-      cursor: "pointer"
+      gap: "8px"
     }}
   >
 
-    <div
-      style={{
-        width: "22px",
-        height: "3px",
-        borderRadius: "2px",
-        background: "#2563eb"
-      }}
-    />
+    <span>
+      {isPlaying ? "⏸" : "▶"}
+    </span>
 
-    <input
-      type="checkbox"
-      checked={mahalleVisible}
-      onChange={() =>
-        setMahalleVisible(
-          !mahalleVisible
-        )
-      }
-    />
+    {isPlaying
+      ? "Animasyonu Durdur"
+      : "Animasyonu Başlat"}
 
-    <span>Mahalle Sınırları</span>
+  </button>
 
-    <button
-      onClick={() =>
-        moveLayerToTop([
-          "mahalle-outline"
-        ])
-      }
-    >
-      ↑
-    </button>
-
-  </label>
-
-  <input
-    type="range"
-    min="0"
-    max="1"
-    step="0.1"
-    value={mahalleOpacity}
-    onChange={(e) =>
-      setMahalleOpacity(
-        Number(e.target.value)
-      )
-    }
-  />
-
-</div>
-
-  {/* Toplanma */}
-<div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px"
-  }}
->
-
-  <label
-    style={{
-      display: "grid",
-      gridTemplateColumns:
-        "24px 20px 1fr 30px",
-
-      alignItems: "center",
-
-      columnGap: "10px",
-
-      cursor: "pointer"
-    }}
-  >
-
-    <div
-      style={{
-        width: "12px",
-        height: "12px",
-        borderRadius: "50%",
-        background: "#16a34a"
-      }}
-    />
-
-    <input
-      type="checkbox"
-      checked={toplanmaVisible}
-      onChange={() =>
-        setToplanmaVisible(
-          !toplanmaVisible
-        )
-      }
-    />
-
-    <span>Toplanma Alanları</span>
-
-    <button
-      onClick={() =>
-        moveLayerToTop([
-          "toplanma-circle"
-        ])
-      }
-    >
-      ↑
-    </button>
-
-  </label>
-
-  <input
-  type="range"
-  min="0"
-  max="1"
-  step="0.1"
-
-  value={toplanmaOpacity}
-
-  onChange={(e) =>
-    setToplanmaOpacity(
-      Number(e.target.value)
-    )
-  }
-/>
-
-</div>
-
-  {/* Yollar */}
-<div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px"
-  }}
->
-
-  <label
-    style={{
-      display: "grid",
-      gridTemplateColumns:
-        "24px 20px 1fr 30px",
-
-      alignItems: "center",
-
-      columnGap: "10px",
-
-      cursor: "pointer"
-    }}
-  >
-
-    <div
-      style={{
-        width: "22px",
-        height: "3px",
-        borderRadius: "2px",
-        background: "#f59e0b"
-      }}
-    />
-
-    <input
-      type="checkbox"
-      checked={yollarVisible}
-      onChange={() =>
-        setYollarVisible(
-          !yollarVisible
-        )
-      }
-    />
-
-    <span>Yol Ağı</span>
-
-    <button
-      onClick={() =>
-        moveLayerToTop([
-          "yollar-line"
-        ])
-      }
-    >
-      ↑
-    </button>
-
-  </label>
-
-  <input
-    type="range"
-    min="0"
-    max="1"
-    step="0.1"
-    value={yollarOpacity}
-    onChange={(e) =>
-      setYollarOpacity(
-        Number(e.target.value)
-      )
-    }
-  />
-
-</div>
-
-</div>
-</div>
-
-{/* Analysis Panel */}
-<div
-  style={{
-  position: "absolute",
-
-  top: 100,
-  right: 30,
-
-  background:
-    "rgba(255,255,255,0.12)",
-
-  backdropFilter: "blur(10px)",
-
-  border:
-    "1px solid rgba(255,255,255,0.18)",
-
-  padding: "14px",
-
-  borderRadius: "14px",
-
-  boxShadow:
-    "0 8px 32px rgba(0,0,0,0.12)",
-
-  zIndex: 2,
-
-  minWidth: "220px"
-}}
->
-
-  <h4
-    style={{
-      margin: 0,
-      marginBottom: "12px"
-    }}
-  >
-    Analizler
-  </h4>
-
+  {/* ANALİZ KARTLARI */}
   <div
     style={{
       display: "flex",
       flexDirection: "column",
-      gap: "12px"
+      gap: "14px"
     }}
   >
 
-    {/* 5 DK */}
-    <label
+    {/* SERVICE AREA */}
+    <div
       style={{
-        display: "grid",
-        gridTemplateColumns:
-          "24px 20px 1fr",
+        background:
+          "rgba(255,255,255,0.10)",
 
-        alignItems: "center",
+        border:
+          "1px solid rgba(255,255,255,0.12)",
 
-        columnGap: "10px",
+        borderRadius: "18px",
 
-        cursor: "pointer"
+        padding: "16px"
       }}
     >
 
       <div
         style={{
-          width: "22px",
-          height: "3px",
-          background: "#22c55e"
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+
+          marginBottom: "14px"
         }}
-      />
+      >
 
-      <input
-        type="checkbox"
-        checked={service5Visible}
-        onChange={() =>
-          setService5Visible(
-            !service5Visible
-          )
-        }
-      />
+        <div>
 
-      <span>5 DK Service Area</span>
+          <div
+            style={{
+              fontWeight: "700"
+            }}
+          >
+            Service Area
+          </div>
 
-    </label>
+          <div
+            style={{
+              fontSize: "12px",
+              opacity: 0.7,
 
-    {/* 10 DK */}
-    <label
-      style={{
-        display: "grid",
-        gridTemplateColumns:
-          "24px 20px 1fr",
+              marginTop: "3px"
+            }}
+          >
+            Ağ tabanlı erişilebilirlik
+          </div>
 
-        alignItems: "center",
+        </div>
 
-        columnGap: "10px",
+        <div
+          style={{
+            width: "12px",
+            height: "12px",
 
-        cursor: "pointer"
-      }}
-    >
+            borderRadius: "50%",
+
+            background: "#22c55e"
+          }}
+        />
+
+      </div>
 
       <div
         style={{
-          width: "22px",
-          height: "3px",
-          background: "#eab308"
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px"
         }}
-      />
+      >
 
-      <input
-        type="checkbox"
-        checked={service10Visible}
-        onChange={() =>
-          setService10Visible(
-            !service10Visible
-          )
-        }
-      />
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px"
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={service5Visible}
+            onChange={() =>
+              setService5Visible(
+                !service5Visible
+              )
+            }
+          />
 
-      <span>10 DK Service Area</span>
+          <span>
+            5 DK Service Area
+          </span>
 
-    </label>
+        </label>
 
-    {/* 15 DK */}
-    <label
-      style={{
-        display: "grid",
-        gridTemplateColumns:
-          "24px 20px 1fr",
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px"
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={service10Visible}
+            onChange={() =>
+              setService10Visible(
+                !service10Visible
+              )
+            }
+          />
 
-        alignItems: "center",
+          <span>
+            10 DK Service Area
+          </span>
 
-        columnGap: "10px",
+        </label>
 
-        cursor: "pointer"
-      }}
-    >
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px"
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={service15Visible}
+            onChange={() =>
+              setService15Visible(
+                !service15Visible
+              )
+            }
+          />
+
+          <span>
+            15 DK Service Area
+          </span>
+
+        </label>
+
+      </div>
+
+    </div>
+
+    {[
+      "Acil Durum Erişilebilirliği",
+      "Tahliye Simülasyonu",
+      "Risk Analizi",
+      "Yaya Yoğunluğu",
+      "Afet Müdahale Süresi",
+      "Kritik Altyapı Analizi"
+    ].map((title, i) => (
 
       <div
+        key={i}
         style={{
-          width: "22px",
-          height: "3px",
-          background: "#ef4444"
+          background:
+            "rgba(255,255,255,0.08)",
+
+          border:
+            "1px solid rgba(255,255,255,0.10)",
+
+          borderRadius: "18px",
+
+          padding: "16px",
+
+          opacity: 0.85
         }}
-      />
+      >
 
-      <input
-        type="checkbox"
-        checked={service15Visible}
-        onChange={() =>
-          setService15Visible(
-            !service15Visible
-          )
-        }
-      />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center"
+          }}
+        >
 
-        <span>15 DK Service Area</span>
+          <div>
 
-    </label>
+            <div
+              style={{
+                fontWeight: "600"
+              }}
+            >
+              {title}
+            </div>
+
+            <div
+              style={{
+                fontSize: "12px",
+                opacity: 0.6,
+                marginTop: "4px"
+              }}
+            >
+              Yakında eklenecek
+            </div>
+
+          </div>
+
+          <div
+            style={{
+              padding: "6px 10px",
+
+              borderRadius: "999px",
+
+              fontSize: "11px",
+
+              background:
+                "rgba(255,255,255,0.10)"
+            }}
+          >
+            Coming Soon
+          </div>
+
+        </div>
+
+      </div>
+
+    ))}
 
   </div>
 
-
 </div>
 
 </div>
-
-);
+  );
 }
 
 export default App;
