@@ -1,6 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import AnalysisPanel
+from "./components/AnalysisPanel";
+
 
 function App() {
 
@@ -472,7 +475,20 @@ if (
   };
 
   return (
-    <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
+    <div
+  style={{
+
+    width: "100vw",
+
+    height: "100vh",
+
+    position: "relative",
+
+    overflow: "hidden",
+
+    background: "#e5e7eb"
+  }}
+>
 
       <div id="map" style={{ width: "100%", height: "100%" }} />
 
@@ -594,7 +610,7 @@ if (
     top: 100,
     right: 30,
 
-    width: "58px",
+    padding: "0 22px",
     height: "58px",
 
     borderRadius: "18px",
@@ -614,6 +630,8 @@ if (
     alignItems: "center",
     justifyContent: "center",
 
+    gap: "12px",
+
     cursor: "pointer",
 
     zIndex: 20,
@@ -622,392 +640,105 @@ if (
   }}
 >
 
+  <img
+    src="/analysis_icon.png"
+    alt="analysis"
+    style={{
+      width: "24px",
+      height: "24px",
+      objectFit: "contain"
+    }}
+  />
+
   <span
     style={{
-      fontSize: "24px"
+      color: "black",
+      fontWeight: "700",
+      fontSize: "15px",
+      letterSpacing: "0.3px"
     }}
   >
-    📊
+    Analiz Katmanları
   </span>
 
 </div>
 
-     {/* Modern Analysis Panel */}
+<AnalysisPanel
+
+  analysisOpen={analysisOpen}
+  setAnalysisOpen={setAnalysisOpen}
+
+  service5Visible={service5Visible}
+  setService5Visible={
+    setService5Visible
+  }
+  service10Visible={service10Visible}
+setService10Visible={
+  setService10Visible
+}
+
+service15Visible={service15Visible}
+setService15Visible={
+  setService15Visible
+}
+
+serviceOpacity={serviceOpacity}
+setServiceOpacity={
+  setServiceOpacity
+}
+
+isPlaying={isPlaying}
+setIsPlaying={setIsPlaying}
+
+/>
+
+{/* Bottom Footer */}
 <div
   style={{
+
     position: "absolute",
 
-    top: 100,
+    left: "50%",
+transform: "translateX(-50%)",
+bottom: 20,
 
-    right: analysisOpen
-      ? 100
-      : -420,
+    height: "54px",
 
-    width: "340px",
+    padding: "0 22px",
 
-    maxHeight: "78vh",
-
-    overflowY: "auto",
+    borderRadius: "18px",
 
     background:
-      "rgba(255,255,255,0.12)",
+      "rgba(255,255,255,0.14)",
 
-    backdropFilter: "blur(18px)",
+    backdropFilter: "blur(14px)",
 
     border:
       "1px solid rgba(255,255,255,0.18)",
 
-    borderRadius: "26px",
-
-    padding: "22px",
-
     boxShadow:
-      "0 18px 55px rgba(0,0,0,0.22)",
+      "0 10px 35px rgba(0,0,0,0.18)",
 
-    transition: "all 0.35s ease",
+    display: "flex",
 
-    zIndex: 15
+    alignItems: "center",
+
+    justifyContent: "center",
+
+    zIndex: 20
   }}
 >
 
-  {/* HEADER */}
-  <div
+  <span
     style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: "20px"
+      color: "#ddd6fe",
+      fontSize: "14px",
+      fontWeight: "600",
+      letterSpacing: "0.4px"
     }}
   >
-
-    <div>
-
-      <div
-        style={{
-          fontSize: "20px",
-          fontWeight: "700"
-        }}
-      >
-        Analiz Merkezi
-      </div>
-
-      <div
-        style={{
-          fontSize: "12px",
-          opacity: 0.7,
-          marginTop: "2px"
-        }}
-      >
-        WebGIS Analiz Katmanları
-      </div>
-
-    </div>
-
-    <button
-      onClick={() =>
-        setAnalysisOpen(false)
-      }
-      style={{
-        width: "36px",
-        height: "36px",
-
-        borderRadius: "12px",
-
-        border: "none",
-
-        background:
-          "rgba(255,255,255,0.12)",
-
-        cursor: "pointer",
-
-        fontSize: "16px"
-      }}
-    >
-      ✕
-    </button>
-
-  </div>
-
-  {/* PLAY / PAUSE */}
-  <button
-    onClick={() =>
-      setIsPlaying((p) => !p)
-    }
-    style={{
-      width: "100%",
-
-      marginBottom: "18px",
-
-      padding: "10px 0",
-
-      borderRadius: "14px",
-
-      border:
-        "1px solid rgba(255,255,255,0.16)",
-
-      background: isPlaying
-        ? "rgba(34,197,94,0.16)"
-        : "rgba(239,68,68,0.16)",
-
-      color: isPlaying
-        ? "#22c55e"
-        : "#ef4444",
-
-      fontWeight: "700",
-
-      fontSize: "13px",
-
-      cursor: "pointer",
-
-      display: "flex",
-
-      alignItems: "center",
-
-      justifyContent: "center",
-
-      gap: "8px"
-    }}
-  >
-
-    <span>
-      {isPlaying ? "⏸" : "▶"}
-    </span>
-
-    {isPlaying
-      ? "Animasyonu Durdur"
-      : "Animasyonu Başlat"}
-
-  </button>
-
-  {/* ANALİZ KARTLARI */}
-  <div
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      gap: "14px"
-    }}
-  >
-
-    {/* SERVICE AREA */}
-    <div
-      style={{
-        background:
-          "rgba(255,255,255,0.10)",
-
-        border:
-          "1px solid rgba(255,255,255,0.12)",
-
-        borderRadius: "18px",
-
-        padding: "16px"
-      }}
-    >
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-
-          marginBottom: "14px"
-        }}
-      >
-
-        <div>
-
-          <div
-            style={{
-              fontWeight: "700"
-            }}
-          >
-            Service Area
-          </div>
-
-          <div
-            style={{
-              fontSize: "12px",
-              opacity: 0.7,
-
-              marginTop: "3px"
-            }}
-          >
-            Ağ tabanlı erişilebilirlik
-          </div>
-
-        </div>
-
-        <div
-          style={{
-            width: "12px",
-            height: "12px",
-
-            borderRadius: "50%",
-
-            background: "#22c55e"
-          }}
-        />
-
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px"
-        }}
-      >
-
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px"
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={service5Visible}
-            onChange={() =>
-              setService5Visible(
-                !service5Visible
-              )
-            }
-          />
-
-          <span>
-            5 DK Service Area
-          </span>
-
-        </label>
-
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px"
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={service10Visible}
-            onChange={() =>
-              setService10Visible(
-                !service10Visible
-              )
-            }
-          />
-
-          <span>
-            10 DK Service Area
-          </span>
-
-        </label>
-
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px"
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={service15Visible}
-            onChange={() =>
-              setService15Visible(
-                !service15Visible
-              )
-            }
-          />
-
-          <span>
-            15 DK Service Area
-          </span>
-
-        </label>
-
-      </div>
-
-    </div>
-
-    {[
-      "Acil Durum Erişilebilirliği",
-      "Tahliye Simülasyonu",
-      "Risk Analizi",
-      "Yaya Yoğunluğu",
-      "Afet Müdahale Süresi",
-      "Kritik Altyapı Analizi"
-    ].map((title, i) => (
-
-      <div
-        key={i}
-        style={{
-          background:
-            "rgba(255,255,255,0.08)",
-
-          border:
-            "1px solid rgba(255,255,255,0.10)",
-
-          borderRadius: "18px",
-
-          padding: "16px",
-
-          opacity: 0.85
-        }}
-      >
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center"
-          }}
-        >
-
-          <div>
-
-            <div
-              style={{
-                fontWeight: "600"
-              }}
-            >
-              {title}
-            </div>
-
-            <div
-              style={{
-                fontSize: "12px",
-                opacity: 0.6,
-                marginTop: "4px"
-              }}
-            >
-              Yakında eklenecek
-            </div>
-
-          </div>
-
-          <div
-            style={{
-              padding: "6px 10px",
-
-              borderRadius: "999px",
-
-              fontSize: "11px",
-
-              background:
-                "rgba(255,255,255,0.10)"
-            }}
-          >
-            Coming Soon
-          </div>
-
-        </div>
-
-      </div>
-
-    ))}
-
-  </div>
+    Team KOR-İZ
+  </span>
 
 </div>
 
