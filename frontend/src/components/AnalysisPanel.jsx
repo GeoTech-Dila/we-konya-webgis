@@ -181,25 +181,61 @@ details={
           : "▶ Animasyonu Başlat"}
       </button>
 
-      {/* Başlık */}
-      <div>
+      {/* Parametre Kartı */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+
+          padding: "14px",
+
+          borderRadius: "14px",
+
+          background:
+            "rgba(255,255,255,0.06)",
+
+          border:
+            "1px solid rgba(255,255,255,0.08)"
+        }}
+      >
 
         <div
           style={{
             fontWeight: "700",
-            fontSize: "17px"
+            fontSize: "15px",
+            color: "black"
           }}
         >
-          Service Area
+          Analiz Parametreleri
         </div>
 
         <div
           style={{
             fontSize: "13px",
-            opacity: 0.7
+            opacity: 0.82,
+            lineHeight: "1.7"
           }}
         >
-          Acil durum erişilebilirlik analizi
+
+          • Ağ tabanlı servis alanı analizi uygulanmıştır.<br/>
+
+          • Yaya erişilebilirliği esas alınmıştır.<br/>
+
+          • Yol ağı verileri kullanılarak erişim hesaplanmıştır.<br/>
+
+          • Ortalama yaya hızı ≈ 5 km/s olarak kabul edilmiştir.<br/>
+
+          • 5 km/s ≈ dakikada 83.3 metre yürüyüş mesafesine karşılık gelmektedir.<br/>
+
+          • 5 dk ≈ 416 metre erişim mesafesi.<br/>
+
+          • 10 dk ≈ 833 metre erişim mesafesi.<br/>
+
+          • 15 dk ≈ 1250 metre erişim mesafesi.<br/>
+
+          • Isochrone yaklaşımı ile erişilebilirlik modellenmiştir.
+
         </div>
 
       </div>
@@ -265,7 +301,7 @@ details={
 
       </label>
 
-      {/* Slider */}
+      {/* Opacity */}
       <div
         style={{
           display: "flex",
@@ -299,7 +335,7 @@ details={
 
       </div>
 
-      {/* LEJANT */}
+      {/* Lejant */}
       <div
         style={{
           display: "flex",

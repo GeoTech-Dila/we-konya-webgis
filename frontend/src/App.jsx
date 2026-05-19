@@ -544,58 +544,435 @@ if (
       </div>
 
       {/* Legend */}
-      <div style={{
-        position: "absolute", bottom: 30, left: 30,
-        background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)",
-        border: "1px solid rgba(255,255,255,0.18)", padding: "12px",
-        borderRadius: "10px", boxShadow: "0 2px 10px rgba(0,0,0,0.2)", zIndex: 1, minWidth: "180px"
-      }}>
-        <h4 style={{ margin: 0, marginBottom: "10px" }}>Katmanlar</h4>
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      <div
+  style={{
 
-          {/* İlçe */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ display: "grid", gridTemplateColumns: "24px 20px 1fr 30px", alignItems: "center", columnGap: "10px", cursor: "pointer" }}>
-              <div style={{ width: "22px", height: "3px", borderRadius: "2px", background: "#ef4444" }} />
-              <input type="checkbox" checked={layerVisible} onChange={() => setLayerVisible(!layerVisible)} />
-              <span>İlçe Sınırları</span>
-              <button onClick={() => moveLayerToTop(["district-outline"])}>↑</button>
-            </label>
-            <input type="range" min="0" max="1" step="0.1" value={districtOpacity} onChange={(e) => setDistrictOpacity(Number(e.target.value))} />
-          </div>
+    position: "absolute",
+
+    bottom: 30,
+
+    left: 30,
+
+    width: "290px",
+
+    display: "flex",
+
+    flexDirection: "column",
+
+    gap: "14px",
+
+    padding: "16px",
+
+    borderRadius: "24px",
+
+    background:
+      "rgba(255,255,255,0.12)",
+
+    backdropFilter: "blur(18px)",
+
+    border:
+      "1px solid rgba(255,255,255,0.18)",
+
+    boxShadow:
+      "0 10px 40px rgba(0,0,0,0.18)",
+
+    zIndex: 10
+  }}
+>
+    <div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px"
+  }}
+>
+
+    {/* İlçe */}
+<div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+
+    padding: "12px",
+
+    borderRadius: "16px",
+
+    background:
+      "rgba(255,255,255,0.08)",
+
+    border:
+      "1px solid rgba(255,255,255,0.08)"
+  }}
+>
+
+  <div
+    style={{
+
+      display: "flex",
+
+      alignItems: "center",
+
+      justifyContent: "space-between"
+    }}
+  >
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px"
+      }}
+    >
+
+      <div
+        style={{
+          width: "18px",
+          height: "4px",
+          borderRadius: "999px",
+          background: "#ef4444"
+        }}
+      />
+
+      <span
+        style={{
+          fontSize: "14px",
+          fontWeight: "600"
+        }}
+      >
+        İlçe Sınırları
+      </span>
+
+    </div>
+
+    <button
+      onClick={() =>
+        setLayerVisible(!layerVisible)
+      }
+      style={{
+
+        border: "none",
+
+        background: "transparent",
+
+        cursor: "pointer",
+
+        fontSize: "18px"
+      }}
+    >
+      {layerVisible ? "⦿" : "⦸"}
+    </button>
+
+  </div>
+
+  <input
+    type="range"
+    min="0"
+    max="1"
+    step="0.1"
+    value={districtOpacity}
+    onChange={(e) =>
+      setDistrictOpacity(
+        Number(e.target.value)
+      )
+    }
+    style={{
+      accentColor: "#ef4444"
+    }}
+  />
+
+</div>
 
           {/* Mahalle */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ display: "grid", gridTemplateColumns: "24px 20px 1fr 30px", alignItems: "center", columnGap: "10px", cursor: "pointer" }}>
-              <div style={{ width: "22px", height: "3px", borderRadius: "2px", background: "#2563eb" }} />
-              <input type="checkbox" checked={mahalleVisible} onChange={() => setMahalleVisible(!mahalleVisible)} />
-              <span>Mahalle Sınırları</span>
-              <button onClick={() => moveLayerToTop(["mahalle-outline"])}>↑</button>
-            </label>
-            <input type="range" min="0" max="1" step="0.1" value={mahalleOpacity} onChange={(e) => setMahalleOpacity(Number(e.target.value))} />
-          </div>
+<div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+
+    padding: "12px",
+
+    borderRadius: "16px",
+
+    background:
+      "rgba(255,255,255,0.08)",
+
+    border:
+      "1px solid rgba(255,255,255,0.08)"
+  }}
+>
+
+  <div
+    style={{
+
+      display: "flex",
+
+      alignItems: "center",
+
+      justifyContent: "space-between"
+    }}
+  >
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px"
+      }}
+    >
+
+      <div
+        style={{
+          width: "18px",
+          height: "4px",
+          borderRadius: "999px",
+          background: "#2563eb"
+        }}
+      />
+
+      <span
+        style={{
+          fontSize: "14px",
+          fontWeight: "600"
+        }}
+      >
+        Mahalle Sınırları
+      </span>
+
+    </div>
+
+    <button
+      onClick={() =>
+        setMahalleVisible(!mahalleVisible)
+      }
+      style={{
+
+        border: "none",
+
+        background: "transparent",
+
+        cursor: "pointer",
+
+        fontSize: "18px"
+      }}
+    >
+      {mahalleVisible ? "⦿" : "⦸"}
+    </button>
+
+  </div>
+
+  <input
+    type="range"
+    min="0"
+    max="1"
+    step="0.1"
+    value={mahalleOpacity}
+    onChange={(e) =>
+      setMahalleOpacity(
+        Number(e.target.value)
+      )
+    }
+    style={{
+      accentColor: "#2563eb"
+    }}
+  />
+
+</div>
 
           {/* Toplanma */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ display: "grid", gridTemplateColumns: "24px 20px 1fr 30px", alignItems: "center", columnGap: "10px", cursor: "pointer" }}>
-              <div style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#16a34a" }} />
-              <input type="checkbox" checked={toplanmaVisible} onChange={() => setToplanmaVisible(!toplanmaVisible)} />
-              <span>Toplanma Alanları</span>
-              <button onClick={() => moveLayerToTop(["toplanma-points"])}>↑</button>
-            </label>
-            <input type="range" min="0" max="1" step="0.1" value={toplanmaOpacity} onChange={(e) => setToplanmaOpacity(Number(e.target.value))} />
-          </div>
+<div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+
+    padding: "12px",
+
+    borderRadius: "16px",
+
+    background:
+      "rgba(255,255,255,0.08)",
+
+    border:
+      "1px solid rgba(255,255,255,0.08)"
+  }}
+>
+
+  <div
+    style={{
+
+      display: "flex",
+
+      alignItems: "center",
+
+      justifyContent: "space-between"
+    }}
+  >
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px"
+      }}
+    >
+
+      <div
+        style={{
+          width: "12px",
+          height: "12px",
+          borderRadius: "50%",
+          background: "#16a34a"
+        }}
+      />
+
+      <span
+        style={{
+          fontSize: "14px",
+          fontWeight: "600"
+        }}
+      >
+        Toplanma Alanları
+      </span>
+
+    </div>
+
+    <button
+      onClick={() =>
+        setToplanmaVisible(
+          !toplanmaVisible
+        )
+      }
+      style={{
+
+        border: "none",
+
+        background: "transparent",
+
+        cursor: "pointer",
+
+        fontSize: "18px"
+      }}
+    >
+      {toplanmaVisible
+        ? "⦿" : "⦸"}
+    </button>
+
+  </div>
+
+  <input
+    type="range"
+    min="0"
+    max="1"
+    step="0.1"
+    value={toplanmaOpacity}
+    onChange={(e) =>
+      setToplanmaOpacity(
+        Number(e.target.value)
+      )
+    }
+    style={{
+      accentColor: "#16a34a"
+    }}
+  />
+
+</div>
 
           {/* Yollar */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ display: "grid", gridTemplateColumns: "24px 20px 1fr 30px", alignItems: "center", columnGap: "10px", cursor: "pointer" }}>
-              <div style={{ width: "22px", height: "3px", borderRadius: "2px", background: "#f59e0b" }} />
-              <input type="checkbox" checked={yollarVisible} onChange={() => setYollarVisible(!yollarVisible)} />
-              <span>Yol Ağı</span>
-              <button onClick={() => moveLayerToTop(["yollar-line"])}>↑</button>
-            </label>
-            <input type="range" min="0" max="1" step="0.1" value={yollarOpacity} onChange={(e) => setYollarOpacity(Number(e.target.value))} />
-          </div>
+<div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+
+    padding: "12px",
+
+    borderRadius: "16px",
+
+    background:
+      "rgba(255,255,255,0.08)",
+
+    border:
+      "1px solid rgba(255,255,255,0.08)"
+  }}
+>
+
+  <div
+    style={{
+
+      display: "flex",
+
+      alignItems: "center",
+
+      justifyContent: "space-between"
+    }}
+  >
+
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px"
+      }}
+    >
+
+      <div
+        style={{
+          width: "18px",
+          height: "4px",
+          borderRadius: "999px",
+          background: "#f59e0b"
+        }}
+      />
+
+      <span
+        style={{
+          fontSize: "14px",
+          fontWeight: "600"
+        }}
+      >
+        Yol Ağı
+      </span>
+
+    </div>
+
+    <button
+      onClick={() =>
+        setYollarVisible(!yollarVisible)
+      }
+      style={{
+
+        border: "none",
+
+        background: "transparent",
+
+        cursor: "pointer",
+
+        fontSize: "18px"
+      }}
+    >
+      {yollarVisible ? "⦿" : "⦸"}
+    </button>
+
+  </div>
+
+  <input
+    type="range"
+    min="0"
+    max="1"
+    step="0.1"
+    value={yollarOpacity}
+    onChange={(e) =>
+      setYollarOpacity(
+        Number(e.target.value)
+      )
+    }
+    style={{
+      accentColor: "#f59e0b"
+    }}
+  />
+
+</div>
 
         </div>
       </div>
