@@ -4,7 +4,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import AnalysisPanel from "./components/AnalysisPanel";
 
 
-const API_URL = "http://localhost:8000";
+const API_URL =
+  import.meta.env.VITE_API_URL;
 const EMPTY_FC = { type: "FeatureCollection", features: [] };
 
 const emergencyCategoryColors = {
