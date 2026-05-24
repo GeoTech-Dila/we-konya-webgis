@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
@@ -7,6 +8,8 @@ import json
 import random
 
 app = FastAPI()
+
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "https://we-konya-webgis.vercel.app")
 
@@ -38,6 +41,24 @@ engine = create_engine(
     max_overflow=0,
     connect_args=connect_args,
 )
+
+
+def bbox_filter(bbox):
+    if not bbox:
+        return "", {}
+
+    try:
+        minx, miny, maxx, maxy = [float(value) for value in bbox.split(",")]
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=400,
+            detail="bbox minx,miny,maxx,maxy formatında olmalı.",
+        )
+
+    return (
+        "WHERE geom && ST_MakeEnvelope(:minx, :miny, :maxx, :maxy, 4326)",
+        {"minx": minx, "miny": miny, "maxx": maxx, "maxy": maxy},
+    )
 
 
 @app.get("/")
@@ -124,11 +145,12 @@ def toplanma_alanlari():
 
 
 @app.get("/yollar")
-def yollar():
-    query = text("""
+def yollar(bbox: str | None = None):
+    where_sql, params = bbox_filter(bbox)
+    query = text(f"""
         SELECT json_build_object(
             'type', 'FeatureCollection',
-            'features', json_agg(features.feature)
+            'features', COALESCE(json_agg(features.feature), '[]'::json)
         )
         FROM (
             SELECT json_build_object(
@@ -137,16 +159,18 @@ def yollar():
                 'properties', json_build_object('id', id)
             ) AS feature
             FROM konya_yollar
+            {where_sql}
         ) AS features;
     """)
     with engine.connect() as conn:
-        return conn.execute(query).scalar()
+        return conn.execute(query, params).scalar()
 
 
 @app.get("/service-area-15-polygons")
-def service_area_15_polygons():
+def service_area_15_polygons(bbox: str | None = None):
 
-    query = text("""
+    where_sql, params = bbox_filter(bbox)
+    query = text(f"""
         SELECT json_build_object(
             'type', 'FeatureCollection',
             'features', COALESCE(json_agg(f.feature), '[]'::json)
@@ -159,7 +183,7 @@ def service_area_15_polygons():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
+                    ST_Transform(geom, 4326)
                 )::json,
 
                 'properties',
@@ -171,18 +195,19 @@ def service_area_15_polygons():
             ) AS feature
 
             FROM service_area_polygons
-            LIMIT 150
+            {where_sql}
 
         ) AS f;
     """)
 
     with engine.connect() as conn:
-        return conn.execute(query).scalar()
+        return conn.execute(query, params).scalar()
 
 @app.get("/service-area-10-polygons")
-def service_area_10_polygons():
+def service_area_10_polygons(bbox: str | None = None):
 
-    query = text("""
+    where_sql, params = bbox_filter(bbox)
+    query = text(f"""
         SELECT json_build_object(
             'type', 'FeatureCollection',
             'features', COALESCE(json_agg(f.feature), '[]'::json)
@@ -195,7 +220,7 @@ def service_area_10_polygons():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
+                    ST_Transform(geom, 4326)
                 )::json,
 
                 'properties',
@@ -207,18 +232,19 @@ def service_area_10_polygons():
             ) AS feature
 
             FROM service_area_10_polygons
-            LIMIT 150
+            {where_sql}
 
         ) AS f;
     """)
 
     with engine.connect() as conn:
-        return conn.execute(query).scalar()
+        return conn.execute(query, params).scalar()
 
 @app.get("/service-area-5-polygons")
-def service_area_5_polygons():
+def service_area_5_polygons(bbox: str | None = None):
 
-    query = text("""
+    where_sql, params = bbox_filter(bbox)
+    query = text(f"""
         SELECT json_build_object(
             'type', 'FeatureCollection',
             'features', COALESCE(json_agg(f.feature), '[]'::json)
@@ -231,7 +257,7 @@ def service_area_5_polygons():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
+                    ST_Transform(geom, 4326)
                 )::json,
 
                 'properties',
@@ -243,18 +269,19 @@ def service_area_5_polygons():
             ) AS feature
 
             FROM service_area_5_polygons
-            LIMIT 150
+            {where_sql}
 
         ) AS f;
     """)
 
     with engine.connect() as conn:
-        return conn.execute(query).scalar()
+        return conn.execute(query, params).scalar()
 
 
 @app.get("/service-area-15-lines")
-def service_area_15_lines():
-            query = text("""
+def service_area_15_lines(bbox: str | None = None):
+            where_sql, params = bbox_filter(bbox)
+            query = text(f"""
                 SELECT json_build_object(
                     'type', 'FeatureCollection',
                     'features', COALESCE(json_agg(f.feature), '[]'::json)
@@ -267,7 +294,7 @@ def service_area_15_lines():
 
                         'geometry',
                         ST_AsGeoJSON(
-                            ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
+                            ST_Transform(geom, 4326)
                         )::json,
 
                         'properties',
@@ -279,17 +306,18 @@ def service_area_15_lines():
                     ) AS feature
 
                     FROM service_area_15_lines
-                    LIMIT 8000
+                    {where_sql}
 
                 ) AS f;
             """)
 
             with engine.connect() as conn:
-                return conn.execute(query).scalar()
+                return conn.execute(query, params).scalar()
 
 @app.get("/service-area-10-lines")
-def service_area_10_lines():
-        query = text("""
+def service_area_10_lines(bbox: str | None = None):
+        where_sql, params = bbox_filter(bbox)
+        query = text(f"""
             SELECT json_build_object(
                 'type', 'FeatureCollection',
                 'features', COALESCE(json_agg(f.feature), '[]'::json)
@@ -302,7 +330,7 @@ def service_area_10_lines():
 
                     'geometry',
                     ST_AsGeoJSON(
-                        ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
+                        ST_Transform(geom, 4326)
                     )::json,
 
                     'properties',
@@ -314,18 +342,19 @@ def service_area_10_lines():
                 ) AS feature
 
                 FROM service_area_10_lines
-                LIMIT 8000
+                {where_sql}
 
             ) AS f;
         """)
 
         with engine.connect() as conn:
-            return conn.execute(query).scalar()
+            return conn.execute(query, params).scalar()
 
 @app.get("/service-area-5-lines")
-def service_area_5_lines():
+def service_area_5_lines(bbox: str | None = None):
 
-    query = text("""
+    where_sql, params = bbox_filter(bbox)
+    query = text(f"""
         SELECT json_build_object(
             'type', 'FeatureCollection',
             'features', COALESCE(json_agg(f.feature), '[]'::json)
@@ -338,7 +367,7 @@ def service_area_5_lines():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
+                    ST_Transform(geom, 4326)
                 )::json,
 
                 'properties',
@@ -350,13 +379,13 @@ def service_area_5_lines():
             ) AS feature
 
             FROM service_area_5_lines
-            LIMIT 8000
+            {where_sql}
 
         ) AS f;
     """)
 
     with engine.connect() as conn:
-        return conn.execute(query).scalar()
+        return conn.execute(query, params).scalar()
 
 
 # --- LAYER ENDPOINTLERİ ---
@@ -392,9 +421,9 @@ def obruklar():
             SELECT json_build_object(
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(ST_Transform(geom, 4326))::json,
-                'properties', json_build_object('id', id)
+                'properties', to_jsonb(t) - 'geom'
             ) AS feature
-            FROM konya_obruklar
+            FROM konya_obruklar t
         ) AS f;
     """)
     with engine.connect() as conn:
@@ -438,9 +467,10 @@ def kritik_tesisler():
 
 
 @app.get("/layers/ana-yollar")
-def ana_yollar():
+def ana_yollar(bbox: str | None = None):
     # konya_yollar tablosundan ana yolları döndür
-    query = text("""
+    where_sql, params = bbox_filter(bbox)
+    query = text(f"""
         SELECT json_build_object(
             'type', 'FeatureCollection',
             'features', COALESCE(json_agg(f.feature), '[]'::json)
@@ -452,11 +482,11 @@ def ana_yollar():
                 'properties', json_build_object('id', id)
             ) AS feature
             FROM konya_yollar
-            LIMIT 5000
+            {where_sql}
         ) AS f;
     """)
     with engine.connect() as conn:
-        return conn.execute(query).scalar()
+        return conn.execute(query, params).scalar()
 
 
 @app.get("/layers/il-siniri")
@@ -763,9 +793,10 @@ json_build_object(
         return result
 
 @app.get("/buildings-3d")
-def buildings_3d():
+def buildings_3d(bbox: str | None = None):
 
-    query = text("""
+    where_sql, params = bbox_filter(bbox)
+    query = text(f"""
 
         SELECT json_build_object(
 
@@ -784,7 +815,7 @@ def buildings_3d():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
+                    ST_Transform(geom, 4326)
                 )::json,
 
                 'properties',
@@ -798,20 +829,20 @@ def buildings_3d():
             ) AS feature
 
             FROM buildings_access_levels
-            ORDER BY id
-            LIMIT 15000
+            {where_sql}
 
         ) AS f;
 
     """)
 
     with engine.connect() as conn:
-        return conn.execute(query).scalar()
+        return conn.execute(query, params).scalar()
 
 @app.get("/inaccessible-buildings-heatmap")
-def inaccessible_buildings_heatmap():
+def inaccessible_buildings_heatmap(bbox: str | None = None):
 
-    query = text("""
+    where_sql, params = bbox_filter(bbox)
+    query = text(f"""
 
         SELECT json_build_object(
 
@@ -843,21 +874,21 @@ def inaccessible_buildings_heatmap():
             ) AS feature
 
             FROM inaccessible_building_points
-            ORDER BY id
-            LIMIT 20000
+            {where_sql}
 
         ) AS f;
 
     """)
 
     with engine.connect() as conn:
-        return conn.execute(query).scalar()
+        return conn.execute(query, params).scalar()
 
 
 @app.get("/buildings-5")
-def buildings_5():
+def buildings_5(bbox: str | None = None):
 
-    query = text("""
+    where_sql, params = bbox_filter(bbox)
+    query = text(f"""
 
         SELECT json_build_object(
 
@@ -876,7 +907,7 @@ def buildings_5():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
+                    ST_Transform(geom, 4326)
                 )::json,
 
                 'properties',
@@ -889,21 +920,21 @@ def buildings_5():
             ) AS feature
 
             FROM buildings_5
-            ORDER BY id
-            LIMIT 10000
+            {where_sql}
 
         ) AS f;
 
     """)
 
     with engine.connect() as conn:
-        return conn.execute(query).scalar()
+        return conn.execute(query, params).scalar()
 
 
 @app.get("/buildings-10")
-def buildings_10():
+def buildings_10(bbox: str | None = None):
 
-    query = text("""
+    where_sql, params = bbox_filter(bbox)
+    query = text(f"""
 
         SELECT json_build_object(
 
@@ -922,7 +953,7 @@ def buildings_10():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
+                    ST_Transform(geom, 4326)
                 )::json,
 
                 'properties',
@@ -935,20 +966,20 @@ def buildings_10():
             ) AS feature
 
             FROM buildings_10
-            ORDER BY id
-            LIMIT 10000
+            {where_sql}
 
         ) AS f;
 
     """)
 
     with engine.connect() as conn:
-        return conn.execute(query).scalar()
+        return conn.execute(query, params).scalar()
 
 @app.get("/buildings-15")
-def buildings_15():
+def buildings_15(bbox: str | None = None):
 
-    query = text("""
+    where_sql, params = bbox_filter(bbox)
+    query = text(f"""
 
         SELECT json_build_object(
 
@@ -967,7 +998,7 @@ def buildings_15():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
+                    ST_Transform(geom, 4326)
                 )::json,
 
                 'properties',
@@ -980,20 +1011,20 @@ def buildings_15():
             ) AS feature
 
             FROM buildings_15
-            ORDER BY id
-            LIMIT 10000
+            {where_sql}
 
         ) AS f;
 
     """)
 
     with engine.connect() as conn:
-        return conn.execute(query).scalar()
+        return conn.execute(query, params).scalar()
 
 @app.get("/buildings-unreachable")
-def buildings_unreachable():
+def buildings_unreachable(bbox: str | None = None):
 
-    query = text("""
+    where_sql, params = bbox_filter(bbox)
+    query = text(f"""
 
         SELECT json_build_object(
 
@@ -1012,7 +1043,7 @@ def buildings_unreachable():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
+                    ST_Transform(geom, 4326)
                 )::json,
 
                 'properties',
@@ -1025,12 +1056,12 @@ def buildings_unreachable():
             ) AS feature
 
             FROM buildings_unreachable
-            ORDER BY id
-            LIMIT 10000
+            {where_sql}
 
         ) AS f;
 
     """)
 
     with engine.connect() as conn:
-        return conn.execute(query).scalar()
+        return conn.execute(query, params).scalar()
+
