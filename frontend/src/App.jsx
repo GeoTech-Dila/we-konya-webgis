@@ -27,7 +27,7 @@ function App() {
   const [facilityVisible, setFacilityVisible] = useState(false);
   const [roadVisible, setRoadVisible] = useState(false);
   const [emergencyVisible, setEmergencyVisible] = useState(false);
-  const [heatmapVisible, setHeatmapVisible] = useState(false);
+
   const [provinceBoundaryVisible, setProvinceBoundaryVisible] = useState(false);
   const [parksVisible, setParksVisible] = useState(false);
   const [lawVisible, setLawVisible] = useState(false);
@@ -35,10 +35,20 @@ function App() {
   const [healthAreaVisible, setHealthAreaVisible] = useState(false);
   const [transitPointVisible, setTransitPointVisible] = useState(false);
   const [transitAreaVisible, setTransitAreaVisible] = useState(false);
-  const [resilienceVisible, setResilienceVisible] = useState(true);
+  const [resilienceVisible, setResilienceVisible] = useState(false);
   const [service5Visible, setService5Visible] = useState(true);
 const [service10Visible, setService10Visible] = useState(true);
 const [service15Visible, setService15Visible] = useState(true);
+const [buildingsVisible, setBuildingsVisible] = useState(true);
+const [buildings5Visible, setBuildings5Visible] = useState(true);
+
+const [buildings10Visible, setBuildings10Visible] = useState(true);
+
+const [buildings15Visible, setBuildings15Visible] = useState(true);
+
+const [buildingsUnreachableVisible, setBuildingsUnreachableVisible] = useState(true);
+const [heatmapVisible, setHeatmapVisible] = useState(true);
+
 
 
   // --- OPASITE STATE ---
@@ -47,7 +57,9 @@ const [service15Visible, setService15Visible] = useState(true);
   const [serviceOpacity, setServiceOpacity] = useState(1);
   const [toplanmaOpacity, setToplanmaOpacity] = useState(1);
   const [districtOpacity, setDistrictOpacity] = useState(1);
-
+  const [buildingsOpacity, setBuildingsOpacity] = useState(0.88);
+  const [heatmapOpacity, setHeatmapOpacity] = useState(0.40);
+  const [appLoading, setAppLoading] = useState(true);
 
 
   // --- UI STATE ---
@@ -220,6 +232,7 @@ const [service15Visible, setService15Visible] = useState(true);
 
     map.on("load", async () => {
       const [
+
   ilceData,
   mahalleData,
   toplanmaData,
@@ -232,7 +245,14 @@ const [service15Visible, setService15Visible] = useState(true);
   service5PolyData,
   service10PolyData,
   service15PolyData,
+
   buildings3DData,
+  buildings5Data,
+  buildings10Data,
+  buildings15Data,
+  buildingsUnreachableData,
+
+  inaccessibleHeatmapData,
 
 ] = await Promise.all([
 
@@ -241,6 +261,7 @@ const [service15Visible, setService15Visible] = useState(true);
           fetch(`${API_URL}/toplanma-alanlari`).then((r) => r.json()),
           fetch(`${API_URL}/yollar`).then((r) => r.json()),
           fetch(`${API_URL}/service-area-5-lines`).then((r) => r.json()),
+
 
 fetch(`${API_URL}/service-area-10-lines`).then((r) => r.json()),
 
@@ -253,6 +274,20 @@ fetch(`${API_URL}/service-area-10-polygons`).then((r) => r.json()),
 fetch(`${API_URL}/service-area-15-polygons`).then((r) => r.json()),
 
 fetch(`${API_URL}/buildings-3d`).then((r) => r.json()),
+
+fetch(`${API_URL}/buildings-5`)
+  .then((r) => r.json()),
+
+fetch(`${API_URL}/buildings-10`)
+  .then((r) => r.json()),
+
+fetch(`${API_URL}/buildings-15`)
+  .then((r) => r.json()),
+
+fetch(`${API_URL}/buildings-unreachable`)
+  .then((r) => r.json()),
+
+fetch(`${API_URL}/inaccessible-buildings-heatmap`).then((r) => r.json()),
 
         ]);
 
@@ -298,6 +333,32 @@ addSrc("buildings-3d", {
   type: "geojson",
   data: buildings3DData,
 });
+
+addSrc("buildings-5", {
+  type: "geojson",
+  data: buildings5Data,
+});
+
+addSrc("buildings-10", {
+  type: "geojson",
+  data: buildings10Data,
+});
+
+addSrc("buildings-15", {
+  type: "geojson",
+  data: buildings15Data,
+});
+
+addSrc("buildings-unreachable", {
+  type: "geojson",
+  data: buildingsUnreachableData,
+});
+
+addSrc("inaccessible-heatmap", {
+  type: "geojson",
+  data: inaccessibleHeatmapData,
+});
+
       addSrc("fault-lines", { type: "geojson", data: EMPTY_FC });
       addSrc("sinkholes", { type: "geojson", data: EMPTY_FC });
       addSrc("critical-facilities", { type: "geojson", data: EMPTY_FC });
@@ -313,20 +374,7 @@ addSrc("buildings-3d", {
       addSrc("critical-accessibility", { type: "geojson", data: EMPTY_FC });
       addSrc("district-risk", { type: "geojson", data: EMPTY_FC });
       addSrc("neighborhood-risk", { type: "geojson", data: EMPTY_FC });
-      addSrc("service-area-5-lines", {
-  type: "geojson",
-  data: EMPTY_FC,
-});
 
-addSrc("service-area-10-lines", {
-  type: "geojson",
-  data: EMPTY_FC,
-});
-
-addSrc("service-area-15-lines", {
-  type: "geojson",
-  data: EMPTY_FC,
-});
 
       const addLyr = (cfg) => {
         if (!map.getLayer(cfg.id)) map.addLayer(cfg);
@@ -336,14 +384,31 @@ addSrc("service-area-15-lines", {
       addLyr({ id: "district-outline", type: "line", source: "districts", paint: { "line-color": "#ef4444", "line-width": 1.5 } });
 
       addLyr({
-        id: "resilience-district-fill",
-        type: "fill",
-        source: "district-risk",
-        paint: {
-          "fill-color": ["interpolate", ["linear"], ["get", "resilience_score"], 0, "#dc2626", 55, "#f59e0b", 75, "#22c55e", 100, "#0f766e"],
-          "fill-opacity": 0.24,
-        },
-      });
+  id: "resilience-district-fill",
+
+  type: "fill",
+
+  source: "district-risk",
+
+  layout: {
+    visibility: "none",
+  },
+
+  paint: {
+    "fill-color": [
+      "interpolate",
+      ["linear"],
+      ["get", "resilience_score"],
+
+      0, "#dc2626",
+      55, "#f59e0b",
+      75, "#22c55e",
+      100, "#0f766e"
+    ],
+
+    "fill-opacity": 0.24,
+  },
+});
 
       addLyr({ id: "mahalle-fill", type: "fill", source: "mahalleler", paint: { "fill-color": "#2563eb", "fill-opacity": 0 } });
 
@@ -361,6 +426,79 @@ addSrc("service-area-15-lines", {
       addLyr({ id: "mahalle-outline", type: "line", source: "mahalleler", paint: { "line-color": "#2563eb", "line-width": 1 } });
       addLyr({ id: "yollar-line", type: "line", source: "yollar", paint: { "line-color": "#f59e0b", "line-width": 0.5, "line-opacity": 0.8 } });
 
+addLyr({
+
+  id: "inaccessible-heatmap",
+
+  type: "heatmap",
+
+  source: "inaccessible-heatmap",
+
+  maxzoom: 18,
+
+  paint: {
+
+    // yoğunluk
+
+    "heatmap-weight": 1,
+
+    // zoom ile yoğunluk
+
+    "heatmap-intensity": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      8, 0.6,
+      15, 2
+    ],
+
+    // renk
+
+    "heatmap-color": [
+
+  "interpolate",
+  ["linear"],
+  ["heatmap-density"],
+
+  0,
+  "rgba(0,0,0,0)",
+
+  0.2,
+  "rgba(255,120,120,0.05)",
+
+  0.4,
+  "rgba(255,90,90,0.10)",
+
+  0.6,
+"rgba(255,40,40,0.28)",
+
+  0.8,
+  "rgba(255,0,0,0.28)",
+
+  1,
+  "rgba(255,0,0,0.55)"
+],
+
+    // radius
+
+    "heatmap-radius": [
+  "interpolate",
+  ["linear"],
+  ["zoom"],
+
+  2, 4,
+
+  10, 10,
+
+  15, 18
+],
+
+    // opacity
+
+    "heatmap-opacity": 0.45,
+  },
+});
+
       addLyr({
   id: "buildings-3d",
 
@@ -368,26 +506,13 @@ addSrc("service-area-15-lines", {
 
   source: "buildings-3d",
 
-  minzoom: 13,
+  minzoom: 5,
 
   paint: {
 
     // RENKLER
 
-    "fill-extrusion-color": [
-
-      "match",
-
-      ["get", "access_level"],
-
-      5, "#22c55e",
-
-      10, "#f59e0b",
-
-      15, "#ef4444",
-
-      "#94a3b8"
-    ],
+    "fill-extrusion-color": "#d1d5db",
 
     // YÜKSEKLİK
 
@@ -402,7 +527,110 @@ addSrc("service-area-15-lines", {
 
     // OPACITY
 
-    "fill-extrusion-opacity": 0.88,
+    "fill-extrusion-opacity": 0.50,
+
+
+    "fill-extrusion-vertical-gradient": true,
+  },
+});
+
+addLyr({
+
+  id: "buildings-5",
+
+  type: "fill-extrusion",
+
+  source: "buildings-5",
+
+  minzoom: 5,
+
+  paint: {
+
+    "fill-extrusion-color": "#22c55e",
+
+    "fill-extrusion-height": [
+      "get",
+      "height"
+    ],
+
+    "fill-extrusion-base": 0,
+
+    "fill-extrusion-opacity": 0.95,
+  },
+});
+
+addLyr({
+
+  id: "buildings-10",
+
+  type: "fill-extrusion",
+
+  source: "buildings-10",
+
+  minzoom: 5,
+
+  paint: {
+
+    "fill-extrusion-color": "#f59e0b",
+
+    "fill-extrusion-height": [
+      "get",
+      "height"
+    ],
+
+    "fill-extrusion-base": 0,
+
+    "fill-extrusion-opacity": 0.95,
+  },
+});
+
+addLyr({
+
+  id: "buildings-15",
+
+  type: "fill-extrusion",
+
+  source: "buildings-15",
+
+  minzoom: 5,
+
+  paint: {
+
+    "fill-extrusion-color": "#ef4444",
+
+    "fill-extrusion-height": [
+      "get",
+      "height"
+    ],
+
+    "fill-extrusion-base": 0,
+
+    "fill-extrusion-opacity": 0.95,
+  },
+});
+
+addLyr({
+
+  id: "buildings-unreachable",
+
+  type: "fill-extrusion",
+
+  source: "buildings-unreachable",
+
+  minzoom: 5,
+
+  paint: {
+
+    "fill-extrusion-color": "#6b7280",
+
+    "fill-extrusion-height": [
+      "get",
+      "height"
+    ],
+
+    "fill-extrusion-base": 0,
+
+    "fill-extrusion-opacity": 0.98,
   },
 });
 
@@ -592,6 +820,15 @@ addLyr({
       map.setLayoutProperty("mahalle-fill", "visibility", "none");
       map.setLayoutProperty("mahalle-outline", "visibility", "none");
       map.setLayoutProperty("toplanma-points", "visibility", "visible");
+      requestAnimationFrame(() => {
+
+  requestAnimationFrame(() => {
+
+    setAppLoading(false);
+
+  });
+
+});
     });
 
     return () => {
@@ -712,6 +949,43 @@ addLyr({
   service15Visible,
 ]);
 
+useEffect(() => {
+
+  const map = mapRef.current;
+
+  if (!map) return;
+
+  let opacity = 0.10;
+
+  let direction = 1;
+
+  const interval = setInterval(() => {
+
+    if (!map.getLayer("inaccessible-heatmap"))
+      return;
+
+    opacity += direction * 0.015;
+
+    if (opacity >= 0.45) {
+      direction = -1;
+    }
+
+    if (opacity <= 0.12) {
+      direction = 1;
+    }
+
+    map.setPaintProperty(
+      "inaccessible-heatmap",
+      "heatmap-opacity",
+      opacity
+    );
+
+  }, 90);
+
+  return () => clearInterval(interval);
+
+}, []);
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map?.getLayer("service-5-line")) return;
@@ -725,6 +999,119 @@ addLyr({
   if (!map?.getLayer("resilience-district-fill")) return;
   map.setLayoutProperty("resilience-district-fill", "visibility", resilienceVisible ? "visible" : "none");
 }, [resilienceVisible]);
+
+useEffect(() => {
+
+  const map = mapRef.current;
+
+  if (!map) return;
+
+  if (map.getLayer("buildings-3d")) {
+
+    map.setLayoutProperty(
+      "buildings-3d",
+      "visibility",
+      buildingsVisible ? "visible" : "none"
+    );
+
+    map.setPaintProperty(
+      "buildings-3d",
+      "fill-extrusion-opacity",
+      buildingsOpacity
+    );
+  }
+
+}, [
+  buildingsVisible,
+  buildingsOpacity,
+]);
+
+useEffect(() => {
+
+  const map = mapRef.current;
+
+  if (!map) return;
+
+  // 5 DK
+
+  if (map.getLayer("buildings-5")) {
+
+    map.setLayoutProperty(
+      "buildings-5",
+      "visibility",
+      buildings5Visible ? "visible" : "none"
+    );
+  }
+
+  // 10 DK
+
+  if (map.getLayer("buildings-10")) {
+
+    map.setLayoutProperty(
+      "buildings-10",
+      "visibility",
+      buildings10Visible ? "visible" : "none"
+    );
+  }
+
+  // 15 DK
+
+  if (map.getLayer("buildings-15")) {
+
+    map.setLayoutProperty(
+      "buildings-15",
+      "visibility",
+      buildings15Visible ? "visible" : "none"
+    );
+  }
+
+  // ERİŞİLEMEYEN
+
+  if (map.getLayer("buildings-unreachable")) {
+
+    map.setLayoutProperty(
+      "buildings-unreachable",
+      "visibility",
+      buildingsUnreachableVisible
+        ? "visible"
+        : "none"
+    );
+  }
+
+}, [
+
+  buildings5Visible,
+  buildings10Visible,
+  buildings15Visible,
+  buildingsUnreachableVisible,
+
+]);
+
+useEffect(() => {
+
+  const map = mapRef.current;
+
+  if (!map) return;
+
+  if (map.getLayer("inaccessible-heatmap")) {
+
+    map.setLayoutProperty(
+      "inaccessible-heatmap",
+      "visibility",
+      heatmapVisible ? "visible" : "none"
+    );
+
+    map.setPaintProperty(
+      "inaccessible-heatmap",
+      "heatmap-opacity",
+      heatmapOpacity
+    );
+  }
+
+}, [
+  heatmapVisible,
+  heatmapOpacity,
+]);
 
   useEffect(() => {
   const map = mapRef.current;
@@ -777,6 +1164,187 @@ addLyr({
     <div style={{ width: "100vw", height: "100vh", position: "relative", overflow: "hidden", background: "#e5e7eb" }}>
       <div id="map" style={{ width: "100%", height: "100%" }} />
 
+{appLoading && (
+
+  <div
+    style={{
+
+      position: "absolute",
+      inset: 0,
+
+      zIndex: 9999,
+
+
+      display: "flex",
+      flexDirection: "column",
+
+      alignItems: "center",
+      justifyContent: "center",
+
+      background:
+  "radial-gradient(circle at center, rgba(49,46,129,0.98), rgba(88,28,135,0.96), rgba(30,27,75,1))",
+
+      overflow: "hidden",
+      pointerEvents: "none",
+    }}
+  >
+
+    {/* glow */}
+
+    <div
+      style={{
+        position: "absolute",
+        width: 420,
+        height: 420,
+        borderRadius: "50%",
+
+        background:
+  "radial-gradient(circle, rgba(192,132,252,0.42), transparent 70%)",
+
+        filter: "blur(40px)",
+
+        animation: "pulseGlow 4s ease-in-out infinite",
+      }}
+    />
+
+    {/* logo */}
+
+    <div
+      style={{
+        fontSize: "72px",
+        fontWeight: "900",
+        fontStyle: "italic",
+
+        letterSpacing: "2px",
+
+        display: "flex",
+        alignItems: "center",
+
+        zIndex: 2,
+      }}
+    >
+      <span
+  style={{
+    color: "#f8fafc",
+    textShadow:
+      "0 0 18px rgba(255,255,255,0.35)"
+  }}
+>
+        KOR-
+      </span>
+
+      <span
+  style={{
+    color: "#ef4444",
+
+    textShadow:
+      "0 0 18px rgba(239,68,68,0.45)"
+  }}
+>
+        İZ
+      </span>
+    </div>
+
+    {/* subtitle */}
+
+    <div
+      style={{
+        marginTop: 12,
+
+        color: "#94a3b8",
+
+        fontSize: "14px",
+        letterSpacing: "1px",
+
+        zIndex: 2,
+      }}
+    >
+      Acil Durumda Koruma ve İzleme Sistemi
+    </div>
+
+    {/* loader */}
+
+    <div
+      style={{
+        marginTop: 42,
+
+        width: 52,
+        height: 52,
+
+        borderRadius: "50%",
+
+        border:
+          "3px solid rgba(255,255,255,0.10)",
+
+        borderTop:
+  "3px solid #c084fc",
+
+        animation:
+          "spinLoader 1s linear infinite",
+
+        zIndex: 2,
+      }}
+    />
+
+    {/* loading text */}
+
+    <div
+      style={{
+        marginTop: 18,
+
+        color: "#4c1d95",
+
+        fontSize: "13px",
+        fontWeight: "600",
+
+        letterSpacing: "1px",
+
+        zIndex: 2,
+      }}
+    >
+      Veriler yükleniyor...
+    </div>
+
+    {/* animation styles */}
+
+    <style>
+      {`
+
+        @keyframes spinLoader {
+
+          from {
+            transform: rotate(0deg);
+          }
+
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        @keyframes pulseGlow {
+
+          0% {
+            transform: scale(1);
+            opacity: 0.7;
+          }
+
+          50% {
+            transform: scale(1.15);
+            opacity: 1;
+          }
+
+          100% {
+            transform: scale(1);
+            opacity: 0.7;
+          }
+        }
+
+      `}
+    </style>
+
+  </div>
+)}
+
       <div style={{
         position: "absolute", top: 0, left: 0, width: "100%", height: "72px",
         background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)",
@@ -786,8 +1354,21 @@ addLyr({
       }}>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: "34px", fontWeight: "800", fontStyle: "italic", letterSpacing: "1px", display: "flex", alignItems: "center" }}>
-            <span style={{ color: "#c7d2fe" }}>KOR-</span>
-            <span style={{ color: "#ef4444" }}>İZ</span>
+            <span
+  style={{
+    color: "#ede9fe",
+    textShadow:
+      "0 0 10px rgba(255,255,255,0.55)"
+  }}
+>KOR-</span>
+            <span
+  style={{
+    color: "#ef4444",
+
+    textShadow:
+      "0 0 18px rgba(239,68,68,0.45)"
+  }}
+>İZ</span>
           </div>
           <span style={{ color: "#94a3b8", fontSize: "13px", marginTop: "-2px" }}>Acil Durumda Koruma ve İzleme Sistemi</span>
         </div>
@@ -896,7 +1477,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
 >
                 <div style={{
   fontSize: "9px",
-  color: "#94a3b8",
+  color: "#ddd6fe",
   marginBottom: "4px",
   letterSpacing: "0.4px",
   textTransform: "uppercase",
@@ -1041,6 +1622,21 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
             { label: "Sağlık Noktaları", color: "#0891b2", checked: healthPointVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!healthPointVisible, setHealthPointVisible, "health-points", ["health-points-point"], `${API_URL}/layers/saglik-nokta`) },
             { label: "Sağlık Alanları", color: "#06b6d4", checked: healthAreaVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!healthAreaVisible, setHealthAreaVisible, "health-areas", ["health-areas-fill", "health-areas-outline"], `${API_URL}/layers/saglik-alan`) },
             { label: "Toplu Ulaşım Noktaları", color: "#9333ea", checked: transitPointVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!transitPointVisible, setTransitPointVisible, "transit-points", ["transit-points-point"], `${API_URL}/layers/toplu-ulasim-nokta`) },
+            {
+  label: "3D Binalar",
+  color: "#d1d5db",
+  checked: buildingsVisible,
+  type: "point",
+  opacity: buildingsOpacity,
+
+  onOpacity: (v) =>
+    setBuildingsOpacity(v),
+
+  onChange: () =>
+    setBuildingsVisible(
+      (v) => !v
+    ),
+},
             { label: "Toplu Ulaşım Alanları", color: "#a855f7", checked: transitAreaVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!transitAreaVisible, setTransitAreaVisible, "transit-areas", ["transit-areas-fill", "transit-areas-outline"], `${API_URL}/layers/toplu-ulasim-alan`) },
             {
               label: "Acil Durum Noktaları",
@@ -1122,8 +1718,32 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         setService10Visible={setService10Visible}
         service15Visible={service15Visible}
         setService15Visible={setService15Visible}
+        buildingsVisible={buildingsVisible}
+        setBuildingsVisible={setBuildingsVisible}
+
+        buildingsOpacity={buildingsOpacity}
+        setBuildingsOpacity={setBuildingsOpacity}
+
         serviceOpacity={serviceOpacity}
         setServiceOpacity={setServiceOpacity}
+
+        heatmapVisible={heatmapVisible}
+        setHeatmapVisible={setHeatmapVisible}
+
+        heatmapOpacity={heatmapOpacity}
+        setHeatmapOpacity={setHeatmapOpacity}
+
+        buildings5Visible={buildings5Visible}
+        setBuildings5Visible={setBuildings5Visible}
+
+        buildings10Visible={buildings10Visible}
+        setBuildings10Visible={setBuildings10Visible}
+
+        buildings15Visible={buildings15Visible}
+        setBuildings15Visible={setBuildings15Visible}
+
+        buildingsUnreachableVisible={buildingsUnreachableVisible}
+        setBuildingsUnreachableVisible={setBuildingsUnreachableVisible}
 
         activeAnalysisLayer={activeAnalysisLayer}
         setActiveAnalysisLayer={setActiveAnalysisLayer}

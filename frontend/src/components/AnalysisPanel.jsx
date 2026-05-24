@@ -137,9 +137,34 @@ function AnalysisPanel({
   setService15Visible,
   serviceOpacity,
   setServiceOpacity,
+  buildingsVisible,
+  setBuildingsVisible,
+  buildingsOpacity,
+  setBuildingsOpacity,
+
+  buildings5Visible,
+  setBuildings5Visible,
+
+  buildings10Visible,
+  setBuildings10Visible,
+
+  buildings15Visible,
+  setBuildings15Visible,
+
+  buildingsUnreachableVisible,
+  setBuildingsUnreachableVisible,
+
+  heatmapVisible,
+  setHeatmapVisible,
+
+
+
+  heatmapOpacity,
+  setHeatmapOpacity,
 
   activeAnalysisLayer,
   setActiveAnalysisLayer,
+
 }) {
   const [activeCardId, setActiveCardId] = useState("service-area");
   const activeCard = analysisCards.find((card) => card.id === activeCardId) || analysisCards[0];
@@ -310,6 +335,29 @@ height: "250px",
               setService15Visible={setService15Visible}
               serviceOpacity={serviceOpacity}
               setServiceOpacity={setServiceOpacity}
+              buildingsVisible={buildingsVisible}
+              setBuildingsVisible={setBuildingsVisible}
+
+              buildingsOpacity={buildingsOpacity}
+              setBuildingsOpacity={setBuildingsOpacity}
+
+              buildings5Visible={buildings5Visible}
+              setBuildings5Visible={setBuildings5Visible}
+
+              buildings10Visible={buildings10Visible}
+              setBuildings10Visible={setBuildings10Visible}
+
+              buildings15Visible={buildings15Visible}
+              setBuildings15Visible={setBuildings15Visible}
+
+              buildingsUnreachableVisible={buildingsUnreachableVisible}
+              setBuildingsUnreachableVisible={setBuildingsUnreachableVisible}
+
+              heatmapVisible={heatmapVisible}
+              setHeatmapVisible={setHeatmapVisible}
+
+              heatmapOpacity={heatmapOpacity}
+              setHeatmapOpacity={setHeatmapOpacity}
 
             />
            ) : (
@@ -445,6 +493,29 @@ function ServiceAreaControls({
   setService15Visible,
   serviceOpacity,
   setServiceOpacity,
+  buildingsVisible,
+  setBuildingsVisible,
+
+  buildingsOpacity,
+  setBuildingsOpacity,
+
+  buildings5Visible,
+  setBuildings5Visible,
+
+  buildings10Visible,
+  setBuildings10Visible,
+
+  buildings15Visible,
+  setBuildings15Visible,
+
+  buildingsUnreachableVisible,
+  setBuildingsUnreachableVisible,
+
+  heatmapVisible,
+  setHeatmapVisible,
+
+  heatmapOpacity,
+  setHeatmapOpacity,
 
 }) {
   return (
@@ -484,6 +555,132 @@ function ServiceAreaControls({
           />
         </label>
       </div>
+
+
+<div
+  style={{
+    marginTop: 12,
+    paddingTop: 12,
+    borderTop: "1px solid rgba(255,255,255,0.08)",
+  }}
+>
+
+  <div
+    style={{
+      color: "#94a3b8",
+      fontSize: 10,
+      fontWeight: 800,
+      marginBottom: 10,
+      letterSpacing: 1,
+    }}
+  >
+    ERİŞİM BİNALARI
+  </div>
+
+  <div
+    style={{
+      display: "grid",
+      gap: 8,
+    }}
+  >
+
+    <ToggleRow
+      label="5 DK Binalar"
+      color="#22c55e"
+      checked={buildings5Visible}
+      onChange={() =>
+        setBuildings5Visible(
+          !buildings5Visible
+        )
+      }
+    />
+
+    <ToggleRow
+      label="10 DK Binalar"
+      color="#f59e0b"
+      checked={buildings10Visible}
+      onChange={() =>
+        setBuildings10Visible(
+          !buildings10Visible
+        )
+      }
+    />
+
+    <ToggleRow
+      label="15 DK Binalar"
+      color="#ef4444"
+      checked={buildings15Visible}
+      onChange={() =>
+        setBuildings15Visible(
+          !buildings15Visible
+        )
+      }
+    />
+
+    <ToggleRow
+      label="Erişilemeyen"
+      color="#6b7280"
+      checked={buildingsUnreachableVisible}
+      onChange={() =>
+        setBuildingsUnreachableVisible(
+          !buildingsUnreachableVisible
+        )
+      }
+    />
+
+  </div>
+
+</div>
+
+  <div
+  style={{
+    marginTop: 12,
+    paddingTop: 12,
+    borderTop: "1px solid rgba(255,255,255,0.08)",
+  }}
+>
+
+  <ToggleRow
+    label="Alarm Heatmap"
+    color="#ef4444"
+    checked={heatmapVisible}
+    onChange={() =>
+      setHeatmapVisible(!heatmapVisible)
+    }
+  />
+
+  <label
+    style={{
+      display: "grid",
+      gap: 7,
+      color: "#cbd5e1",
+      fontSize: 8,
+      fontWeight: 800,
+      marginTop: 10,
+    }}
+  >
+    Heatmap opaklığı
+
+    <input
+      type="range"
+
+      min="0"
+      max="1"
+      step="0.05"
+
+      value={heatmapOpacity}
+
+      onChange={(event) =>
+        setHeatmapOpacity(
+          Number(event.target.value)
+        )
+      }
+
+      style={{ accentColor: "#ef4444" }}
+    />
+  </label>
+
+</div>
 
       <div
         style={{
