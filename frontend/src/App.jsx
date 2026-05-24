@@ -1,38 +1,197 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import AnalysisPanel
-from "./components/AnalysisPanel";
+import AnalysisPanel from "./components/AnalysisPanel";
 
+
+const API_URL = "http://localhost:8000";
+const EMPTY_FC = { type: "FeatureCollection", features: [] };
+
+const emergencyCategoryColors = {
+  DEPREM: "#ef4444",
+  YANGIN: "#f97316",
+  SEL_TASKIN: "#2563eb",
+  TRAFIK_KAZASI: "#7c3aed",
+  ARAMA_KURTARMA: "#16a34a",
+  DIGER_ACIL: "#64748b",
+};
 
 function App() {
-
-  const [service5Visible, setService5Visible] = useState(true);
-  const [service10Visible, setService10Visible] = useState(true);
-  const [service15Visible, setService15Visible] = useState(true);
-  const [yollarVisible, setYollarVisible] = useState(true);
+  // --- KATMAN STATE ---
   const [layerVisible, setLayerVisible] = useState(true);
   const [mahalleVisible, setMahalleVisible] = useState(false);
-  const [searchText, setSearchText] = useState("");
   const [toplanmaVisible, setToplanmaVisible] = useState(true);
+  const [yollarVisible, setYollarVisible] = useState(true);
+  const [faultVisible, setFaultVisible] = useState(false);
+  const [sinkholeVisible, setSinkholeVisible] = useState(false);
+  const [facilityVisible, setFacilityVisible] = useState(false);
+  const [roadVisible, setRoadVisible] = useState(false);
+  const [emergencyVisible, setEmergencyVisible] = useState(false);
+  const [heatmapVisible, setHeatmapVisible] = useState(false);
+  const [provinceBoundaryVisible, setProvinceBoundaryVisible] = useState(false);
+  const [parksVisible, setParksVisible] = useState(false);
+  const [lawVisible, setLawVisible] = useState(false);
+  const [healthPointVisible, setHealthPointVisible] = useState(false);
+  const [healthAreaVisible, setHealthAreaVisible] = useState(false);
+  const [transitPointVisible, setTransitPointVisible] = useState(false);
+  const [transitAreaVisible, setTransitAreaVisible] = useState(false);
+  const [resilienceVisible, setResilienceVisible] = useState(true);
+  const [service5Visible, setService5Visible] = useState(true);
+const [service10Visible, setService10Visible] = useState(true);
+const [service15Visible, setService15Visible] = useState(true);
+
+
+  // --- OPASITE STATE ---
   const [mahalleOpacity, setMahalleOpacity] = useState(1);
   const [yollarOpacity, setYollarOpacity] = useState(1);
   const [serviceOpacity, setServiceOpacity] = useState(1);
   const [toplanmaOpacity, setToplanmaOpacity] = useState(1);
   const [districtOpacity, setDistrictOpacity] = useState(1);
 
-  const [isPlaying, setIsPlaying] = useState(true);
 
+
+  // --- UI STATE ---
+  const [searchText, setSearchText] = useState("");
+  const [analysisOpen, setAnalysisOpen] = useState(false);
+  const [activeAnalysisLayer, setActiveAnalysisLayer] = useState(null);
+  const [eventsPanelOpen, setEventsPanelOpen] = useState(true);
+  const [activeSideTab, setActiveSideTab] = useState("events");
+
+  // --- ACIL DURUM STATE ---
+  const [emergencyFeatures, setEmergencyFeatures] = useState([]);
+  const [emergencyCategory, setEmergencyCategory] = useState("Tümü");
+  const [selectedEmergencyId, setSelectedEmergencyId] = useState(null);
+
+  // --- RISK / DIRENCLILIK STATE ---
+  const [selectedRegionSummary, setSelectedRegionSummary] = useState(null);
+  const [neighborhoodRankFeatures, setNeighborhoodRankFeatures] = useState([]);
+
+  // --- REFS ---
   const mahalleDataRef = useRef(null);
   const mapRef = useRef(null);
-  const animationIdRef = useRef(null);
-  const isPausedRef = useRef(false);
-  const topTimerRef = useRef(null);
-  const [analysisOpen, setAnalysisOpen] =
-  useState(false);
 
+  const loadedLayersRef = useRef({});
+  const regionSummaryRef = useRef({});
+
+  // --- MEMO ---
+  const emergencyCategories = useMemo(() => {
+    const cats = emergencyFeatures
+      .map((f) => f.properties?.birincil_etiket || "Kategori yok")
+      .filter(Boolean);
+    return ["Tümü", ...Array.from(new Set(cats)).sort((a, b) => a.localeCompare(b, "tr"))];
+  }, [emergencyFeatures]);
+
+  const filteredEvents = useMemo(() => {
+    return emergencyCategory === "Tümü"
+      ? emergencyFeatures
+      : emergencyFeatures.filter((f) => (f.properties?.birincil_etiket || "Kategori yok") === emergencyCategory);
+  }, [emergencyCategory, emergencyFeatures]);
+
+  const visibleEvents = useMemo(() => {
+    return [...filteredEvents]
+      .sort((a, b) => new Date(b.properties?.tarih_utc || 0) - new Date(a.properties?.tarih_utc || 0))
+      .slice(0, 250);
+  }, [filteredEvents]);
+
+  const rankedNeighborhoods = useMemo(() => {
+    return [...neighborhoodRankFeatures]
+      .filter((f) => f.properties?.region_name)
+      .sort((a, b) => Number(b.properties?.resilience_score || 0) - Number(a.properties?.resilience_score || 0));
+  }, [neighborhoodRankFeatures]);
+
+  // --- REGION SUMMARY FONKSIYONLARI ---
+  const setRegionSummarySource = (level, data, map = mapRef.current) => {
+    const sourceId = level === "neighborhood" ? "neighborhood-risk" : "district-risk";
+    map?.getSource(sourceId)?.setData(data);
+  };
+
+  const loadRegionSummary = async (level = "district", map = mapRef.current) => {
+    const cached = regionSummaryRef.current[level];
+    if (cached) {
+      setRegionSummarySource(level, cached, map);
+      if (level === "neighborhood") setNeighborhoodRankFeatures(cached.features || []);
+      return cached;
+    }
+
+    const apiLevel = level === "neighborhood" ? "mahalle" : level;
+    const res = await fetch(`${API_URL}/analysis/region-summary?level=${apiLevel}`);
+    if (!res.ok) throw new Error("Region summary yuklenemedi");
+
+    const data = await res.json();
+    regionSummaryRef.current[level] = data;
+    setRegionSummarySource(level, data, map);
+    if (level === "neighborhood") setNeighborhoodRankFeatures(data.features || []);
+    return data;
+  };
+
+  const selectRegionSummary = async (level, properties, map = mapRef.current) => {
+    try {
+      const data = await loadRegionSummary(level, map);
+      const regionName = level === "neighborhood"
+        ? properties.adi_numara || properties.ADI_NUMARA
+        : properties.name;
+      const feature = data.features.find((f) => f.properties?.region_name === regionName);
+      if (feature) setSelectedRegionSummary(feature.properties);
+    } catch {
+      /* sessiz hata */
+    }
+  };
+
+  // --- ACIL DURUM VERISI ---
+  const loadEmergencyData = async (map = mapRef.current) => {
+    const cached = loadedLayersRef.current["emergency-points"];
+    if (cached) {
+      setEmergencyFeatures(cached.features || []);
+      map?.getSource("emergency-points")?.setData(cached);
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/layers/acil-durum`);
+      if (!res.ok) return;
+      const raw = await res.json();
+      const data = normalizeEmergencyGeojson(raw);
+      setEmergencyFeatures(data.features);
+      map?.getSource("emergency-points")?.setData(data);
+      loadedLayersRef.current["emergency-points"] = data;
+    } catch {
+      /* sessiz */
+    }
+  };
+
+  // --- GENEL LAYER TOGGLE FONKSIYONU ---
+  const toggleDataLayer = async (nextVisible, setter, sourceId, layerIds, endpoint) => {
+    setter(nextVisible);
+    if (nextVisible && !loadedLayersRef.current[sourceId]) {
+      try {
+        const res = await fetch(endpoint);
+        if (res.ok) {
+          const data = await res.json();
+          mapRef.current?.getSource(sourceId)?.setData(data);
+          loadedLayersRef.current[sourceId] = true;
+        }
+      } catch {
+        /* sessiz */
+      }
+    }
+    layerIds.forEach((id) => {
+      if (mapRef.current?.getLayer(id)) {
+        mapRef.current.setLayoutProperty(id, "visibility", nextVisible ? "visible" : "none");
+      }
+    });
+  };
+
+  // --- MAHALLE RANK FONKSIYONU ---
   useEffect(() => {
+    if (activeSideTab !== "resilience") return;
+    loadRegionSummary("neighborhood")
+      .then((data) => {
+        setNeighborhoodRankFeatures(data.features || []);
+      })
+      .catch(() => {});
+  }, [activeSideTab]);
 
+  // --- ANA MAP EFFECT ---
+  useEffect(() => {
     const map = new maplibregl.Map({
       container: "map",
       style: {
@@ -43,90 +202,292 @@ function App() {
             tiles: [
               "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
               "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-              "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
+              "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
             ],
-            tileSize: 256
-          }
+            tileSize: 256,
+          },
         },
-        layers: [
-          {
-            id: "carto-light-layer",
-            type: "raster",
-            source: "carto-light"
-          }
-        ]
+        layers: [{ id: "carto-light-layer", type: "raster", source: "carto-light" }],
       },
       center: [32.49, 37.87],
       zoom: 11,
       pitch: 60,
-      bearing: -20
+      bearing: -20,
     });
 
     mapRef.current = map;
-
     map.addControl(new maplibregl.NavigationControl());
 
     map.on("load", async () => {
+      const [
+  ilceData,
+  mahalleData,
+  toplanmaData,
+  yollarData,
 
-      // --- VERİ FETCH ---
-      const service5Data = await fetch("http://localhost:8000/service-5").then(r => r.json());
-      const service10Data = await fetch("http://localhost:8000/service-10").then(r => r.json());
-      const service15Data = await fetch("http://localhost:8000/service-15").then(r => r.json());
-      const ilceData = await fetch("http://localhost:8000/ilceler").then(r => r.json());
-      const mahalleData = await fetch("http://localhost:8000/mahalleler").then(r => r.json());
-      const toplanmaData = await fetch("http://localhost:8000/toplanma-alanlari").then(r => r.json());
-      const yollarData = await fetch("http://localhost:8000/yollar").then(r => r.json());
+  service5Data,
+  service10Data,
+  service15Data,
+
+  service5PolyData,
+  service10PolyData,
+  service15PolyData,
+  buildings3DData,
+
+] = await Promise.all([
+
+          fetch(`${API_URL}/ilceler`).then((r) => r.json()),
+          fetch(`${API_URL}/mahalleler`).then((r) => r.json()),
+          fetch(`${API_URL}/toplanma-alanlari`).then((r) => r.json()),
+          fetch(`${API_URL}/yollar`).then((r) => r.json()),
+          fetch(`${API_URL}/service-area-5-lines`).then((r) => r.json()),
+
+fetch(`${API_URL}/service-area-10-lines`).then((r) => r.json()),
+
+fetch(`${API_URL}/service-area-15-lines`).then((r) => r.json()),
+
+fetch(`${API_URL}/service-area-5-polygons`).then((r) => r.json()),
+
+fetch(`${API_URL}/service-area-10-polygons`).then((r) => r.json()),
+
+fetch(`${API_URL}/service-area-15-polygons`).then((r) => r.json()),
+
+fetch(`${API_URL}/buildings-3d`).then((r) => r.json()),
+
+        ]);
 
       mahalleDataRef.current = mahalleData.features;
 
-      // --- SOURCES ---
-      map.addSource("districts", { type: "geojson", data: ilceData });
-      map.addSource("mahalleler", { type: "geojson", data: mahalleData });
-      map.addSource("toplanma", { type: "geojson", data: toplanmaData });
-      map.addSource("yollar", { type: "geojson", data: yollarData });
-      map.addSource("service-5", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      map.addSource("service-10", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      map.addSource("service-15", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      map.addSource("flow-point", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      map.addSource("flow-pulse", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      const addSrc = (id, cfg) => {
+        if (!map.getSource(id)) map.addSource(id, cfg);
+      };
+      addSrc("districts", { type: "geojson", data: ilceData });
+      addSrc("mahalleler", { type: "geojson", data: mahalleData });
+      addSrc("toplanma", { type: "geojson", data: toplanmaData });
+      addSrc("yollar", { type: "geojson", data: yollarData });
+      addSrc("service-area-5-lines", {
+  type: "geojson",
+  data: service5Data,
+});
 
-      // --- LAYERS (sıralama önemli: altta kalanlar önce eklenir) ---
-      map.addLayer({
-        id: "district-fill",
+addSrc("service-area-10-lines", {
+  type: "geojson",
+  data: service10Data,
+});
+
+addSrc("service-area-15-lines", {
+  type: "geojson",
+  data: service15Data,
+});
+addSrc("service-area-5-polygons", {
+  type: "geojson",
+  data: service5PolyData,
+});
+
+addSrc("service-area-10-polygons", {
+  type: "geojson",
+  data: service10PolyData,
+});
+
+addSrc("service-area-15-polygons", {
+  type: "geojson",
+  data: service15PolyData,
+});
+
+addSrc("buildings-3d", {
+  type: "geojson",
+  data: buildings3DData,
+});
+      addSrc("fault-lines", { type: "geojson", data: EMPTY_FC });
+      addSrc("sinkholes", { type: "geojson", data: EMPTY_FC });
+      addSrc("critical-facilities", { type: "geojson", data: EMPTY_FC });
+      addSrc("major-roads", { type: "geojson", data: EMPTY_FC });
+      addSrc("emergency-points", { type: "geojson", data: EMPTY_FC });
+      addSrc("province-boundary", { type: "geojson", data: EMPTY_FC });
+      addSrc("parks", { type: "geojson", data: EMPTY_FC });
+      addSrc("law-enforcement", { type: "geojson", data: EMPTY_FC });
+      addSrc("health-points", { type: "geojson", data: EMPTY_FC });
+      addSrc("health-areas", { type: "geojson", data: EMPTY_FC });
+      addSrc("transit-points", { type: "geojson", data: EMPTY_FC });
+      addSrc("transit-areas", { type: "geojson", data: EMPTY_FC });
+      addSrc("critical-accessibility", { type: "geojson", data: EMPTY_FC });
+      addSrc("district-risk", { type: "geojson", data: EMPTY_FC });
+      addSrc("neighborhood-risk", { type: "geojson", data: EMPTY_FC });
+      addSrc("service-area-5-lines", {
+  type: "geojson",
+  data: EMPTY_FC,
+});
+
+addSrc("service-area-10-lines", {
+  type: "geojson",
+  data: EMPTY_FC,
+});
+
+addSrc("service-area-15-lines", {
+  type: "geojson",
+  data: EMPTY_FC,
+});
+
+      const addLyr = (cfg) => {
+        if (!map.getLayer(cfg.id)) map.addLayer(cfg);
+      };
+
+      addLyr({ id: "district-fill", type: "fill", source: "districts", paint: { "fill-color": "#ef4444", "fill-opacity": 0 } });
+      addLyr({ id: "district-outline", type: "line", source: "districts", paint: { "line-color": "#ef4444", "line-width": 1.5 } });
+
+      addLyr({
+        id: "resilience-district-fill",
         type: "fill",
-        source: "districts",
-        paint: { "fill-color": "#ff0000", "fill-opacity": 0 }
+        source: "district-risk",
+        paint: {
+          "fill-color": ["interpolate", ["linear"], ["get", "resilience_score"], 0, "#dc2626", 55, "#f59e0b", 75, "#22c55e", 100, "#0f766e"],
+          "fill-opacity": 0.24,
+        },
       });
 
-      map.addLayer({
-        id: "district-outline",
-        type: "line",
-        source: "districts",
-        paint: { "line-color": "#ff0000", "line-width": 1.5 }
-      });
+      addLyr({ id: "mahalle-fill", type: "fill", source: "mahalleler", paint: { "fill-color": "#2563eb", "fill-opacity": 0 } });
 
-      map.addLayer({
-        id: "mahalle-fill",
+      addLyr({
+        id: "resilience-neighborhood-fill",
         type: "fill",
-        source: "mahalleler",
-        paint: { "fill-color": "#2563eb", "fill-opacity": 0 }
+        source: "neighborhood-risk",
+        layout: { visibility: "none" },
+        paint: {
+          "fill-color": ["interpolate", ["linear"], ["get", "resilience_score"], 0, "#dc2626", 55, "#f59e0b", 75, "#22c55e", 100, "#0f766e"],
+          "fill-opacity": 0.22,
+        },
       });
 
-      map.addLayer({
-        id: "mahalle-outline",
-        type: "line",
-        source: "mahalleler",
-        paint: { "line-color": "#2563eb", "line-width": 1 }
-      });
+      addLyr({ id: "mahalle-outline", type: "line", source: "mahalleler", paint: { "line-color": "#2563eb", "line-width": 1 } });
+      addLyr({ id: "yollar-line", type: "line", source: "yollar", paint: { "line-color": "#f59e0b", "line-width": 0.5, "line-opacity": 0.8 } });
 
-      map.addLayer({
-        id: "yollar-line",
-        type: "line",
-        source: "yollar",
-        paint: { "line-color": "#f59e0b", "line-width": 0.5, "line-opacity": 0.8 }
-      });
+      addLyr({
+  id: "buildings-3d",
 
-      map.addLayer({
+  type: "fill-extrusion",
+
+  source: "buildings-3d",
+
+  minzoom: 13,
+
+  paint: {
+
+    // RENKLER
+
+    "fill-extrusion-color": [
+
+      "match",
+
+      ["get", "access_level"],
+
+      5, "#22c55e",
+
+      10, "#f59e0b",
+
+      15, "#ef4444",
+
+      "#94a3b8"
+    ],
+
+    // YÜKSEKLİK
+
+    "fill-extrusion-height": [
+      "get",
+      "height"
+    ],
+
+    // TABAN
+
+    "fill-extrusion-base": 0,
+
+    // OPACITY
+
+    "fill-extrusion-opacity": 0.88,
+  },
+});
+
+      addLyr({
+  id: "service-area-15-fill",
+
+  type: "fill",
+
+  source: "service-area-15-polygons",
+
+  paint: {
+    "fill-color": "#ef4444",
+    "fill-opacity": 0.08,
+  },
+});
+addLyr({
+  id: "service-area-10-fill",
+
+  type: "fill",
+
+  source: "service-area-10-polygons",
+
+  paint: {
+    "fill-color": "#f59e0b",
+    "fill-opacity": 0.12,
+  },
+});
+addLyr({
+  id: "service-area-5-fill",
+
+  type: "fill",
+
+  source: "service-area-5-polygons",
+
+  paint: {
+    "fill-color": "#22c55e",
+    "fill-opacity": 0.18,
+  },
+});
+      addLyr({
+  id: "service-area-15-line",
+  type: "line",
+  source: "service-area-15-lines",
+
+  layout: {
+    visibility: "visible",
+  },
+
+  paint: {
+    "line-color": "#ef4444",
+    "line-width": 2,
+    "line-opacity": 0.18,
+  },
+});
+addLyr({
+  id: "service-area-10-line",
+  type: "line",
+  source: "service-area-10-lines",
+
+  layout: {
+    visibility: "visible",
+  },
+
+  paint: {
+    "line-color": "#f59e0b",
+    "line-width": 2.5,
+    "line-opacity": 0.28,
+  },
+});
+addLyr({
+  id: "service-area-5-line",
+  type: "line",
+  source: "service-area-5-lines",
+
+  layout: {
+    visibility: "visible",
+  },
+
+  paint: {
+    "line-color": "#22c55e",
+    "line-width": 3,
+    "line-opacity": 0.42,
+  },
+});
+      addLyr({
         id: "toplanma-points",
         type: "circle",
         source: "toplanma",
@@ -136,262 +497,111 @@ function App() {
           "circle-stroke-width": 1,
           "circle-stroke-color": "#dcfce7",
           "circle-opacity": 0.95,
-          "circle-blur": 0.2
-        }
+          "circle-blur": 0.2,
+        },
       });
 
-      // Service area layer'ları (hepsi burada, animasyondan önce)
-      map.addLayer({
-        id: "service-15-line",
-        type: "line",
-        source: "service-15",
-        paint: { "line-color": "#ef4444", "line-width": 1.5 }
-      });
+      addLyr({ id: "fault-lines-line", type: "line", source: "fault-lines", layout: { visibility: "none" }, paint: { "line-color": "#dc2626", "line-opacity": 0.92, "line-width": ["interpolate", ["linear"], ["zoom"], 8, 1, 13, 3] } });
+      addLyr({ id: "sinkholes-point", type: "circle", source: "sinkholes", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 7], "circle-color": "#7c2d12", "circle-stroke-color": "#fff7ed", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
+      addLyr({ id: "critical-facilities-point", type: "circle", source: "critical-facilities", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#64748b", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.88 } });
+      addLyr({ id: "major-roads-line", type: "line", source: "major-roads", layout: { visibility: "none" }, paint: { "line-color": "#64748b", "line-opacity": 0.58, "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.7, 13, 2.4] } });
+      addLyr({ id: "province-boundary-line", type: "line", source: "province-boundary", layout: { visibility: "none" }, paint: { "line-color": "#0f172a", "line-opacity": 0.86, "line-width": ["interpolate", ["linear"], ["zoom"], 7, 1.3, 12, 3] } });
+      addLyr({ id: "parks-fill", type: "fill", source: "parks", layout: { visibility: "none" }, paint: { "fill-color": "#22c55e", "fill-opacity": 0.24 } });
+      addLyr({ id: "parks-outline", type: "line", source: "parks", layout: { visibility: "none" }, paint: { "line-color": "#15803d", "line-width": 0.8, "line-opacity": 0.8 } });
+      addLyr({ id: "law-enforcement-point", type: "circle", source: "law-enforcement", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#2563eb", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
+      addLyr({ id: "health-points-point", type: "circle", source: "health-points", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#0891b2", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
+      addLyr({ id: "health-areas-fill", type: "fill", source: "health-areas", layout: { visibility: "none" }, paint: { "fill-color": "#06b6d4", "fill-opacity": 0.22 } });
+      addLyr({ id: "health-areas-outline", type: "line", source: "health-areas", layout: { visibility: "none" }, paint: { "line-color": "#0891b2", "line-width": 0.8, "line-opacity": 0.82 } });
+      addLyr({ id: "transit-points-point", type: "circle", source: "transit-points", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#9333ea", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
+      addLyr({ id: "transit-areas-fill", type: "fill", source: "transit-areas", layout: { visibility: "none" }, paint: { "fill-color": "#a855f7", "fill-opacity": 0.2 } });
+      addLyr({ id: "transit-areas-outline", type: "line", source: "transit-areas", layout: { visibility: "none" }, paint: { "line-color": "#7e22ce", "line-width": 0.8, "line-opacity": 0.82 } });
+      addLyr({
+  id: "critical-accessibility-fill",
+  type: "fill",
+  source: "critical-accessibility",
+  layout: { visibility: "none" },
 
-      map.addLayer({
-        id: "service-10-line",
-        type: "line",
-        source: "service-10",
-        paint: { "line-color": "#eab308", "line-width": 1.5 }
-      });
+  paint: {
+    "fill-color": [
+      "match",
+      ["get", "risk_level"],
 
-      map.addLayer({
-        id: "service-5-line",
-        type: "line",
-        source: "service-5",
-        paint: { "line-color": "#22c55e", "line-width": 2.5 }
-      });
+      "Çok Düşük Risk", "#b8f28f",
+      "Düşük Risk", "#ff4fa3",
+      "Kritik Risk", "#facc15",
+      "Orta Risk", "#4f6df5",
+      "Yüksek Risk", "#43e6c3",
 
-      // Hover district
-      map.addLayer({
-        id: "district-hover",
-        type: "fill",
-        source: "districts",
-        paint: { "fill-color": "#ff0000", "fill-opacity": 0.2 },
-        filter: ["==", "NAME_2", ""]
-      });
+      "#94a3b8"
+    ],
 
-      // Pulse ve top layer'ları (en üstte)
-      map.addLayer({
-        id: "flow-pulse-layer",
-        type: "circle",
-        source: "flow-pulse",
-        paint: {
-          "circle-radius": 18,
-          "circle-color": "transparent",
-          "circle-stroke-width": 2,
-          "circle-stroke-color": "#22c55e",
-          "circle-opacity": 0.4,
-          "circle-blur": 0.5
-        }
-      });
+    "fill-opacity": 0.55,
 
-      map.addLayer({
-        id: "flow-point-layer",
-        type: "circle",
-        source: "flow-point",
-        paint: {
-          "circle-radius": 8,
-          "circle-color": "#ffffff",
-          "circle-stroke-width": 3,
-          "circle-stroke-color": "#22c55e",
-          "circle-blur": 0,
-          "circle-opacity": 1
-        }
-      });
+    "fill-outline-color": "rgba(255,255,255,0.35)"
+  }
+});
+      addLyr({ id: "emergency-heatmap", type: "heatmap", source: "emergency-points", layout: { visibility: "none" }, paint: { "heatmap-weight": ["interpolate", ["linear"], ["zoom"], 7, 0.55, 13, 1], "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 7, 0.75, 13, 1.8], "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 7, 16, 13, 42], "heatmap-opacity": 0.72 } });
+      addLyr({ id: "emergency-points-circle", type: "circle", source: "emergency-points", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": ["match", ["get", "birincil_etiket"], "DEPREM", "#ef4444", "YANGIN", "#f97316", "SEL_TASKIN", "#2563eb", "TRAFIK_KAZASI", "#7c3aed", "ARAMA_KURTARMA", "#16a34a", "#f59e0b"], "circle-stroke-color": "#fff7ed", "circle-stroke-width": 1.2, "circle-opacity": 0.9 } });
 
-      // --- splitFeatures ve ANİMASYON ---
-      const splitFeatures = service5Data.features.sort(
-        (a, b) => a.properties.start - b.properties.start
-      );
 
-      // service-5 boş başlar, animasyon dolduracak
-      // (service-10 ve service-15 zaten boş source olarak eklendi)
 
-      // --- PROGRESSİVE ÇİZGİ ANİMASYONU ---
-      // service-5: LineString  → coordinates: [x,y][]
-      // service-10/15: MultiLineString → coordinates: [x,y][][]
+      addLyr({ id: "district-hover", type: "fill", source: "districts", paint: { "fill-color": "#ef4444", "fill-opacity": 0.2 }, filter: ["==", "name", ""] });
 
-      function getPoints(feature) {
-        const geom = feature.geometry;
-        if (geom.type === "LineString") return geom.coordinates;
-        if (geom.type === "MultiLineString") return geom.coordinates.flat();
-        return [];
-      }
 
-      function buildGeometry(feature, points) {
-        const geom = feature.geometry;
-        if (geom.type === "LineString") return { type: "LineString", coordinates: points };
-        if (geom.type === "MultiLineString") return { type: "MultiLineString", coordinates: [points] };
-        return geom;
-      }
 
-      console.log("=== ANİMASYON DEBUG ===");
-      console.log("service5 features:", splitFeatures.length);
-      console.log("service10 features:", service10Data.features?.length);
-      console.log("service15 features:", service15Data.features?.length);
 
-      let idx5 = 0, idx10 = 0, idx15 = 0;
-
-      let cameraTick = 0;
-
-      // service-5: 25k feature var, her feature sadece 2 nokta → feature başına 1 adım yeterli
-      // service-10/15: çok adım var, toplu atlayacağız
-
-      function animateDraw() {
-        if (isPausedRef.current) {
-          topTimerRef.current = setTimeout(animateDraw, 100);
-          return;
-        }
-
-        const flowSrc  = map.getSource("flow-point");
-        const pulseSrc = map.getSource("flow-pulse");
-
-        // --- service-5: her turda 5 feature ekle ---
-        const BATCH_5 = 5;
-        let lastPt5 = null;
-        if (idx5 < splitFeatures.length) {
-          const end5 = Math.min(idx5 + BATCH_5, splitFeatures.length);
-          const visibleFeatures = splitFeatures.slice(0, end5);
-          map.getSource("service-5").setData({ type: "FeatureCollection", features: visibleFeatures });
-          const lastF = visibleFeatures[visibleFeatures.length - 1];
-          const pts = getPoints(lastF);
-          lastPt5 = pts[pts.length - 1];
-          idx5 = end5;
-        }
-
-        // --- service-10: her turda 1 feature ekle ---
-        let lastPt10 = null;
-        if (idx10 < service10Data.features.length) {
-          const visibleFeatures = service10Data.features.slice(0, idx10 + 1);
-          map.getSource("service-10").setData({ type: "FeatureCollection", features: visibleFeatures });
-          const lastF = visibleFeatures[visibleFeatures.length - 1];
-          const pts = getPoints(lastF);
-          lastPt10 = pts[pts.length - 1];
-          idx10++;
-        }
-
-        // --- service-15: her turda 1 feature ekle ---
-        let lastPt15 = null;
-        if (idx15 < service15Data.features.length) {
-          const visibleFeatures = service15Data.features.slice(0, idx15 + 1);
-          map.getSource("service-15").setData({ type: "FeatureCollection", features: visibleFeatures });
-          const lastF = visibleFeatures[visibleFeatures.length - 1];
-          const pts = getPoints(lastF);
-          lastPt15 = pts[pts.length - 1];
-          idx15++;
-        }
-
-        // Top: service-5 öncelikli
-        const topPt = lastPt5 ?? lastPt10 ?? lastPt15;
-        if (topPt && flowSrc && pulseSrc) {
-          const pd = {
-            type: "FeatureCollection",
-            features: [{ type: "Feature", geometry: { type: "Point", coordinates: topPt }, properties: {} }]
-          };
-          flowSrc.setData(pd);
-          pulseSrc.setData(pd);
-        }
-
-    cameraTick++;
-
-if (
-  topPt &&
-  cameraTick % 15 === 0
-) {
-
-  map.easeTo({
-
-    center: topPt,
-
-    zoom: 13,
-
-    duration: 800,
-
-    essential: true
-
-  });
-
-}
-
-        // Hepsi bittiyse sıfırla
-        const all5done  = idx5  >= splitFeatures.length;
-        const all10done = idx10 >= service10Data.features.length;
-        const all15done = idx15 >= service15Data.features.length;
-
-        if (all5done && all10done && all15done) {
-          idx5 = 0; idx10 = 0; idx15 = 0;
-          map.getSource("service-5").setData({ type: "FeatureCollection", features: [] });
-          map.getSource("service-10").setData({ type: "FeatureCollection", features: [] });
-          map.getSource("service-15").setData({ type: "FeatureCollection", features: [] });
-          if (flowSrc) flowSrc.setData({ type: "FeatureCollection", features: [] });
-          if (pulseSrc) pulseSrc.setData({ type: "FeatureCollection", features: [] });
-          topTimerRef.current = setTimeout(animateDraw, 1200);
-          return;
-        }
-
-        topTimerRef.current = setTimeout(animateDraw, 200);
-      }
-
-      animateDraw();
-
-      // --- HOVER / POPUP ---
       map.on("mousemove", "district-fill", (e) => {
-        const district = e.features[0].properties.name;
-        map.setFilter("district-hover", ["==", "name", district]);
+        map.setFilter("district-hover", ["==", "name", e.features[0].properties.name]);
         map.getCanvas().style.cursor = "pointer";
       });
-
       map.on("mouseleave", "district-fill", () => {
-        map.setFilter("district-hover", ["==", "NAME_2", ""]);
+        map.setFilter("district-hover", ["==", "name", ""]);
         map.getCanvas().style.cursor = "";
       });
-
       map.on("click", "district-fill", (e) => {
-        const props = e.features[0].properties;
-        new maplibregl.Popup()
-          .setLngLat(e.lngLat)
-          .setHTML(`<pre>${JSON.stringify(props, null, 2)}</pre>`)
-          .addTo(map);
+        selectRegionSummary("district", e.features[0].properties, map);
+      });
+      map.on("click", "resilience-district-fill", (e) => {
+        setSelectedRegionSummary(e.features[0].properties);
       });
 
       const mahallePopup = new maplibregl.Popup({ closeButton: false, closeOnClick: false });
-
       map.on("mousemove", "mahalle-fill", (e) => {
         map.getCanvas().style.cursor = "pointer";
-        const props = e.features[0].properties;
-        mahallePopup.setLngLat(e.lngLat).setHTML(`<div style="font-size:14px;font-weight:600;">${props.adi_numara}</div>`).addTo(map);
+        mahallePopup
+          .setLngLat(e.lngLat)
+          .setHTML(`<div style="font-size:14px;font-weight:600;">${e.features[0].properties.adi_numara}</div>`)
+          .addTo(map);
       });
-
       map.on("mouseleave", "mahalle-fill", () => {
         map.getCanvas().style.cursor = "";
         mahallePopup.remove();
       });
+      map.on("click", "mahalle-fill", (e) => {
+        selectRegionSummary("neighborhood", e.features[0].properties, map);
+      });
+      map.on("click", "resilience-neighborhood-fill", (e) => {
+        setSelectedRegionSummary(e.features[0].properties);
+      });
 
-      // --- İLK GÖRÜNÜRLÜK ---
-      map.setLayoutProperty("district-outline", "visibility", layerVisible ? "visible" : "none");
-      map.setLayoutProperty("district-fill", "visibility", layerVisible ? "visible" : "none");
-      map.setLayoutProperty("district-hover", "visibility", layerVisible ? "visible" : "none");
-      map.setLayoutProperty("mahalle-fill", "visibility", mahalleVisible ? "visible" : "none");
-      map.setLayoutProperty("mahalle-outline", "visibility", mahalleVisible ? "visible" : "none");
-      map.setLayoutProperty("toplanma-points", "visibility", toplanmaVisible ? "visible" : "none");
+      loadEmergencyData(map);
+      loadRegionSummary("district", map).catch(() => {});
 
+      map.setLayoutProperty("district-outline", "visibility", "visible");
+      map.setLayoutProperty("district-fill", "visibility", "visible");
+      map.setLayoutProperty("mahalle-fill", "visibility", "none");
+      map.setLayoutProperty("mahalle-outline", "visibility", "none");
+      map.setLayoutProperty("toplanma-points", "visibility", "visible");
     });
 
     return () => {
-      if (animationIdRef.current) cancelAnimationFrame(animationIdRef.current);
-      if (topTimerRef.current) clearTimeout(topTimerRef.current);
+
       map.remove();
     };
-
   }, []);
 
-  // Pause/Play senkronizasyonu
-  useEffect(() => {
-    isPausedRef.current = !isPlaying;
-  }, [isPlaying]);
 
-  // --- VISIBILITY EFFECTS ---
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.getLayer("district-outline")) return;
@@ -412,40 +622,23 @@ if (
     if (!map || !map.getLayer("mahalle-outline")) return;
     map.setLayoutProperty("mahalle-outline", "visibility", mahalleVisible ? "visible" : "none");
     map.setLayoutProperty("mahalle-fill", "visibility", mahalleVisible ? "visible" : "none");
+    map.setLayoutProperty("resilience-neighborhood-fill", "visibility", mahalleVisible ? "visible" : "none");
+    if (mahalleVisible) loadRegionSummary("neighborhood").catch(() => {});
   }, [mahalleVisible]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.getLayer("toplanma-points")) return;
     map.setLayoutProperty("toplanma-points", "visibility", toplanmaVisible ? "visible" : "none");
-  }, [toplanmaVisible]);
+    map.setPaintProperty("toplanma-points", "circle-opacity", toplanmaOpacity);
+  }, [toplanmaVisible, toplanmaOpacity]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.getLayer("yollar-line")) return;
     map.setLayoutProperty("yollar-line", "visibility", yollarVisible ? "visible" : "none");
-  }, [yollarVisible]);
-
-  useEffect(() => {
-    if (!mapRef.current || !mapRef.current.isStyleLoaded() || !mapRef.current.getLayer("service-5-line")) return;
-    mapRef.current.setLayoutProperty("service-5-line", "visibility", service5Visible ? "visible" : "none");
-  }, [service5Visible]);
-
-  useEffect(() => {
-    if (!mapRef.current || !mapRef.current.isStyleLoaded() || !mapRef.current.getLayer("service-10-line")) return;
-    mapRef.current.setLayoutProperty("service-10-line", "visibility", service10Visible ? "visible" : "none");
-  }, [service10Visible]);
-
-  useEffect(() => {
-    if (!mapRef.current || !mapRef.current.isStyleLoaded() || !mapRef.current.getLayer("service-15-line")) return;
-    mapRef.current.setLayoutProperty("service-15-line", "visibility", service15Visible ? "visible" : "none");
-  }, [service15Visible]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !map.getLayer("toplanma-points")) return;
-    map.setPaintProperty("toplanma-points", "circle-opacity", toplanmaOpacity);
-  }, [toplanmaOpacity]);
+    map.setPaintProperty("yollar-line", "line-opacity", yollarOpacity);
+  }, [yollarVisible, yollarOpacity]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -454,60 +647,149 @@ if (
   }, [mahalleOpacity]);
 
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !map.getLayer("yollar-line")) return;
-    map.setPaintProperty("yollar-line", "line-opacity", yollarOpacity);
-  }, [yollarOpacity]);
+
+  const map = mapRef.current;
+
+  if (!map) return;
+
+  // 5 DK
+
+  if (map.getLayer("service-area-5-line")) {
+    map.setLayoutProperty(
+      "service-area-5-line",
+      "visibility",
+      service5Visible ? "visible" : "none"
+    );
+  }
+
+  if (map.getLayer("service-area-5-fill")) {
+    map.setLayoutProperty(
+      "service-area-5-fill",
+      "visibility",
+      service5Visible ? "visible" : "none"
+    );
+  }
+
+  // 10 DK
+
+  if (map.getLayer("service-area-10-line")) {
+    map.setLayoutProperty(
+      "service-area-10-line",
+      "visibility",
+      service10Visible ? "visible" : "none"
+    );
+  }
+
+  if (map.getLayer("service-area-10-fill")) {
+    map.setLayoutProperty(
+      "service-area-10-fill",
+      "visibility",
+      service10Visible ? "visible" : "none"
+    );
+  }
+
+  // 15 DK
+
+  if (map.getLayer("service-area-15-line")) {
+    map.setLayoutProperty(
+      "service-area-15-line",
+      "visibility",
+      service15Visible ? "visible" : "none"
+    );
+  }
+
+  if (map.getLayer("service-area-15-fill")) {
+    map.setLayoutProperty(
+      "service-area-15-fill",
+      "visibility",
+      service15Visible ? "visible" : "none"
+    );
+  }
+
+}, [
+  service5Visible,
+  service10Visible,
+  service15Visible,
+]);
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.getLayer("service-5-line")) return;
+    if (!map?.getLayer("service-5-line")) return;
     map.setPaintProperty("service-5-line", "line-opacity", serviceOpacity);
     map.setPaintProperty("service-10-line", "line-opacity", serviceOpacity);
     map.setPaintProperty("service-15-line", "line-opacity", serviceOpacity);
   }, [serviceOpacity]);
 
-  // --- HELPERS ---
-  const moveLayerToTop = (layerIds) => {
+  useEffect(() => {
+  const map = mapRef.current;
+  if (!map?.getLayer("resilience-district-fill")) return;
+  map.setLayoutProperty("resilience-district-fill", "visibility", resilienceVisible ? "visible" : "none");
+}, [resilienceVisible]);
+
+  useEffect(() => {
+  const map = mapRef.current;
+
+  if (!map?.getLayer("critical-accessibility-fill")) return;
+
+  if (activeAnalysisLayer === "critical-accessibility") {
+
+    fetch(`${API_URL}/layers/ilce_nufuslu_hast_ashi_itfa`)
+
+      .then((r) => r.json())
+      .then((data) => {
+        map.getSource("critical-accessibility")?.setData(data);
+      });
+  }
+
+  map.setLayoutProperty(
+    "critical-accessibility-fill",
+    "visibility",
+    activeAnalysisLayer === "critical-accessibility"
+      ? "visible"
+      : "none"
+  );
+
+}, [activeAnalysisLayer]);
+
+  const focusEmergencyEvent = async (feature) => {
     const map = mapRef.current;
-    if (!map) return;
-    layerIds.forEach((id) => { if (map.getLayer(id)) map.moveLayer(id); });
+    const coords = feature.geometry?.coordinates;
+    if (!map || !coords) return;
+    await loadEmergencyData(map);
+    setEmergencyVisible(true);
+    map.setLayoutProperty("emergency-points-circle", "visibility", "visible");
+    setSelectedEmergencyId(feature.properties?.kayit_id);
+    map.flyTo({ center: coords, zoom: 14, speed: 0.9 });
+    new maplibregl.Popup({ closeButton: true })
+      .setLngLat(coords)
+      .setHTML(`<div style="max-width:240px"><strong>${feature.properties?.birincil_etiket || ""}</strong><p style="font-size:12px;color:#475569;margin:4px 0 0">${feature.properties?.konum_adi || ""}</p></div>`)
+      .addTo(map);
+  };
+
+  const focusRankedRegion = (feature) => {
+    const map = mapRef.current;
+    if (!map || !feature) return;
+    setSelectedRegionSummary(feature.properties || null);
+    setMahalleVisible(true);
   };
 
   return (
-    <div
-  style={{
-
-    width: "100vw",
-
-    height: "100vh",
-
-    position: "relative",
-
-    overflow: "hidden",
-
-    background: "#e5e7eb"
-  }}
->
-
+    <div style={{ width: "100vw", height: "100vh", position: "relative", overflow: "hidden", background: "#e5e7eb" }}>
       <div id="map" style={{ width: "100%", height: "100%" }} />
 
-      {/* Header */}
       <div style={{
         position: "absolute", top: 0, left: 0, width: "100%", height: "72px",
         background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)",
         borderBottom: "1px solid rgba(255,255,255,0.18)",
         display: "flex", alignItems: "center", padding: "0 28px",
-        zIndex: 5, boxShadow: "0 8px 32px rgba(0,0,0,0.12)"
+        zIndex: 10, boxShadow: "0 8px 32px rgba(0,0,0,0.12)"
       }}>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: "34px", fontWeight: "800", fontStyle: "italic", letterSpacing: "1px", display: "flex", alignItems: "center" }}>
             <span style={{ color: "#c7d2fe" }}>KOR-</span>
             <span style={{ color: "#ef4444" }}>İZ</span>
           </div>
-          <span style={{ color: "#cbd5e1", fontSize: "13px", marginTop: "-2px" }}>
-            Acil Durumda Koruma ve İzleme Sistemi
-          </span>
+          <span style={{ color: "#94a3b8", fontSize: "13px", marginTop: "-2px" }}>Acil Durumda Koruma ve İzleme Sistemi</span>
         </div>
 
         <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
@@ -518,19 +800,10 @@ if (
             onChange={(e) => setSearchText(e.target.value)}
             onKeyDown={(e) => {
               if (e.key !== "Enter") return;
-              const mahalleler = mahalleDataRef.current;
-              if (!mahalleler) return;
-              const found = mahalleler.find((m) =>
-                m.properties.adi_numara?.toLowerCase().includes(searchText.toLowerCase())
-              );
+              const found = mahalleDataRef.current?.find((m) => m.properties.adi_numara?.toLowerCase().includes(searchText.toLowerCase()));
               if (!found) return;
-              let coords = [];
-              if (found.geometry.type === "Polygon") coords = found.geometry.coordinates[0];
-              else if (found.geometry.type === "MultiPolygon") coords = found.geometry.coordinates[0][0];
-              const bounds = coords.reduce(
-                (b, coord) => b.extend(coord),
-                new maplibregl.LngLatBounds(coords[0], coords[0])
-              );
+              const coords = found.geometry.type === "Polygon" ? found.geometry.coordinates[0] : found.geometry.coordinates[0][0];
+              const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
               mapRef.current.fitBounds(bounds, { padding: 40, duration: 1500 });
             }}
             style={{
@@ -541,586 +814,391 @@ if (
             }}
           />
         </div>
+        <div style={{
+  position: "absolute",
+  right: "80px",
+  top: "18px",
+  padding: "8px 14px",
+  borderRadius: "12px",
+  background: "rgba(255,255,255,0.10)",
+  border: "1px solid rgba(255,255,255,0.14)",
+  backdropFilter: "blur(12px)",
+  boxShadow: "0 4px 18px rgba(0,0,0,0.12)"
+}}>
+  <span style={{
+    color: "#7376F2",
+    fontSize: "13px",
+    fontWeight: "700",
+    letterSpacing: "0.5px"
+  }}>
+    Team KOR-İZ
+  </span>
+</div>
       </div>
 
-      {/* Legend */}
-      <div
+      {selectedRegionSummary && (
+        <div style={{
+          position: "absolute",
+
+top: 110,
+
+left: 280,
+
+height: "280px",
+          background:
+  "linear-gradient(135deg, rgba(199,210,254,0.22), rgba(196,181,253,0.20))", backdropFilter: "blur(22px)",
+border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
+          padding: "10px 12px", zIndex: 50, width: "280px", color: "black",
+          boxShadow: "0 16px 42px rgba(15,23,42,0.28)"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+            <div>
+              <div style={{ fontSize: "11px", color: "#94a3b8", marginBottom: "2px", textTransform: "uppercase", letterSpacing: "1px" }}>
+                {selectedRegionSummary.region_level || "Bölge"}
+              </div>
+              <div style={{ fontSize: "13px", fontWeight: "800" }}>{selectedRegionSummary.region_name}</div>
+            </div>
+            <button onClick={() => setSelectedRegionSummary(null)}
+              style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: "20px", lineHeight: 1 }}>✕</button>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "9px", padding: "9px", background: "rgba(255,255,255,0.06)", borderRadius: "12px" }}>
+            <ScoreGauge score={selectedRegionSummary.resilience_score} sizeOverride={42} />
+            <div>
+              <div style={{ fontWeight: "700", fontSize: "14px" }}>{selectedRegionSummary.resilience_level || "—"}</div>
+              <div style={{ color: "#94a3b8", fontSize: "11px", marginBottom: "3px" }}>Afet Dirençlilik Skoru</div>
+              <div style={{ fontSize: "21px", fontWeight: "900", color: getScoreColor(selectedRegionSummary.resilience_score) }}>
+                {selectedRegionSummary.resilience_score} <span style={{ fontSize: "12px", color: "#94a3b8" }}>/ 100</span>
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px" }}>
+            {[
+              ["🚨 Acil Olay", selectedRegionSummary.emergency_count],
+              ["⚡ Baskın Kategori", selectedRegionSummary.top_emergency_category || "—"],
+              ["🕳 Obruk", selectedRegionSummary.sinkhole_count],
+              ["📏 Fay Uzunluğu", selectedRegionSummary.fault_length_km != null ? `${selectedRegionSummary.fault_length_km} km` : "—"],
+              ["🏕 Toplanma Alanı", selectedRegionSummary.assembly_count],
+              ["🏥 Kritik Tesis", selectedRegionSummary.critical_facility_count],
+              ["📊 Risk Endeksi", selectedRegionSummary.risk_index ?? "—"],
+              ["💪 Kapasite Endeksi", selectedRegionSummary.capacity_index ?? "—"],
+            ].map(([label, value]) => (
+              <div
+  key={label}
   style={{
-
-    position: "absolute",
-
-    bottom: 30,
-
-    left: 30,
-
-    width: "290px",
-
-    display: "flex",
-
-    flexDirection: "column",
-
-    gap: "14px",
-
-    padding: "16px",
-
-    borderRadius: "24px",
-
-    background:
-      "rgba(255,255,255,0.12)",
-
-    backdropFilter: "blur(18px)",
-
-    border:
-      "1px solid rgba(255,255,255,0.18)",
-
-    boxShadow:
-      "0 10px 40px rgba(0,0,0,0.18)",
-
-    zIndex: 10
+    background: "linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))",
+    borderRadius: "6px",
+    padding: "3px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    backdropFilter: "blur(10px)",
+    boxShadow: "0 4px 14px rgba(0,0,0,0.12)",
+    transition: "0.2s"
   }}
 >
-    <div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px"
-  }}
->
-
-    {/* İlçe */}
-<div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-
-    padding: "12px",
-
-    borderRadius: "16px",
-
-    background:
-      "rgba(255,255,255,0.08)",
-
-    border:
-      "1px solid rgba(255,255,255,0.08)"
-  }}
->
-
-  <div
-    style={{
-
-      display: "flex",
-
-      alignItems: "center",
-
-      justifyContent: "space-between"
-    }}
-  >
-
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "12px"
-      }}
-    >
-
-      <div
-        style={{
-          width: "18px",
-          height: "4px",
-          borderRadius: "999px",
-          background: "#ef4444"
-        }}
-      />
-
-      <span
-        style={{
-          fontSize: "14px",
-          fontWeight: "600"
-        }}
-      >
-        İlçe Sınırları
-      </span>
-
-    </div>
-
-    <button
-      onClick={() =>
-        setLayerVisible(!layerVisible)
-      }
-      style={{
-
-        border: "none",
-
-        background: "transparent",
-
-        cursor: "pointer",
-
-        fontSize: "18px"
-      }}
-    >
-      {layerVisible ? "⦿" : "⦸"}
-    </button>
-
-  </div>
-
-  <input
-    type="range"
-    min="0"
-    max="1"
-    step="0.1"
-    value={districtOpacity}
-    onChange={(e) =>
-      setDistrictOpacity(
-        Number(e.target.value)
-      )
-    }
-    style={{
-      accentColor: "#ef4444"
-    }}
-  />
-
-</div>
-
-          {/* Mahalle */}
-<div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-
-    padding: "12px",
-
-    borderRadius: "16px",
-
-    background:
-      "rgba(255,255,255,0.08)",
-
-    border:
-      "1px solid rgba(255,255,255,0.08)"
-  }}
->
-
-  <div
-    style={{
-
-      display: "flex",
-
-      alignItems: "center",
-
-      justifyContent: "space-between"
-    }}
-  >
-
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "12px"
-      }}
-    >
-
-      <div
-        style={{
-          width: "18px",
-          height: "4px",
-          borderRadius: "999px",
-          background: "#2563eb"
-        }}
-      />
-
-      <span
-        style={{
-          fontSize: "14px",
-          fontWeight: "600"
-        }}
-      >
-        Mahalle Sınırları
-      </span>
-
-    </div>
-
-    <button
-      onClick={() =>
-        setMahalleVisible(!mahalleVisible)
-      }
-      style={{
-
-        border: "none",
-
-        background: "transparent",
-
-        cursor: "pointer",
-
-        fontSize: "18px"
-      }}
-    >
-      {mahalleVisible ? "⦿" : "⦸"}
-    </button>
-
-  </div>
-
-  <input
-    type="range"
-    min="0"
-    max="1"
-    step="0.1"
-    value={mahalleOpacity}
-    onChange={(e) =>
-      setMahalleOpacity(
-        Number(e.target.value)
-      )
-    }
-    style={{
-      accentColor: "#2563eb"
-    }}
-  />
-
-</div>
-
-          {/* Toplanma */}
-<div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-
-    padding: "12px",
-
-    borderRadius: "16px",
-
-    background:
-      "rgba(255,255,255,0.08)",
-
-    border:
-      "1px solid rgba(255,255,255,0.08)"
-  }}
->
-
-  <div
-    style={{
-
-      display: "flex",
-
-      alignItems: "center",
-
-      justifyContent: "space-between"
-    }}
-  >
-
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "12px"
-      }}
-    >
-
-      <div
-        style={{
-          width: "12px",
-          height: "12px",
-          borderRadius: "50%",
-          background: "#16a34a"
-        }}
-      />
-
-      <span
-        style={{
-          fontSize: "14px",
-          fontWeight: "600"
-        }}
-      >
-        Toplanma Alanları
-      </span>
-
-    </div>
-
-    <button
-      onClick={() =>
-        setToplanmaVisible(
-          !toplanmaVisible
-        )
-      }
-      style={{
-
-        border: "none",
-
-        background: "transparent",
-
-        cursor: "pointer",
-
-        fontSize: "18px"
-      }}
-    >
-      {toplanmaVisible
-        ? "⦿" : "⦸"}
-    </button>
-
-  </div>
-
-  <input
-    type="range"
-    min="0"
-    max="1"
-    step="0.1"
-    value={toplanmaOpacity}
-    onChange={(e) =>
-      setToplanmaOpacity(
-        Number(e.target.value)
-      )
-    }
-    style={{
-      accentColor: "#16a34a"
-    }}
-  />
-
-</div>
-
-          {/* Yollar */}
-<div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-
-    padding: "12px",
-
-    borderRadius: "16px",
-
-    background:
-      "rgba(255,255,255,0.08)",
-
-    border:
-      "1px solid rgba(255,255,255,0.08)"
-  }}
->
-
-  <div
-    style={{
-
-      display: "flex",
-
-      alignItems: "center",
-
-      justifyContent: "space-between"
-    }}
-  >
-
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "12px"
-      }}
-    >
-
-      <div
-        style={{
-          width: "18px",
-          height: "4px",
-          borderRadius: "999px",
-          background: "#f59e0b"
-        }}
-      />
-
-      <span
-        style={{
-          fontSize: "14px",
-          fontWeight: "600"
-        }}
-      >
-        Yol Ağı
-      </span>
-
-    </div>
-
-    <button
-      onClick={() =>
-        setYollarVisible(!yollarVisible)
-      }
-      style={{
-
-        border: "none",
-
-        background: "transparent",
-
-        cursor: "pointer",
-
-        fontSize: "18px"
-      }}
-    >
-      {yollarVisible ? "⦿" : "⦸"}
-    </button>
-
-  </div>
-
-  <input
-    type="range"
-    min="0"
-    max="1"
-    step="0.1"
-    value={yollarOpacity}
-    onChange={(e) =>
-      setYollarOpacity(
-        Number(e.target.value)
-      )
-    }
-    style={{
-      accentColor: "#f59e0b"
-    }}
-  />
-
-</div>
-
+                <div style={{
+  fontSize: "9px",
+  color: "#94a3b8",
+  marginBottom: "4px",
+  letterSpacing: "0.4px",
+  textTransform: "uppercase",
+  fontWeight: "700"
+}}>{label}</div>
+                <div style={{ fontSize: "12px", fontWeight: "700" }}>{value ?? "—"}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{
+        position: "absolute", top: 90, right: 30,
+        width: "340px", maxHeight: "calc(100vh - 120px)",
+        background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)",
+        border: "1px solid rgba(255,255,255,0.18)", borderRadius: "16px",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.12)", zIndex: 10,
+        display: "flex", flexDirection: "column", overflow: "hidden"
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
+          <div style={{ fontSize: "16px", fontWeight: "700" }}>
+            {activeSideTab === "events" ? "Acil Olaylar" : "Dirençlilik Sıralaması"}
+          </div>
+          <button onClick={() => setEventsPanelOpen((p) => !p)}
+            style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "18px", color: "#64748b" }}>
+            {eventsPanelOpen ? "▲" : "▼"}
+          </button>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px", padding: "8px", background: "rgba(0,0,0,0.04)" }}>
+          {["events", "resilience"].map((tab) => (
+            <button key={tab} onClick={() => setActiveSideTab(tab)}
+              style={{
+                padding: "8px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "700", fontSize: "13px",
+                background: activeSideTab === tab ? "white" : "transparent",
+                boxShadow: activeSideTab === tab ? "0 1px 6px rgba(0,0,0,0.12)" : "none",
+                color: activeSideTab === tab ? "#18212f" : "#64748b"
+              }}>
+              {tab === "events" ? "Olaylar" : "Dirençlilik"}
+            </button>
+          ))}
+        </div>
+
+        {eventsPanelOpen && (
+          <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+            {activeSideTab === "events" ? (
+              <>
+                <div style={{ padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "700", background: "#fff7ed", color: "#c2410c", borderRadius: "999px", padding: "5px 9px" }}>
+                    {filteredEvents.length} kayıt
+                  </span>
+                  <select value={emergencyCategory} onChange={(e) => setEmergencyCategory(e.target.value)}
+                    style={{ fontSize: "12px", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "5px 8px", background: "rgba(255,255,255,0.14)", cursor: "pointer" }}>
+                    {emergencyCategories.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div style={{ flex: 1, overflowY: "auto", padding: "0 8px 8px", display: "grid", gap: "6px" }}>
+                  {visibleEvents.map((f) => (
+                    <button key={f.properties?.kayit_id || Math.random()}
+                      onClick={() => focusEmergencyEvent(f)}
+                      style={{
+                        background: selectedEmergencyId === f.properties?.kayit_id ? "linear-gradient(135deg, rgba(192,132,252,0.30), rgba(129,140,248,0.26))"
+
+: "linear-gradient(135deg, rgba(255,255,255,0.32), rgba(224,231,255,0.20))",
+                        border: `1px solid ${selectedEmergencyId === f.properties?.kayit_id ? "#f97316" : "rgba(255,255,255,0.12)"}`,
+                        borderRadius: "10px", padding: "10px", textAlign: "left", cursor: "pointer", color: "inherit"
+                      }}>
+                      <div style={{ fontSize: "11px", fontWeight: "750", color: emergencyCategoryColors[f.properties?.birincil_etiket] || "#f97316", marginBottom: "4px" }}>
+                        {f.properties?.birincil_etiket || "Kategori yok"}
+                      </div>
+                      <div style={{ fontSize: "12px", fontWeight: "600", marginBottom: "2px" }}>
+                        {f.properties?.konum_adi || f.properties?.arama_terimi || "Konum yok"}
+                      </div>
+                      <div style={{ fontSize: "11px", color: "#64748b" }}>
+                        {f.properties?.tarih_utc ? new Date(f.properties.tarih_utc).toLocaleDateString("tr-TR") : ""}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ padding: "8px 12px" }}>
+                  <div style={{ fontSize: "12px", color: "#0f766e", fontWeight: "800" }}>{rankedNeighborhoods.length} mahalle</div>
+                  <div style={{ fontSize: "11px", color: "#64748b" }}>En yüksek dirençlilik skoruna göre</div>
+                </div>
+                <div style={{ flex: 1, overflowY: "auto", padding: "0 8px 8px", display: "grid", gap: "6px" }}>
+                  {rankedNeighborhoods.map((f, i) => {
+                    const p = f.properties || {};
+                    return (
+                      <button key={`${p.region_name}-${i}`} onClick={() => focusRankedRegion(f)}
+                        style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "10px", textAlign: "left", cursor: "pointer", display: "grid", gridTemplateColumns: "28px 36px 1fr 36px", alignItems: "center", gap: "8px" }}>
+                        <span style={{ background: "#eef4ff", color: "#24579f", borderRadius: "50%", width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800" }}>{i + 1}</span>
+                        <ScoreGauge score={p.resilience_score} compact />
+                        <div>
+                          <div style={{ fontSize: "12px", fontWeight: "700", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.region_name}</div>
+                          <div style={{ fontSize: "10px", color: "#64748b" }}>{p.resilience_level}</div>
+                        </div>
+                        <span style={{ fontSize: "15px", fontWeight: "800", justifySelf: "end" }}>{p.resilience_score}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div style={{
+  position: "absolute",
+
+  top: 110,
+
+  left: 22,
+
+  width: "230px",
+
+  height: "280px",
+
+  overflowY: "auto",
+        padding: "12px", borderRadius: "16px",
+        background: "rgba(255,255,255,0.12)", backdropFilter: "blur(18px)",
+        border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 10px 40px rgba(0,0,0,0.18)", zIndex: 10,
+        overflowY: "auto", scrollbarWidth: "thin"
+      }}>
+        <div style={{ fontSize: "14px", fontWeight: "700", marginBottom: "10px" }}>Katmanlar</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {[
+            { label: "İlçe Sınırları", color: "#ef4444", checked: layerVisible, onChange: () => setLayerVisible((v) => !v), type: "line", opacity: districtOpacity, onOpacity: (v) => setDistrictOpacity(v) },
+            { label: "Mahalle Sınırları", color: "#2563eb", checked: mahalleVisible, onChange: () => setMahalleVisible((v) => !v), type: "line", opacity: mahalleOpacity, onOpacity: (v) => setMahalleOpacity(v) },
+            { label: "Toplanma Alanları", color: "#16a34a", checked: toplanmaVisible, onChange: () => setToplanmaVisible((v) => !v), type: "point", opacity: toplanmaOpacity, onOpacity: (v) => setToplanmaOpacity(v) },
+            { label: "Yol Ağı", color: "#f59e0b", checked: yollarVisible, onChange: () => setYollarVisible((v) => !v), type: "line", opacity: yollarOpacity, onOpacity: (v) => setYollarOpacity(v) },
+            { label: "Fay Hatları", color: "#dc2626", checked: faultVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!faultVisible, setFaultVisible, "fault-lines", ["fault-lines-line"], `${API_URL}/layers/fay-hatlari`) },
+            { label: "Obruklar", color: "#7c2d12", checked: sinkholeVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!sinkholeVisible, setSinkholeVisible, "sinkholes", ["sinkholes-point"], `${API_URL}/layers/obruklar`) },
+            { label: "Kritik Tesisler", color: "#64748b", checked: facilityVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!facilityVisible, setFacilityVisible, "critical-facilities", ["critical-facilities-point"], `${API_URL}/layers/kritik-tesisler`) },
+            { label: "Ana Yollar", color: "#64748b", checked: roadVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!roadVisible, setRoadVisible, "major-roads", ["major-roads-line"], `${API_URL}/layers/ana-yollar`) },
+            { label: "İl Sınırı", color: "#0f172a", checked: provinceBoundaryVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!provinceBoundaryVisible, setProvinceBoundaryVisible, "province-boundary", ["province-boundary-line"], `${API_URL}/layers/il-siniri`) },
+            { label: "Parklar", color: "#22c55e", checked: parksVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!parksVisible, setParksVisible, "parks", ["parks-fill", "parks-outline"], `${API_URL}/layers/parklar`) },
+            { label: "Kolluk", color: "#2563eb", checked: lawVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!lawVisible, setLawVisible, "law-enforcement", ["law-enforcement-point"], `${API_URL}/layers/kolluk`) },
+            { label: "Sağlık Noktaları", color: "#0891b2", checked: healthPointVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!healthPointVisible, setHealthPointVisible, "health-points", ["health-points-point"], `${API_URL}/layers/saglik-nokta`) },
+            { label: "Sağlık Alanları", color: "#06b6d4", checked: healthAreaVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!healthAreaVisible, setHealthAreaVisible, "health-areas", ["health-areas-fill", "health-areas-outline"], `${API_URL}/layers/saglik-alan`) },
+            { label: "Toplu Ulaşım Noktaları", color: "#9333ea", checked: transitPointVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!transitPointVisible, setTransitPointVisible, "transit-points", ["transit-points-point"], `${API_URL}/layers/toplu-ulasim-nokta`) },
+            { label: "Toplu Ulaşım Alanları", color: "#a855f7", checked: transitAreaVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!transitAreaVisible, setTransitAreaVisible, "transit-areas", ["transit-areas-fill", "transit-areas-outline"], `${API_URL}/layers/toplu-ulasim-alan`) },
+            {
+              label: "Acil Durum Noktaları",
+              color: "#f97316",
+              checked: emergencyVisible,
+              type: "point",
+              opacity: null,
+              onChange: async () => {
+                const next = !emergencyVisible;
+                setEmergencyVisible(next);
+                if (next) await loadEmergencyData();
+                mapRef.current?.setLayoutProperty("emergency-points-circle", "visibility", next ? "visible" : "none");
+              },
+            },
+          ].map(({ label, color, checked, onChange, type, opacity, onOpacity }) => (
+            <div key={label} style={{ display: "flex", flexDirection: "column", gap: "5px", padding: "8px 9px", borderRadius: "11px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                  <div style={{ width: type === "point" ? "10px" : "16px", height: type === "point" ? "10px" : "4px", borderRadius: type === "point" ? "50%" : "999px", background: color, flexShrink: 0 }} />
+                  <span style={{ fontSize: "12px", fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
+                </div>
+                <button onClick={onChange} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "17px", padding: 0, lineHeight: 1, flexShrink: 0 }}>
+                  {checked ? "⦿" : "⦸"}
+                </button>
+              </div>
+              {opacity !== null && onOpacity && (
+                <input type="range" min="0" max="1" step="0.1" value={opacity}
+                  onChange={(e) => onOpacity(Number(e.target.value))}
+                  style={{ accentColor: color, width: "100%" }} />
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
-{/* Floating Analysis Button */}
-<div
-  onClick={() =>
-    setAnalysisOpen(!analysisOpen)
-  }
-  style={{
-    position: "absolute",
-    top: 100,
-    right: 30,
+{/* Dirençlilik Skoru Paneli */}
+      <div style={{
+        position: "absolute",
+        top: 450,
+        left: 22,
+        width: "230px",
+        padding: "12px",
+        borderRadius: "16px",
+        background: "rgba(255,255,255,0.12)",
+        backdropFilter: "blur(18px)",
+        border: "1px solid rgba(255,255,255,0.18)",
+        boxShadow: "0 10px 40px rgba(0,0,0,0.18)",
+        zIndex: 10,
+      }}>
+        <div style={{ fontSize: "14px", fontWeight: "700", marginBottom: "10px" }}>
+          Dirençlilik Skoru
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+          <span style={{ fontSize: "12px", fontWeight: "600" }}>İlçe Renk Haritası</span>
+          <button
+            onClick={() => setResilienceVisible(v => !v)}
+            style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "17px", padding: 0, lineHeight: 1 }}
+          >
+            {resilienceVisible ? "⦿" : "⦸"}
+          </button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <div style={{ height: "10px", borderRadius: "999px", background: "linear-gradient(to right, #dc2626, #f59e0b, #22c55e, #0f766e)" }} />
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#64748b", fontWeight: "600" }}>
+            <span>0 Kritik</span>
+            <span>55 Orta</span>
+            <span>75 İyi</span>
+            <span>100</span>
+          </div>
+        </div>
+      </div>
 
-    padding: "0 22px",
-    height: "58px",
+      <AnalysisPanel
+        analysisOpen={analysisOpen}
+        setAnalysisOpen={setAnalysisOpen}
+        service5Visible={service5Visible}
+        setService5Visible={setService5Visible}
+        service10Visible={service10Visible}
+        setService10Visible={setService10Visible}
+        service15Visible={service15Visible}
+        setService15Visible={setService15Visible}
+        serviceOpacity={serviceOpacity}
+        setServiceOpacity={setServiceOpacity}
 
-    borderRadius: "18px",
+        activeAnalysisLayer={activeAnalysisLayer}
+        setActiveAnalysisLayer={setActiveAnalysisLayer}
+      />
 
-    background:
-      "rgba(255,255,255,0.14)",
 
-    backdropFilter: "blur(14px)",
-
-    border:
-      "1px solid rgba(255,255,255,0.18)",
-
-    boxShadow:
-      "0 10px 35px rgba(0,0,0,0.18)",
-
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-
-    gap: "12px",
-
-    cursor: "pointer",
-
-    zIndex: 20,
-
-    transition: "all 0.25s"
-  }}
->
-
-  <img
-    src="/analysis_icon.png"
-    alt="analysis"
-    style={{
-      width: "24px",
-      height: "24px",
-      objectFit: "contain"
-    }}
-  />
-
-  <span
-    style={{
-      color: "black",
-      fontWeight: "700",
-      fontSize: "15px",
-      letterSpacing: "0.3px"
-    }}
-  >
-    Analiz Katmanları
-  </span>
-
-</div>
-
-<AnalysisPanel
-
-  analysisOpen={analysisOpen}
-  setAnalysisOpen={setAnalysisOpen}
-
-  service5Visible={service5Visible}
-  setService5Visible={
-    setService5Visible
-  }
-  service10Visible={service10Visible}
-setService10Visible={
-  setService10Visible
-}
-
-service15Visible={service15Visible}
-setService15Visible={
-  setService15Visible
-}
-
-serviceOpacity={serviceOpacity}
-setServiceOpacity={
-  setServiceOpacity
-}
-
-isPlaying={isPlaying}
-setIsPlaying={setIsPlaying}
-
-/>
-
-{/* Bottom Footer */}
-<div
-  style={{
-
-    position: "absolute",
-
-    left: "50%",
-transform: "translateX(-50%)",
-bottom: 20,
-
-    height: "54px",
-
-    padding: "0 22px",
-
-    borderRadius: "18px",
-
-    background:
-      "rgba(255,255,255,0.14)",
-
-    backdropFilter: "blur(14px)",
-
-    border:
-      "1px solid rgba(255,255,255,0.18)",
-
-    boxShadow:
-      "0 10px 35px rgba(0,0,0,0.18)",
-
-    display: "flex",
-
-    alignItems: "center",
-
-    justifyContent: "center",
-
-    zIndex: 20
-  }}
->
-
-  <span
-    style={{
-      color: "#ddd6fe",
-      fontSize: "14px",
-      fontWeight: "600",
-      letterSpacing: "0.4px"
-    }}
-  >
-    Team KOR-İZ
-  </span>
-
-</div>
-
-</div>
+    </div>
   );
+}
+
+function getScoreColor(score) {
+  const n = Number(score);
+  if (n >= 75) return "#0f766e";
+  if (n >= 55) return "#d97706";
+  return "#dc2626";
+}
+
+function ScoreGauge({ score, compact = false, sizeOverride = null }) {
+  const n = Math.max(0, Math.min(100, Number(score) || 0));
+  const size = sizeOverride || (compact ? 36 : 70);
+  const stroke = compact ? 4 : sizeOverride ? 6 : 7;
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (n / 100) * circ;
+  const color = getScoreColor(n);
+
+  return (
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={stroke}
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+        />
+      </svg>
+      {!compact && (
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "black", fontWeight: "800", fontSize: sizeOverride ? "14px" : "16px" }}>
+          {n}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function normalizeEmergencyGeojson(data) {
+  const features = Array.isArray(data?.features) ? data.features : [];
+  return {
+    type: "FeatureCollection",
+    features: features.map((f, i) => {
+      const p = f.properties || {};
+      const coords = f.geometry?.coordinates || [];
+      const lon = Number(coords[0] ?? p.x_lon);
+      const lat = Number(coords[1] ?? p.y_lat);
+      if (!Number.isFinite(lon) || !Number.isFinite(lat)) return null;
+      return {
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [lon, lat] },
+        properties: {
+          kayit_id: String(p.kayit_id || `emergency-${i + 1}`),
+          birincil_etiket: String(p.birincil_etiket || p.kaynak_kategori || "Kategori yok"),
+          tarih_utc: String(p.tarih_utc || ""),
+          konum_adi: String(p.konum_adi || ""),
+          arama_terimi: String(p.arama_terimi || ""),
+          metin: String(p.metin || ""),
+        },
+      };
+    }).filter(Boolean),
+  };
 }
 
 export default App;

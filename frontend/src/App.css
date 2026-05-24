@@ -182,3 +182,19 @@
     border-right-color: var(--border);
   }
 }
+
+/* Codex merge: analiz panelini alta alma */
+.analysis-panel {
+  border-radius: 8px 8px 0 0 !important;
+  bottom: 0 !important;
+  left: 12px !important;
+  max-height: min(390px, calc(100vh - 44px)) !important;
+  position: absolute !important;
+  right: 12px !important;
+  top: auto !important;
+  width: auto !important;
+}
+
+.analysis-panel.collapsed {
+  max-height: 68px !important;
+}
