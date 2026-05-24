@@ -1,0 +1,12 @@
+﻿services:
+  backend:
+    volumes:
+      - ./backend:/app
+      # Frontend icindeki temel GeoJSON fallback verileri.
+      - ./frontend/public/data:/data:ro
+      # Verilerin oldugu klasor yolu.
+      - ./data/data:/external-data:ro
+  postgis:
+    volumes:
+      # Hazir PostGIS dump'i. Mutlak Windows path yoktur.
+      - ./database/init:/docker-entrypoint-initdb.d:ro

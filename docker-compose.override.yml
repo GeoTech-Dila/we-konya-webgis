@@ -1,0 +1,5 @@
+﻿services:
+  postgis:
+    volumes:
+      # Hazir PostGIS dump'i. Mutlak Windows path yoktur.
+      - ./database/init:/docker-entrypoint-initdb.d:ro
