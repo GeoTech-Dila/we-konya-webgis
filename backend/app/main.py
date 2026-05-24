@@ -159,7 +159,7 @@ def service_area_15_polygons():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
+                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
                 )::json,
 
                 'properties',
@@ -171,6 +171,7 @@ def service_area_15_polygons():
             ) AS feature
 
             FROM service_area_polygons
+            LIMIT 150
 
         ) AS f;
     """)
@@ -194,7 +195,7 @@ def service_area_10_polygons():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
+                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
                 )::json,
 
                 'properties',
@@ -206,6 +207,7 @@ def service_area_10_polygons():
             ) AS feature
 
             FROM service_area_10_polygons
+            LIMIT 150
 
         ) AS f;
     """)
@@ -229,7 +231,7 @@ def service_area_5_polygons():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
+                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
                 )::json,
 
                 'properties',
@@ -241,6 +243,7 @@ def service_area_5_polygons():
             ) AS feature
 
             FROM service_area_5_polygons
+            LIMIT 150
 
         ) AS f;
     """)
@@ -264,7 +267,7 @@ def service_area_15_lines():
 
                         'geometry',
                         ST_AsGeoJSON(
-                            ST_Transform(geom, 4326)
+                            ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
                         )::json,
 
                         'properties',
@@ -276,6 +279,7 @@ def service_area_15_lines():
                     ) AS feature
 
                     FROM service_area_15_lines
+                    LIMIT 8000
 
                 ) AS f;
             """)
@@ -298,7 +302,7 @@ def service_area_10_lines():
 
                     'geometry',
                     ST_AsGeoJSON(
-                        ST_Transform(geom, 4326)
+                        ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
                     )::json,
 
                     'properties',
@@ -310,6 +314,7 @@ def service_area_10_lines():
                 ) AS feature
 
                 FROM service_area_10_lines
+                LIMIT 8000
 
             ) AS f;
         """)
@@ -333,7 +338,7 @@ def service_area_5_lines():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
+                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
                 )::json,
 
                 'properties',
@@ -345,6 +350,7 @@ def service_area_5_lines():
             ) AS feature
 
             FROM service_area_5_lines
+            LIMIT 8000
 
         ) AS f;
     """)
@@ -778,7 +784,7 @@ def buildings_3d():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
+                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
                 )::json,
 
                 'properties',
@@ -792,6 +798,8 @@ def buildings_3d():
             ) AS feature
 
             FROM buildings_access_levels
+            ORDER BY id
+            LIMIT 15000
 
         ) AS f;
 
@@ -835,6 +843,8 @@ def inaccessible_buildings_heatmap():
             ) AS feature
 
             FROM inaccessible_building_points
+            ORDER BY id
+            LIMIT 20000
 
         ) AS f;
 
@@ -866,7 +876,7 @@ def buildings_5():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
+                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
                 )::json,
 
                 'properties',
@@ -879,6 +889,8 @@ def buildings_5():
             ) AS feature
 
             FROM buildings_5
+            ORDER BY id
+            LIMIT 10000
 
         ) AS f;
 
@@ -910,7 +922,7 @@ def buildings_10():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
+                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
                 )::json,
 
                 'properties',
@@ -923,6 +935,8 @@ def buildings_10():
             ) AS feature
 
             FROM buildings_10
+            ORDER BY id
+            LIMIT 10000
 
         ) AS f;
 
@@ -953,7 +967,7 @@ def buildings_15():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
+                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
                 )::json,
 
                 'properties',
@@ -966,6 +980,8 @@ def buildings_15():
             ) AS feature
 
             FROM buildings_15
+            ORDER BY id
+            LIMIT 10000
 
         ) AS f;
 
@@ -996,7 +1012,7 @@ def buildings_unreachable():
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
+                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.00008)
                 )::json,
 
                 'properties',
@@ -1009,6 +1025,8 @@ def buildings_unreachable():
             ) AS feature
 
             FROM buildings_unreachable
+            ORDER BY id
+            LIMIT 10000
 
         ) AS f;
 
