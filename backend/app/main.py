@@ -3,36 +3,58 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
-from fastapi.middleware.cors import CORSMiddleware
 import json
 import random
 
 app = FastAPI()
 
+FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "https://we-konya-webgis.vercel.app")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://we-konya-webgis.vercel.app",
+        FRONTEND_ORIGIN,
+        "http://localhost:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@postgis:5432/webgis")
+
+connect_args = {}
+if "supabase" in DATABASE_URL or "pooler" in DATABASE_URL:
+    connect_args = {
+        "sslmode": "require",
+        "options": "-c search_path=public,extensions",
+    }
 
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
     pool_recycle=300,
     pool_size=1,
-    max_overflow=0
+    max_overflow=0,
+    connect_args=connect_args,
 )
 
 
 @app.get("/")
 def root():
     return {"message": "WebGIS Backend Çalışıyor"}
+
+
+@app.get("/health/db")
+def health_db():
+    with engine.connect() as conn:
+        current_database = conn.execute(text("SELECT current_database()")).scalar()
+        postgis_version = conn.execute(text("SELECT PostGIS_Version()")).scalar()
+        return {
+            "ok": True,
+            "database": current_database,
+            "postgis": postgis_version,
+        }
 
 
 @app.get("/mahalleler")
