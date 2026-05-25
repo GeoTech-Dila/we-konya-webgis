@@ -849,8 +849,10 @@ addLyr({
       const reloadViewportSources = () => {
   window.clearTimeout(viewportReloadTimer);
   viewportReloadTimer = window.setTimeout(() => {
+
+
     Promise.all(
-      viewportSourcePaths.map(async ([sourceId, path]) => {
+      visiblePaths.map(async ([sourceId, path]) => {
         const source = map.getSource(sourceId);
         if (!source) return;
         const data = await fetchGeojson(withMapBbox(path), 60000);
