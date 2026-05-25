@@ -846,18 +846,27 @@ addLyr({
       ];
 
       const reloadViewportSources = () => {
-        window.clearTimeout(viewportReloadTimer);
-        viewportReloadTimer = window.setTimeout(() => {
-          Promise.all(
-            viewportSourcePaths.map(async ([sourceId, path]) => {
-              const source = map.getSource(sourceId);
-              if (!source) return;
-              const data = await fetchGeojson(withMapBbox(path), 60000);
-              source.setData(data);
-            })
-          ).catch(() => {});
-        }, 450);
-      };
+  window.clearTimeout(viewportReloadTimer);
+  viewportReloadTimer = window.setTimeout(() => {
+    const visiblePaths = viewportSourcePaths.filter(([sourceId]) => {
+      const layer = map.getLayer(sourceId) ||
+                    map.getLayer(`${sourceId}-line`) ||
+                    map.getLayer(`${sourceId}-fill`);
+      if (!layer) return false;
+      const visibility = map.getLayoutProperty(layer.id, "visibility");
+      return visibility === "visible";
+    });
+
+    Promise.all(
+      visiblePaths.map(async ([sourceId, path]) => {
+        const source = map.getSource(sourceId);
+        if (!source) return;
+        const data = await fetchGeojson(withMapBbox(path), 60000);
+        source.setData(data);
+      })
+    ).catch(() => {});
+  }, 450);
+};
 
       map.on("moveend", reloadViewportSources);
       requestAnimationFrame(() => {
