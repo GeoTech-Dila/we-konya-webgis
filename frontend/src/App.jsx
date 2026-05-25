@@ -298,9 +298,6 @@ const service5PolyData = EMPTY_FC;
 const service10PolyData = EMPTY_FC;
 const service15PolyData = EMPTY_FC;
 
-]);
-
-
       mahalleDataRef.current = mahalleData.features || [];
 
       const addSrc = (id, cfg) => {
