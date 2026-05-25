@@ -869,6 +869,8 @@ addLyr({
 };
 
       map.on("moveend", reloadViewportSources);
+
+reloadViewportSources(); // ← bunu ekle
       requestAnimationFrame(() => {
 
   requestAnimationFrame(() => {
