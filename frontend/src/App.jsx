@@ -282,9 +282,11 @@ const [heatmapVisible, setHeatmapVisible] = useState(true);
   fetchGeojson("/ilceler"),
   fetchGeojson("/mahalleler"),
   fetchGeojson("/toplanma-alanlari"),
+
 ]);
 
-const yollarData = EMPTY_FC;
+const yollarData =
+  await fetchGeojson("/yollar");
 const service5Data = EMPTY_FC;
 const service10Data = EMPTY_FC;
 const service15Data = EMPTY_FC;
@@ -829,7 +831,7 @@ addLyr({
       map.setLayoutProperty("toplanma-points", "visibility", "visible");
 
       const viewportSourcePaths = [
-        ["yollar", "/yollar"],
+
         ["major-roads", "/layers/ana-yollar"],
         ["service-area-5-lines", "/service-area-5-lines"],
         ["service-area-10-lines", "/service-area-10-lines"],
