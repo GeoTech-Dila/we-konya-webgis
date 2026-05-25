@@ -297,44 +297,6 @@ const service15Data = EMPTY_FC;
 const service5PolyData = EMPTY_FC;
 const service10PolyData = EMPTY_FC;
 const service15PolyData = EMPTY_FC;
-const [
-  buildings3DData,
-  buildings5Data,
-  buildings10Data,
-  buildings15Data,
-  buildingsUnreachableData,
-  inaccessibleHeatmapData
-] = await Promise.all([
-
-  fetchGeojson(
-    withMapBbox("/buildings-3d"),
-    120000
-  ),
-
-  fetchGeojson(
-    withMapBbox("/buildings-5"),
-    120000
-  ),
-
-  fetchGeojson(
-    withMapBbox("/buildings-10"),
-    120000
-  ),
-
-  fetchGeojson(
-    withMapBbox("/buildings-15"),
-    120000
-  ),
-
-  fetchGeojson(
-    withMapBbox("/buildings-unreachable"),
-    120000
-  ),
-
-  fetchGeojson(
-    withMapBbox("/inaccessible-buildings-heatmap"),
-    120000
-  ),
 
 ]);
 
@@ -379,32 +341,32 @@ addSrc("service-area-15-polygons", {
 
 addSrc("buildings-3d", {
   type: "geojson",
-  data: buildings3DData,
+  data: EMPTY_FC,
 });
 
 addSrc("buildings-5", {
   type: "geojson",
-  data: buildings5Data,
+  data: EMPTY_FC,
 });
 
 addSrc("buildings-10", {
   type: "geojson",
-  data: buildings10Data,
+  data: EMPTY_FC,
 });
 
 addSrc("buildings-15", {
   type: "geojson",
-  data: buildings15Data,
+  data: EMPTY_FC,
 });
 
 addSrc("buildings-unreachable", {
   type: "geojson",
-  data: buildingsUnreachableData,
+  data: EMPTY_FC,
 });
 
 addSrc("inaccessible-heatmap", {
   type: "geojson",
-  data: inaccessibleHeatmapData,
+  data: EMPTY_FC,
 });
 
       addSrc("fault-lines", { type: "geojson", data: EMPTY_FC });
@@ -1109,46 +1071,166 @@ useEffect(() => {
   buildingsOpacity,
 ]);
 
+// BUILDINGS 5
+
 useEffect(() => {
 
   const map = mapRef.current;
 
   if (!map) return;
 
-  // 5 DK
+  if (
+    buildings5Visible &&
+    !loadedLayersRef.current["buildings-5"]
+  ) {
+
+    fetch(
+      buildMapBboxEndpoint("/buildings-5")
+    )
+      .then((r) => r.json())
+      .then((data) => {
+
+        map
+          .getSource("buildings-5")
+          ?.setData(data);
+
+        loadedLayersRef.current[
+          "buildings-5"
+        ] = true;
+      });
+  }
 
   if (map.getLayer("buildings-5")) {
 
     map.setLayoutProperty(
       "buildings-5",
       "visibility",
-      buildings5Visible ? "visible" : "none"
+      buildings5Visible
+        ? "visible"
+        : "none"
     );
   }
 
-  // 10 DK
+}, [buildings5Visible]);
+
+
+
+// BUILDINGS 10
+
+useEffect(() => {
+
+  const map = mapRef.current;
+
+  if (!map) return;
+
+  if (
+    buildings10Visible &&
+    !loadedLayersRef.current["buildings-10"]
+  ) {
+
+    fetch(
+      buildMapBboxEndpoint("/buildings-10")
+    )
+      .then((r) => r.json())
+      .then((data) => {
+
+        map
+          .getSource("buildings-10")
+          ?.setData(data);
+
+        loadedLayersRef.current[
+          "buildings-10"
+        ] = true;
+      });
+  }
 
   if (map.getLayer("buildings-10")) {
 
     map.setLayoutProperty(
       "buildings-10",
       "visibility",
-      buildings10Visible ? "visible" : "none"
+      buildings10Visible
+        ? "visible"
+        : "none"
     );
   }
 
-  // 15 DK
+}, [buildings10Visible]);
+
+
+
+// BUILDINGS 15
+
+useEffect(() => {
+
+  const map = mapRef.current;
+
+  if (!map) return;
+
+  if (
+    buildings15Visible &&
+    !loadedLayersRef.current["buildings-15"]
+  ) {
+
+    fetch(
+      buildMapBboxEndpoint("/buildings-15")
+    )
+      .then((r) => r.json())
+      .then((data) => {
+
+        map
+          .getSource("buildings-15")
+          ?.setData(data);
+
+        loadedLayersRef.current[
+          "buildings-15"
+        ] = true;
+      });
+  }
 
   if (map.getLayer("buildings-15")) {
 
     map.setLayoutProperty(
       "buildings-15",
       "visibility",
-      buildings15Visible ? "visible" : "none"
+      buildings15Visible
+        ? "visible"
+        : "none"
     );
   }
 
-  // ERİŞİLEMEYEN
+}, [buildings15Visible]);
+
+
+
+// BUILDINGS UNREACHABLE
+
+useEffect(() => {
+
+  const map = mapRef.current;
+
+  if (!map) return;
+
+  if (
+    buildingsUnreachableVisible &&
+    !loadedLayersRef.current["buildings-unreachable"]
+  ) {
+
+    fetch(
+      buildMapBboxEndpoint("/buildings-unreachable")
+    )
+      .then((r) => r.json())
+      .then((data) => {
+
+        map
+          .getSource("buildings-unreachable")
+          ?.setData(data);
+
+        loadedLayersRef.current[
+          "buildings-unreachable"
+        ] = true;
+      });
+  }
 
   if (map.getLayer("buildings-unreachable")) {
 
@@ -1161,14 +1243,11 @@ useEffect(() => {
     );
   }
 
-}, [
+}, [buildingsUnreachableVisible]);
 
-  buildings5Visible,
-  buildings10Visible,
-  buildings15Visible,
-  buildingsUnreachableVisible,
 
-]);
+
+// HEATMAP
 
 useEffect(() => {
 
@@ -1176,12 +1255,37 @@ useEffect(() => {
 
   if (!map) return;
 
+  if (
+    heatmapVisible &&
+    !loadedLayersRef.current["inaccessible-heatmap"]
+  ) {
+
+    fetch(
+      buildMapBboxEndpoint(
+        "/inaccessible-buildings-heatmap"
+      )
+    )
+      .then((r) => r.json())
+      .then((data) => {
+
+        map
+          .getSource("inaccessible-heatmap")
+          ?.setData(data);
+
+        loadedLayersRef.current[
+          "inaccessible-heatmap"
+        ] = true;
+      });
+  }
+
   if (map.getLayer("inaccessible-heatmap")) {
 
     map.setLayoutProperty(
       "inaccessible-heatmap",
       "visibility",
-      heatmapVisible ? "visible" : "none"
+      heatmapVisible
+        ? "visible"
+        : "none"
     );
 
     map.setPaintProperty(
@@ -1193,7 +1297,7 @@ useEffect(() => {
 
 }, [
   heatmapVisible,
-  heatmapOpacity,
+  heatmapOpacity
 ]);
 
   useEffect(() => {
