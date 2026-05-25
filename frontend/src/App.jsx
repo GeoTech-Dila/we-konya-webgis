@@ -292,12 +292,47 @@ const service15Data = EMPTY_FC;
 const service5PolyData = EMPTY_FC;
 const service10PolyData = EMPTY_FC;
 const service15PolyData = EMPTY_FC;
-const buildings3DData = EMPTY_FC;
-const buildings5Data = EMPTY_FC;
-const buildings10Data = EMPTY_FC;
-const buildings15Data = EMPTY_FC;
-const buildingsUnreachableData = EMPTY_FC;
-const inaccessibleHeatmapData = EMPTY_FC;
+const [
+  buildings3DData,
+  buildings5Data,
+  buildings10Data,
+  buildings15Data,
+  buildingsUnreachableData,
+  inaccessibleHeatmapData
+] = await Promise.all([
+
+  fetchGeojson(
+    withMapBbox("/buildings-3d"),
+    120000
+  ),
+
+  fetchGeojson(
+    withMapBbox("/buildings-5"),
+    120000
+  ),
+
+  fetchGeojson(
+    withMapBbox("/buildings-10"),
+    120000
+  ),
+
+  fetchGeojson(
+    withMapBbox("/buildings-15"),
+    120000
+  ),
+
+  fetchGeojson(
+    withMapBbox("/buildings-unreachable"),
+    120000
+  ),
+
+  fetchGeojson(
+    withMapBbox("/inaccessible-buildings-heatmap"),
+    120000
+  ),
+
+]);
+
 
       mahalleDataRef.current = mahalleData.features || [];
 
@@ -831,20 +866,17 @@ addLyr({
 
       const viewportSourcePaths = [
 
-        ["major-roads", "/layers/ana-yollar"],
-        ["service-area-5-lines", "/service-area-5-lines"],
-        ["service-area-10-lines", "/service-area-10-lines"],
-        ["service-area-15-lines", "/service-area-15-lines"],
-        ["service-area-5-polygons", "/service-area-5-polygons"],
-        ["service-area-10-polygons", "/service-area-10-polygons"],
-        ["service-area-15-polygons", "/service-area-15-polygons"],
-        ["buildings-3d", "/buildings-3d"],
-        ["buildings-5", "/buildings-5"],
-        ["buildings-10", "/buildings-10"],
-        ["buildings-15", "/buildings-15"],
-        ["buildings-unreachable", "/buildings-unreachable"],
-        ["inaccessible-heatmap", "/inaccessible-buildings-heatmap"],
-      ];
+  ["major-roads", "/layers/ana-yollar"],
+
+  ["service-area-5-lines", "/service-area-5-lines"],
+  ["service-area-10-lines", "/service-area-10-lines"],
+  ["service-area-15-lines", "/service-area-15-lines"],
+
+  ["service-area-5-polygons", "/service-area-5-polygons"],
+  ["service-area-10-polygons", "/service-area-10-polygons"],
+  ["service-area-15-polygons", "/service-area-15-polygons"],
+
+];
 
       const reloadViewportSources = () => {
   window.clearTimeout(viewportReloadTimer);
@@ -852,7 +884,7 @@ addLyr({
 
 
     Promise.all(
-      visiblePaths.map(async ([sourceId, path]) => {
+  viewportSourcePaths.map(async ([sourceId, path]) => {
         const source = map.getSource(sourceId);
         if (!source) return;
         const data = await fetchGeojson(withMapBbox(path), 60000);
