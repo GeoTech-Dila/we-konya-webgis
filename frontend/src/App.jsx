@@ -37,18 +37,23 @@ function App() {
   const [transitPointVisible, setTransitPointVisible] = useState(false);
   const [transitAreaVisible, setTransitAreaVisible] = useState(false);
   const [resilienceVisible, setResilienceVisible] = useState(false);
-  const [service5Visible, setService5Visible] = useState(true);
-const [service10Visible, setService10Visible] = useState(true);
-const [service15Visible, setService15Visible] = useState(true);
-const [buildingsVisible, setBuildingsVisible] = useState(true);
-const [buildings5Visible, setBuildings5Visible] = useState(true);
+  const [buildingsVisible, setBuildingsVisible] = useState(false);
 
-const [buildings10Visible, setBuildings10Visible] = useState(true);
+const [buildings5Visible, setBuildings5Visible] = useState(false);
 
-const [buildings15Visible, setBuildings15Visible] = useState(true);
+const [buildings10Visible, setBuildings10Visible] = useState(false);
 
-const [buildingsUnreachableVisible, setBuildingsUnreachableVisible] = useState(true);
-const [heatmapVisible, setHeatmapVisible] = useState(true);
+const [buildings15Visible, setBuildings15Visible] = useState(false);
+
+const [buildingsUnreachableVisible, setBuildingsUnreachableVisible] = useState(false);
+
+const [heatmapVisible, setHeatmapVisible] = useState(false);
+
+const [service5Visible, setService5Visible] = useState(false);
+
+const [service10Visible, setService10Visible] = useState(false);
+
+const [service15Visible, setService15Visible] = useState(false);
 
 
 
@@ -549,7 +554,7 @@ addLyr({
 
   source: "buildings-3d",
 
-  minzoom: 5,
+  minzoom: 13,
 
   paint: {
 
@@ -585,7 +590,7 @@ addLyr({
 
   source: "buildings-5",
 
-  minzoom: 5,
+  minzoom: 13,
 
   paint: {
 
@@ -610,7 +615,7 @@ addLyr({
 
   source: "buildings-10",
 
-  minzoom: 5,
+  minzoom: 13,
 
   paint: {
 
@@ -635,7 +640,7 @@ addLyr({
 
   source: "buildings-15",
 
-  minzoom: 5,
+  minzoom: 13,
 
   paint: {
 
@@ -660,7 +665,7 @@ addLyr({
 
   source: "buildings-unreachable",
 
-  minzoom: 5,
+  minzoom: 13,
 
   paint: {
 
@@ -894,7 +899,7 @@ addLyr({
   }, 450);
 };
 
-      map.on("moveend", reloadViewportSources);
+     // map.on("moveend", reloadViewportSources);
 
 reloadViewportSources(); // ← bunu ekle
       requestAnimationFrame(() => {
