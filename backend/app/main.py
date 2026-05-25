@@ -712,7 +712,7 @@ def region_summary(level: str = "district"):
             SELECT
                 m.id,
                 m.adi_numara,
-                ST_AsGeoJSON(ST_Transform(m.geom, 4326))::json AS geometry,
+                ST_AsGeoJSON(ST_Transform(ST_SimplifyPreserveTopology(m.geom, 0.001), 4326))::json AS geometry,
                 COUNT(t.id) AS toplanma_sayisi
             FROM konya_mahalleler m
             LEFT JOIN konya_toplanma t
@@ -796,21 +796,16 @@ json_build_object(
 def buildings_3d(bbox: str | None = None):
 
     where_sql, params = bbox_filter(bbox)
+
     query = text(f"""
-
         SELECT json_build_object(
-
             'type', 'FeatureCollection',
-
-            'features',
-            COALESCE(json_agg(f.feature), '[]'::json)
-
+            'features', COALESCE(json_agg(f.feature), '[]'::json)
         )
 
         FROM (
 
             SELECT json_build_object(
-
                 'type', 'Feature',
 
                 'geometry',
@@ -819,20 +814,20 @@ def buildings_3d(bbox: str | None = None):
                 )::json,
 
                 'properties',
-
                 json_build_object(
                     'id', id,
-                    'access_level', access_level,
-                    'height', 12
+                    'height',
+                    COALESCE(height, 15)
                 )
 
             ) AS feature
 
-            FROM buildings_access_levels
+            FROM konya_buildings
             {where_sql}
 
-        ) AS f;
+            LIMIT 5000
 
+        ) AS f;
     """)
 
     with engine.connect() as conn:
