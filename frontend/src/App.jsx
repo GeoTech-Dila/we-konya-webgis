@@ -172,11 +172,25 @@ const [heatmapVisible, setHeatmapVisible] = useState(true);
   };
 
   // --- GENEL LAYER TOGGLE FONKSIYONU ---
+  const buildMapBboxEndpoint = (endpoint) => {
+    const map = mapRef.current;
+    if (!map) return endpoint;
+
+    const bounds = map.getBounds();
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+    const bbox = [sw.lng, sw.lat, ne.lng, ne.lat]
+      .map((value) => value.toFixed(6))
+      .join(",");
+
+    return `${endpoint}${endpoint.includes("?") ? "&" : "?"}bbox=${bbox}`;
+  };
+
   const toggleDataLayer = async (nextVisible, setter, sourceId, layerIds, endpoint) => {
     setter(nextVisible);
     if (nextVisible && !loadedLayersRef.current[sourceId]) {
       try {
-        const res = await fetch(endpoint);
+        const res = await fetch(buildMapBboxEndpoint(endpoint));
         if (res.ok) {
           const data = await res.json();
           mapRef.current?.getSource(sourceId)?.setData(data);
@@ -238,9 +252,10 @@ const [heatmapVisible, setHeatmapVisible] = useState(true);
 
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl());
+    let viewportReloadTimer = null;
 
     map.on("load", async () => {
-      const fetchGeojson = async (path, timeoutMs = 18000) => {
+      const fetchGeojson = async (path, timeoutMs = 90000) => {
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
@@ -253,6 +268,14 @@ const [heatmapVisible, setHeatmapVisible] = useState(true);
         } finally {
           window.clearTimeout(timeoutId);
         }
+      };
+
+      const withMapBbox = (path) => {
+        const bounds = map.getBounds();
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+        const bbox = [sw.lng, sw.lat, ne.lng, ne.lat].map((value) => value.toFixed(6)).join(",");
+        return `${path}?bbox=${bbox}`;
       };
 
       const [
@@ -283,31 +306,31 @@ const [heatmapVisible, setHeatmapVisible] = useState(true);
           fetchGeojson("/ilceler"),
           fetchGeojson("/mahalleler"),
           fetchGeojson("/toplanma-alanlari"),
-          fetchGeojson("/yollar"),
-          fetchGeojson("/service-area-5-lines"),
+          fetchGeojson(withMapBbox("/yollar")),
+          fetchGeojson(withMapBbox("/service-area-5-lines")),
 
 
-fetchGeojson("/service-area-10-lines"),
+fetchGeojson(withMapBbox("/service-area-10-lines")),
 
-fetchGeojson("/service-area-15-lines"),
+fetchGeojson(withMapBbox("/service-area-15-lines")),
 
-fetchGeojson("/service-area-5-polygons"),
+fetchGeojson(withMapBbox("/service-area-5-polygons")),
 
-fetchGeojson("/service-area-10-polygons"),
+fetchGeojson(withMapBbox("/service-area-10-polygons")),
 
-fetchGeojson("/service-area-15-polygons"),
+fetchGeojson(withMapBbox("/service-area-15-polygons")),
 
-fetchGeojson("/buildings-3d"),
+fetchGeojson(withMapBbox("/buildings-3d")),
 
-fetchGeojson("/buildings-5"),
+fetchGeojson(withMapBbox("/buildings-5")),
 
-fetchGeojson("/buildings-10"),
+fetchGeojson(withMapBbox("/buildings-10")),
 
-fetchGeojson("/buildings-15"),
+fetchGeojson(withMapBbox("/buildings-15")),
 
-fetchGeojson("/buildings-unreachable"),
+fetchGeojson(withMapBbox("/buildings-unreachable")),
 
-fetchGeojson("/inaccessible-buildings-heatmap"),
+fetchGeojson(withMapBbox("/inaccessible-buildings-heatmap")),
 
         ]);
 
@@ -840,6 +863,39 @@ addLyr({
       map.setLayoutProperty("mahalle-fill", "visibility", "none");
       map.setLayoutProperty("mahalle-outline", "visibility", "none");
       map.setLayoutProperty("toplanma-points", "visibility", "visible");
+
+      const viewportSourcePaths = [
+        ["yollar", "/yollar"],
+        ["major-roads", "/layers/ana-yollar"],
+        ["service-area-5-lines", "/service-area-5-lines"],
+        ["service-area-10-lines", "/service-area-10-lines"],
+        ["service-area-15-lines", "/service-area-15-lines"],
+        ["service-area-5-polygons", "/service-area-5-polygons"],
+        ["service-area-10-polygons", "/service-area-10-polygons"],
+        ["service-area-15-polygons", "/service-area-15-polygons"],
+        ["buildings-3d", "/buildings-3d"],
+        ["buildings-5", "/buildings-5"],
+        ["buildings-10", "/buildings-10"],
+        ["buildings-15", "/buildings-15"],
+        ["buildings-unreachable", "/buildings-unreachable"],
+        ["inaccessible-heatmap", "/inaccessible-buildings-heatmap"],
+      ];
+
+      const reloadViewportSources = () => {
+        window.clearTimeout(viewportReloadTimer);
+        viewportReloadTimer = window.setTimeout(() => {
+          Promise.all(
+            viewportSourcePaths.map(async ([sourceId, path]) => {
+              const source = map.getSource(sourceId);
+              if (!source) return;
+              const data = await fetchGeojson(withMapBbox(path), 60000);
+              source.setData(data);
+            })
+          ).catch(() => {});
+        }, 450);
+      };
+
+      map.on("moveend", reloadViewportSources);
       requestAnimationFrame(() => {
 
   requestAnimationFrame(() => {
@@ -853,6 +909,7 @@ addLyr({
 
     return () => {
 
+      window.clearTimeout(viewportReloadTimer);
       map.remove();
     };
   }, []);
@@ -879,7 +936,7 @@ addLyr({
     if (!map || !map.getLayer("mahalle-outline")) return;
     map.setLayoutProperty("mahalle-outline", "visibility", mahalleVisible ? "visible" : "none");
     map.setLayoutProperty("mahalle-fill", "visibility", mahalleVisible ? "visible" : "none");
-    map.setLayoutProperty("resilience-neighborhood-fill", "visibility", mahalleVisible ? "visible" : "none");
+
     if (mahalleVisible) loadRegionSummary("neighborhood").catch(() => {});
   }, [mahalleVisible]);
 
