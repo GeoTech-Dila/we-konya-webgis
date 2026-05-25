@@ -278,61 +278,25 @@ const [heatmapVisible, setHeatmapVisible] = useState(true);
         return `${path}?bbox=${bbox}`;
       };
 
-      const [
+      const [ilceData, mahalleData, toplanmaData] = await Promise.all([
+  fetchGeojson("/ilceler"),
+  fetchGeojson("/mahalleler"),
+  fetchGeojson("/toplanma-alanlari"),
+]);
 
-  ilceData,
-  mahalleData,
-  toplanmaData,
-  yollarData,
-
-  service5Data,
-  service10Data,
-  service15Data,
-
-  service5PolyData,
-  service10PolyData,
-  service15PolyData,
-
-  buildings3DData,
-  buildings5Data,
-  buildings10Data,
-  buildings15Data,
-  buildingsUnreachableData,
-
-  inaccessibleHeatmapData,
-
-] = await Promise.all([
-
-          fetchGeojson("/ilceler"),
-          fetchGeojson("/mahalleler"),
-          fetchGeojson("/toplanma-alanlari"),
-          fetchGeojson(withMapBbox("/yollar")),
-          fetchGeojson(withMapBbox("/service-area-5-lines")),
-
-
-fetchGeojson(withMapBbox("/service-area-10-lines")),
-
-fetchGeojson(withMapBbox("/service-area-15-lines")),
-
-fetchGeojson(withMapBbox("/service-area-5-polygons")),
-
-fetchGeojson(withMapBbox("/service-area-10-polygons")),
-
-fetchGeojson(withMapBbox("/service-area-15-polygons")),
-
-fetchGeojson(withMapBbox("/buildings-3d")),
-
-fetchGeojson(withMapBbox("/buildings-5")),
-
-fetchGeojson(withMapBbox("/buildings-10")),
-
-fetchGeojson(withMapBbox("/buildings-15")),
-
-fetchGeojson(withMapBbox("/buildings-unreachable")),
-
-fetchGeojson(withMapBbox("/inaccessible-buildings-heatmap")),
-
-        ]);
+const yollarData = EMPTY_FC;
+const service5Data = EMPTY_FC;
+const service10Data = EMPTY_FC;
+const service15Data = EMPTY_FC;
+const service5PolyData = EMPTY_FC;
+const service10PolyData = EMPTY_FC;
+const service15PolyData = EMPTY_FC;
+const buildings3DData = EMPTY_FC;
+const buildings5Data = EMPTY_FC;
+const buildings10Data = EMPTY_FC;
+const buildings15Data = EMPTY_FC;
+const buildingsUnreachableData = EMPTY_FC;
+const inaccessibleHeatmapData = EMPTY_FC;
 
       mahalleDataRef.current = mahalleData.features || [];
 
