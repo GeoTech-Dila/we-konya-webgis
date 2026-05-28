@@ -178,24 +178,42 @@ const [service15Visible, setService15Visible] = useState(false);
 
   // --- GENEL LAYER TOGGLE FONKSIYONU ---
   const buildMapBboxEndpoint = (endpoint) => {
-    const map = mapRef.current;
-    if (!map) return endpoint;
 
-    const bounds = map.getBounds();
-    const sw = bounds.getSouthWest();
-    const ne = bounds.getNorthEast();
-    const bbox = [sw.lng, sw.lat, ne.lng, ne.lat]
-      .map((value) => value.toFixed(6))
-      .join(",");
+  const map = mapRef.current;
 
-    return `${endpoint}${endpoint.includes("?") ? "&" : "?"}bbox=${bbox}`;
-  };
+  if (!map) return endpoint;
+
+  const bounds = map.getBounds();
+
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+
+  const bbox = [
+    sw.lng,
+    sw.lat,
+    ne.lng,
+    ne.lat
+  ]
+    .map((value) => value.toFixed(6))
+    .join(",");
+
+  const separator =
+    endpoint.includes("?")
+      ? "&"
+      : "?";
+
+  return `${endpoint}${separator}bbox=${bbox}`;
+};
 
   const toggleDataLayer = async (nextVisible, setter, sourceId, layerIds, endpoint) => {
     setter(nextVisible);
     if (nextVisible && !loadedLayersRef.current[sourceId]) {
       try {
-        const res = await fetch(buildMapBboxEndpoint(endpoint));
+        const res = await fetch(
+  endpoint.startsWith("http")
+    ? buildMapBboxEndpoint(endpoint)
+    : `${API_URL}${buildMapBboxEndpoint(endpoint)}`
+);
         if (res.ok) {
           const data = await res.json();
           mapRef.current?.getSource(sourceId)?.setData(data);
@@ -1849,16 +1867,16 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
             { label: "Mahalle Sınırları", color: "#2563eb", checked: mahalleVisible, onChange: () => setMahalleVisible((v) => !v), type: "line", opacity: mahalleOpacity, onOpacity: (v) => setMahalleOpacity(v) },
             { label: "Toplanma Alanları", color: "#16a34a", checked: toplanmaVisible, onChange: () => setToplanmaVisible((v) => !v), type: "point", opacity: toplanmaOpacity, onOpacity: (v) => setToplanmaOpacity(v) },
             { label: "Yol Ağı", color: "#f59e0b", checked: yollarVisible, onChange: () => setYollarVisible((v) => !v), type: "line", opacity: yollarOpacity, onOpacity: (v) => setYollarOpacity(v) },
-            { label: "Fay Hatları", color: "#dc2626", checked: faultVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!faultVisible, setFaultVisible, "fault-lines", ["fault-lines-line"], `${API_URL}/layers/fay-hatlari`) },
-            { label: "Obruklar", color: "#7c2d12", checked: sinkholeVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!sinkholeVisible, setSinkholeVisible, "sinkholes", ["sinkholes-point"], `${API_URL}/layers/obruklar`) },
-            { label: "Kritik Tesisler", color: "#64748b", checked: facilityVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!facilityVisible, setFacilityVisible, "critical-facilities", ["critical-facilities-point"], `${API_URL}/layers/kritik-tesisler`) },
-            { label: "Ana Yollar", color: "#64748b", checked: roadVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!roadVisible, setRoadVisible, "major-roads", ["major-roads-line"], `${API_URL}/layers/ana-yollar`) },
-            { label: "İl Sınırı", color: "#0f172a", checked: provinceBoundaryVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!provinceBoundaryVisible, setProvinceBoundaryVisible, "province-boundary", ["province-boundary-line"], `${API_URL}/layers/il-siniri`) },
-            { label: "Parklar", color: "#22c55e", checked: parksVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!parksVisible, setParksVisible, "parks", ["parks-fill", "parks-outline"], `${API_URL}/layers/parklar`) },
-            { label: "Kolluk", color: "#2563eb", checked: lawVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!lawVisible, setLawVisible, "law-enforcement", ["law-enforcement-point"], `${API_URL}/layers/kolluk`) },
-            { label: "Sağlık Noktaları", color: "#0891b2", checked: healthPointVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!healthPointVisible, setHealthPointVisible, "health-points", ["health-points-point"], `${API_URL}/layers/saglik-nokta`) },
-            { label: "Sağlık Alanları", color: "#06b6d4", checked: healthAreaVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!healthAreaVisible, setHealthAreaVisible, "health-areas", ["health-areas-fill", "health-areas-outline"], `${API_URL}/layers/saglik-alan`) },
-            { label: "Toplu Ulaşım Noktaları", color: "#9333ea", checked: transitPointVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!transitPointVisible, setTransitPointVisible, "transit-points", ["transit-points-point"], `${API_URL}/layers/toplu-ulasim-nokta`) },
+            { label: "Fay Hatları", color: "#dc2626", checked: faultVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!faultVisible, setFaultVisible, "fault-lines", ["fault-lines-line"], "/layers/fay-hatlari") },
+            { label: "Obruklar", color: "#7c2d12", checked: sinkholeVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!sinkholeVisible, setSinkholeVisible, "sinkholes", ["sinkholes-point"], `/layers/obruklar`) },
+            { label: "Kritik Tesisler", color: "#64748b", checked: facilityVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!facilityVisible, setFacilityVisible, "critical-facilities", ["critical-facilities-point"], `/layers/kritik-tesisler`) },
+            { label: "Ana Yollar", color: "#64748b", checked: roadVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!roadVisible, setRoadVisible, "major-roads", ["major-roads-line"], `/layers/ana-yollar`) },
+            { label: "İl Sınırı", color: "#0f172a", checked: provinceBoundaryVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!provinceBoundaryVisible, setProvinceBoundaryVisible, "province-boundary", ["province-boundary-line"], `/layers/il-siniri`) },
+            { label: "Parklar", color: "#22c55e", checked: parksVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!parksVisible, setParksVisible, "parks", ["parks-fill", "parks-outline"], `/layers/parklar`) },
+            { label: "Kolluk", color: "#2563eb", checked: lawVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!lawVisible, setLawVisible, "law-enforcement", ["law-enforcement-point"], `/layers/kolluk`) },
+            { label: "Sağlık Noktaları", color: "#0891b2", checked: healthPointVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!healthPointVisible, setHealthPointVisible, "health-points", ["health-points-point"], `/layers/saglik-nokta`) },
+            { label: "Sağlık Alanları", color: "#06b6d4", checked: healthAreaVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!healthAreaVisible, setHealthAreaVisible, "health-areas", ["health-areas-fill", "health-areas-outline"], `/layers/saglik-alan`) },
+            { label: "Toplu Ulaşım Noktaları", color: "#9333ea", checked: transitPointVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!transitPointVisible, setTransitPointVisible, "transit-points", ["transit-points-point"], `/layers/toplu-ulasim-nokta`) },
             {
   label: "3D Binalar",
   color: "#d1d5db",
@@ -1874,7 +1892,21 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
       (v) => !v
     ),
 },
-            { label: "Toplu Ulaşım Alanları", color: "#a855f7", checked: transitAreaVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!transitAreaVisible, setTransitAreaVisible, "transit-areas", ["transit-areas-fill", "transit-areas-outline"], `${API_URL}/layers/toplu-ulasim-alan`) },
+            {
+  label: "Toplu Ulaşım Alanları",
+  color: "#a855f7",
+  checked: transitAreaVisible,
+  type: "point",
+  opacity: null,
+  onChange: () =>
+    toggleDataLayer(
+      !transitAreaVisible,
+      setTransitAreaVisible,
+      "transit-areas",
+      ["transit-areas-fill", "transit-areas-outline"],
+      "/layers/toplu-ulasim-alan"
+    ),
+},
             {
               label: "Acil Durum Noktaları",
               color: "#f97316",
