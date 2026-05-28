@@ -506,14 +506,19 @@ addLyr({
   },
 });
 
-      addLyr({
+     addLyr({
+
   id: "buildings-3d",
 
   type: "fill-extrusion",
 
   source: "buildings-3d",
 
-  minzoom: 13,
+  minzoom: 9,
+
+  layout: {
+    visibility: "none"
+  },
 
   paint: {
 
@@ -549,7 +554,12 @@ addLyr({
 
   source: "buildings-5",
 
-  minzoom: 13,
+  minzoom: 9,
+
+
+  layout: {
+    visibility: "none"
+  },
 
   paint: {
 
@@ -574,7 +584,11 @@ addLyr({
 
   source: "buildings-10",
 
-  minzoom: 13,
+  minzoom: 9,
+
+  layout: {
+    visibility: "none"
+  },
 
   paint: {
 
@@ -599,7 +613,11 @@ addLyr({
 
   source: "buildings-15",
 
-  minzoom: 13,
+  minzoom: 9,
+
+  layout: {
+    visibility: "none"
+  },
 
   paint: {
 
@@ -624,7 +642,11 @@ addLyr({
 
   source: "buildings-unreachable",
 
-  minzoom: 13,
+  minzoom: 9,
+
+  layout: {
+    visibility: "none"
+  },
 
   paint: {
 
@@ -1030,10 +1052,10 @@ useEffect(() => {
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map?.getLayer("service-5-line")) return;
-    map.setPaintProperty("service-5-line", "line-opacity", serviceOpacity);
-    map.setPaintProperty("service-10-line", "line-opacity", serviceOpacity);
-    map.setPaintProperty("service-15-line", "line-opacity", serviceOpacity);
+    if (!map?.getLayer("service-area-5-line")) return;
+    map.setPaintProperty("service-area-5-line", "line-opacity", serviceOpacity);
+    map.setPaintProperty("service-area-10-line", "line-opacity", serviceOpacity);
+    map.setPaintProperty("service-area-15-line", "line-opacity", serviceOpacity);
   }, [serviceOpacity]);
 
   useEffect(() => {
@@ -1073,8 +1095,9 @@ useEffect(() => {
   ) {
 
     fetch(
-      buildMapBboxEndpoint("/buildings-3d")
-    )
+  API_URL +
+  buildMapBboxEndpoint("/buildings-3d")
+)
       .then((r) => r.json())
       .then((data) => {
 
@@ -1107,8 +1130,9 @@ useEffect(() => {
   ) {
 
     fetch(
-      buildMapBboxEndpoint("/buildings-5")
-    )
+  API_URL +
+  buildMapBboxEndpoint("/buildings-5")
+)
       .then((r) => r.json())
       .then((data) => {
 
@@ -1151,8 +1175,9 @@ useEffect(() => {
   ) {
 
     fetch(
-      buildMapBboxEndpoint("/buildings-10")
-    )
+  API_URL +
+  buildMapBboxEndpoint("/buildings-10")
+)
       .then((r) => r.json())
       .then((data) => {
 
@@ -1195,8 +1220,9 @@ useEffect(() => {
   ) {
 
     fetch(
-      buildMapBboxEndpoint("/buildings-15")
-    )
+  API_URL +
+  buildMapBboxEndpoint("/buildings-15")
+)
       .then((r) => r.json())
       .then((data) => {
 
@@ -1239,8 +1265,9 @@ useEffect(() => {
   ) {
 
     fetch(
-      buildMapBboxEndpoint("/buildings-unreachable")
-    )
+  API_URL +
+  buildMapBboxEndpoint("/buildings-unreachable")
+)
       .then((r) => r.json())
       .then((data) => {
 
@@ -1283,10 +1310,11 @@ useEffect(() => {
   ) {
 
     fetch(
-      buildMapBboxEndpoint(
-        "/inaccessible-buildings-heatmap"
-      )
-    )
+  API_URL +
+  buildMapBboxEndpoint(
+    "/inaccessible-buildings-heatmap"
+  )
+)
       .then((r) => r.json())
       .then((data) => {
 
