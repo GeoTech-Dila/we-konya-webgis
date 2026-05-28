@@ -1048,6 +1048,8 @@ useEffect(() => {
 
   if (!map) return;
 
+  // visibility
+
   if (map.getLayer("buildings-3d")) {
 
     map.setLayoutProperty(
@@ -1061,6 +1063,29 @@ useEffect(() => {
       "fill-extrusion-opacity",
       buildingsOpacity
     );
+  }
+
+  // DATA LOAD
+
+  if (
+    buildingsVisible &&
+    !loadedLayersRef.current["buildings-3d"]
+  ) {
+
+    fetch(
+      buildMapBboxEndpoint("/buildings-3d")
+    )
+      .then((r) => r.json())
+      .then((data) => {
+
+        map
+          .getSource("buildings-3d")
+          ?.setData(data);
+
+        loadedLayersRef.current[
+          "buildings-3d"
+        ] = true;
+      });
   }
 
 }, [
