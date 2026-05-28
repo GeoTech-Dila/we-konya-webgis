@@ -514,7 +514,7 @@ addLyr({
 
   source: "buildings-3d",
 
-  minzoom: 9,
+  minzoom: 8,
 
   layout: {
     visibility: "none"
@@ -554,7 +554,7 @@ addLyr({
 
   source: "buildings-5",
 
-  minzoom: 9,
+  minzoom: 8,
 
 
   layout: {
@@ -584,7 +584,7 @@ addLyr({
 
   source: "buildings-10",
 
-  minzoom: 9,
+  minzoom: 8,
 
   layout: {
     visibility: "none"
@@ -613,7 +613,7 @@ addLyr({
 
   source: "buildings-15",
 
-  minzoom: 9,
+  minzoom: 8,
 
   layout: {
     visibility: "none"
@@ -642,7 +642,7 @@ addLyr({
 
   source: "buildings-unreachable",
 
-  minzoom: 9,
+  minzoom: 8,
 
   layout: {
     visibility: "none"
