@@ -182,9 +182,12 @@ def service_area_15_polygons(bbox: str | None = None):
                 'type', 'Feature',
 
                 'geometry',
-                ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
-                )::json,
+ST_AsGeoJSON(
+    ST_Simplify(
+        ST_Transform(geom, 4326),
+        0.00005
+    )
+)::json,
 
                 'properties',
                 json_build_object(
@@ -219,9 +222,12 @@ def service_area_10_polygons(bbox: str | None = None):
                 'type', 'Feature',
 
                 'geometry',
-                ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
-                )::json,
+ST_AsGeoJSON(
+    ST_Simplify(
+        ST_Transform(geom, 4326),
+        0.00005
+    )
+)::json,
 
                 'properties',
                 json_build_object(
@@ -809,9 +815,12 @@ def buildings_3d(bbox: str | None = None):
                 'type', 'Feature',
 
                 'geometry',
-                ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
-                )::json,
+ST_AsGeoJSON(
+    ST_Simplify(
+        ST_Transform(geom, 4326),
+        0.00005
+    )
+)::json,
 
                 'properties',
                 json_build_object(
@@ -825,7 +834,7 @@ def buildings_3d(bbox: str | None = None):
             FROM konya_buildings
             {where_sql}
 
-            LIMIT 5000
+            LIMIT 3000
 
         ) AS f;
     """)
@@ -855,9 +864,12 @@ def inaccessible_buildings_heatmap(bbox: str | None = None):
                 'type', 'Feature',
 
                 'geometry',
-                ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
-                )::json,
+ST_AsGeoJSON(
+    ST_Simplify(
+        ST_Transform(geom, 4326),
+        0.00005
+    )
+)::json,
 
                 'properties',
 
@@ -883,6 +895,7 @@ def inaccessible_buildings_heatmap(bbox: str | None = None):
 def buildings_5(bbox: str | None = None):
 
     where_sql, params = bbox_filter(bbox)
+
     query = text(f"""
 
         SELECT json_build_object(
@@ -902,7 +915,12 @@ def buildings_5(bbox: str | None = None):
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
+
+                    ST_Simplify(
+                        ST_Transform(geom, 4326),
+                        0.00005
+                    )
+
                 )::json,
 
                 'properties',
@@ -915,7 +933,10 @@ def buildings_5(bbox: str | None = None):
             ) AS feature
 
             FROM buildings_5
+
             {where_sql}
+
+            LIMIT 3000
 
         ) AS f;
 
@@ -929,6 +950,7 @@ def buildings_5(bbox: str | None = None):
 def buildings_10(bbox: str | None = None):
 
     where_sql, params = bbox_filter(bbox)
+
     query = text(f"""
 
         SELECT json_build_object(
@@ -948,7 +970,12 @@ def buildings_10(bbox: str | None = None):
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
+
+                    ST_Simplify(
+                        ST_Transform(geom, 4326),
+                        0.00005
+                    )
+
                 )::json,
 
                 'properties',
@@ -961,7 +988,10 @@ def buildings_10(bbox: str | None = None):
             ) AS feature
 
             FROM buildings_10
+
             {where_sql}
+
+            LIMIT 3000
 
         ) AS f;
 
@@ -974,6 +1004,7 @@ def buildings_10(bbox: str | None = None):
 def buildings_15(bbox: str | None = None):
 
     where_sql, params = bbox_filter(bbox)
+
     query = text(f"""
 
         SELECT json_build_object(
@@ -993,7 +1024,12 @@ def buildings_15(bbox: str | None = None):
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
+
+                    ST_Simplify(
+                        ST_Transform(geom, 4326),
+                        0.00005
+                    )
+
                 )::json,
 
                 'properties',
@@ -1006,7 +1042,10 @@ def buildings_15(bbox: str | None = None):
             ) AS feature
 
             FROM buildings_15
+
             {where_sql}
+
+            LIMIT 3000
 
         ) AS f;
 
@@ -1019,6 +1058,7 @@ def buildings_15(bbox: str | None = None):
 def buildings_unreachable(bbox: str | None = None):
 
     where_sql, params = bbox_filter(bbox)
+
     query = text(f"""
 
         SELECT json_build_object(
@@ -1038,7 +1078,12 @@ def buildings_unreachable(bbox: str | None = None):
 
                 'geometry',
                 ST_AsGeoJSON(
-                    ST_Transform(geom, 4326)
+
+                    ST_Simplify(
+                        ST_Transform(geom, 4326),
+                        0.00005
+                    )
+
                 )::json,
 
                 'properties',
@@ -1051,7 +1096,10 @@ def buildings_unreachable(bbox: str | None = None):
             ) AS feature
 
             FROM buildings_unreachable
+
             {where_sql}
+
+            LIMIT 3000
 
         ) AS f;
 
