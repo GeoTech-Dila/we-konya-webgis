@@ -823,10 +823,10 @@ ST_AsGeoJSON(
             ) AS feature
 
             FROM konya_buildings
-            WHERE geom IS NOT NULL
-            {where_sql}
 
-            LIMIT 3000
+{where_sql}
+
+LIMIT 3000
 
         ) AS f;
     """)
