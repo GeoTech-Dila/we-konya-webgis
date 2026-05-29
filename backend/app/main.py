@@ -817,7 +817,7 @@ ST_AsGeoJSON(
                 json_build_object(
                     'id', id,
                     'height',
-                    COALESCE(height, 15)
+15
                 )
 
             ) AS feature
