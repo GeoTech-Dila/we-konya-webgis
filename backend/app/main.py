@@ -183,10 +183,7 @@ def service_area_15_polygons(bbox: str | None = None):
 
                 'geometry',
 ST_AsGeoJSON(
-    ST_Simplify(
-        ST_Transform(geom, 4326),
-        0.00005
-    )
+    ST_Transform(geom, 4326)
 )::json,
 
                 'properties',
@@ -223,10 +220,7 @@ def service_area_10_polygons(bbox: str | None = None):
 
                 'geometry',
 ST_AsGeoJSON(
-    ST_Simplify(
-        ST_Transform(geom, 4326),
-        0.00005
-    )
+    ST_Transform(geom, 4326)
 )::json,
 
                 'properties',
@@ -816,10 +810,7 @@ def buildings_3d(bbox: str | None = None):
 
                 'geometry',
 ST_AsGeoJSON(
-    ST_Simplify(
-        ST_Transform(geom, 4326),
-        0.00005
-    )
+    ST_Transform(geom, 4326)
 )::json,
 
                 'properties',
@@ -832,6 +823,7 @@ ST_AsGeoJSON(
             ) AS feature
 
             FROM konya_buildings
+            WHERE geom IS NOT NULL
             {where_sql}
 
             LIMIT 3000
@@ -865,10 +857,7 @@ def inaccessible_buildings_heatmap(bbox: str | None = None):
 
                 'geometry',
 ST_AsGeoJSON(
-    ST_Simplify(
-        ST_Transform(geom, 4326),
-        0.00005
-    )
+    ST_Transform(geom, 4326)
 )::json,
 
                 'properties',
@@ -916,10 +905,7 @@ def buildings_5(bbox: str | None = None):
                 'geometry',
                 ST_AsGeoJSON(
 
-                    ST_Simplify(
-                        ST_Transform(geom, 4326),
-                        0.00005
-                    )
+                    ST_Transform(geom, 4326)
 
                 )::json,
 
@@ -971,10 +957,7 @@ def buildings_10(bbox: str | None = None):
                 'geometry',
                 ST_AsGeoJSON(
 
-                    ST_Simplify(
-                        ST_Transform(geom, 4326),
-                        0.00005
-                    )
+                    ST_Transform(geom, 4326)
 
                 )::json,
 
@@ -1025,10 +1008,7 @@ def buildings_15(bbox: str | None = None):
                 'geometry',
                 ST_AsGeoJSON(
 
-                    ST_Simplify(
-                        ST_Transform(geom, 4326),
-                        0.00005
-                    )
+                    ST_Transform(geom, 4326)
 
                 )::json,
 
@@ -1079,10 +1059,7 @@ def buildings_unreachable(bbox: str | None = None):
                 'geometry',
                 ST_AsGeoJSON(
 
-                    ST_Simplify(
-                        ST_Transform(geom, 4326),
-                        0.00005
-                    )
+                    ST_Transform(geom, 4326)
 
                 )::json,
 
