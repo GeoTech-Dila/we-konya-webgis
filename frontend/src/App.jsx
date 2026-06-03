@@ -1452,19 +1452,29 @@ useEffect(() => {
 }, [activeAnalysisLayer]);
 
   const focusEmergencyEvent = async (feature) => {
-    const map = mapRef.current;
-    const coords = feature.geometry?.coordinates;
-    if (!map || !coords) return;
-    await loadEmergencyData(map);
-    setEmergencyVisible(true);
+  const map = mapRef.current;
+  const coords = feature.geometry?.coordinates;
+  if (!map || !coords) return;
+
+  await loadEmergencyData(map);
+  setEmergencyVisible(true);
+
+  // Katmanı görünür yap
+  if (map.getLayer("emergency-points-circle")) {
     map.setLayoutProperty("emergency-points-circle", "visibility", "visible");
-    setSelectedEmergencyId(feature.properties?.kayit_id);
-    map.flyTo({ center: coords, zoom: 14, speed: 0.9 });
-    new maplibregl.Popup({ closeButton: true })
-      .setLngLat(coords)
-      .setHTML(`<div style="max-width:240px"><strong>${feature.properties?.birincil_etiket || ""}</strong><p style="font-size:12px;color:#475569;margin:4px 0 0">${feature.properties?.konum_adi || ""}</p></div>`)
-      .addTo(map);
-  };
+  }
+  if (map.getLayer("emergency-heatmap")) {
+    map.setLayoutProperty("emergency-heatmap", "visibility", "visible");
+  }
+
+  setSelectedEmergencyId(feature.properties?.kayit_id);
+  map.flyTo({ center: coords, zoom: 14, speed: 0.9 });
+
+  new maplibregl.Popup({ closeButton: true })
+    .setLngLat(coords)
+    .setHTML(`<div style="max-width:240px"><strong>${feature.properties?.birincil_etiket || ""}</strong><p style="font-size:12px;color:#475569;margin:4px 0 0">${feature.properties?.konum_adi || ""}</p></div>`)
+    .addTo(map);
+};
 
   const focusRankedRegion = (feature) => {
     const map = mapRef.current;
@@ -1852,8 +1862,34 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                     {emergencyCategories.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-                <div style={{ flex: 1, overflowY: "auto", padding: "0 8px 8px", display: "grid", gap: "6px" }}>
-                  {visibleEvents.map((f) => (
+
+                <div
+  style={{
+    background: "red",
+    color: "white",
+    padding: "8px",
+    margin: "8px",
+    borderRadius: "8px",
+    fontSize: "12px"
+  }}
+>
+  Kategori: {emergencyCategory}
+  <br />
+  Filtrelenen: {filteredEvents.length}
+  <br />
+  Toplam: {emergencyFeatures.length}
+</div>
+
+<div
+  style={{
+    flex: 1,
+    overflowY: "auto",
+    padding: "0 8px 8px",
+    display: "grid",
+    gap: "6px"
+  }}
+>
+  {visibleEvents.map((f) => (
                     <button key={f.properties?.kayit_id || Math.random()}
                       onClick={() => focusEmergencyEvent(f)}
                       style={{
