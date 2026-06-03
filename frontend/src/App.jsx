@@ -176,6 +176,25 @@ const [service15Visible, setService15Visible] = useState(false);
     }
   };
 
+  const loadMahalleData = async (map = mapRef.current) => {
+    if (loadedLayersRef.current["mahalleler"]) {
+      return loadedLayersRef.current["mahalleler"];
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/mahalleler`);
+      if (!res.ok) return EMPTY_FC;
+
+      const data = await res.json();
+      mahalleDataRef.current = data.features || [];
+      map?.getSource("mahalleler")?.setData(data);
+      loadedLayersRef.current["mahalleler"] = data;
+      return data;
+    } catch {
+      return EMPTY_FC;
+    }
+  };
+
   // --- GENEL LAYER TOGGLE FONKSIYONU ---
   const buildMapBboxEndpoint = (endpoint) => {
 
@@ -301,14 +320,13 @@ const [service15Visible, setService15Visible] = useState(false);
         return `${path}?bbox=${bbox}`;
       };
 
-      const [ilceData, mahalleData, toplanmaData] = await Promise.all([
+      const [ilceData, toplanmaData] = await Promise.all([
   fetchGeojson("/ilceler"),
-  fetchGeojson("/mahalleler"),
   fetchGeojson("/toplanma-alanlari"),
 ]);
 
-const yollarData =
-  await fetchGeojson("/yollar");
+const mahalleData = EMPTY_FC;
+const yollarData = EMPTY_FC;
 const service5Data = EMPTY_FC;
 const service10Data = EMPTY_FC;
 const service15Data = EMPTY_FC;
@@ -316,7 +334,7 @@ const service5PolyData = EMPTY_FC;
 const service10PolyData = EMPTY_FC;
 const service15PolyData = EMPTY_FC;
 
-      mahalleDataRef.current = mahalleData.features || [];
+      mahalleDataRef.current = [];
 
       const addSrc = (id, cfg) => {
         if (!map.getSource(id)) map.addSource(id, cfg);
@@ -947,7 +965,10 @@ reloadViewportSources();
     map.setLayoutProperty("mahalle-outline", "visibility", mahalleVisible ? "visible" : "none");
     map.setLayoutProperty("mahalle-fill", "visibility", mahalleVisible ? "visible" : "none");
 
-    if (mahalleVisible) loadRegionSummary("neighborhood").catch(() => {});
+    if (mahalleVisible) {
+      loadMahalleData(map).catch(() => {});
+      loadRegionSummary("neighborhood").catch(() => {});
+    }
   }, [mahalleVisible]);
 
   useEffect(() => {
@@ -1639,8 +1660,12 @@ useEffect(() => {
             placeholder="Mahalle ara..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            onKeyDown={(e) => {
+            onKeyDown={async (e) => {
               if (e.key !== "Enter") return;
+              if (!mahalleDataRef.current?.length) {
+                await loadMahalleData();
+              }
+
               const found = mahalleDataRef.current?.find((m) => m.properties.adi_numara?.toLowerCase().includes(searchText.toLowerCase()));
               if (!found) return;
               const coords = found.geometry.type === "Polygon" ? found.geometry.coordinates[0] : found.geometry.coordinates[0][0];
