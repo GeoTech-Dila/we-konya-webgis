@@ -1945,6 +1945,17 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                         border: `1px solid ${selectedEmergencyId === f.properties?.kayit_id ? "#f97316" : "rgba(255,255,255,0.12)"}`,
                         borderRadius: "10px", padding: "10px", textAlign: "left", cursor: "pointer", color: "inherit"
                       }}>
+
+                  <div
+      style={{
+        background: "lime",
+        color: "black",
+        fontWeight: "bold",
+        padding: "4px"
+      }}
+    >
+      INDEX = {i}
+    </div>
                   <div
   style={{
     color: "green",
