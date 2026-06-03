@@ -201,6 +201,24 @@ if (cached) {
       if (!res.ok) return;
       const raw = await res.json();
       const data = normalizeEmergencyGeojson(raw);
+      console.log(
+  "ILK KAYIT",
+  data.features[0]?.properties
+);
+
+console.log(
+  "YANGIN ORNEK",
+  data.features.find(
+    x => x.properties?.birincil_etiket === "YANGIN"
+  )?.properties
+);
+
+console.log(
+  "ARAMA ORNEK",
+  data.features.find(
+    x => x.properties?.birincil_etiket === "ARAMA_KURTARMA"
+  )?.properties
+);
       setEmergencyFeatures(data.features);
       map?.getSource("emergency-points")?.setData(data);
       loadedLayersRef.current["emergency-points"] = data;
@@ -1830,7 +1848,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
           <div style={{ fontSize: "16px", fontWeight: "700" }}>
-            {activeSideTab === "events" ? "Acil Olaylar" : "Dirençlilik Sıralaması"}
+            {activeSideTab === "events" ? "Acil Olaylar TEST 999" : "Dirençlilik Sıralaması"}
           </div>
           <button onClick={() => setEventsPanelOpen((p) => !p)}
             style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "18px", color: "#64748b" }}>
