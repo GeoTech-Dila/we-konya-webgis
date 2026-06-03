@@ -880,6 +880,13 @@ addLyr({
   ["service-area-10-polygons", "/service-area-10-polygons"],
   ["service-area-15-polygons", "/service-area-15-polygons"],
 
+  ["buildings-3d", "/buildings-3d"],
+  ["buildings-5", "/buildings-5"],
+  ["buildings-10", "/buildings-10"],
+  ["buildings-15", "/buildings-15"],
+  ["buildings-unreachable", "/buildings-unreachable"],
+  ["inaccessible-heatmap", "/inaccessible-buildings-heatmap"],
+
 ];
 
       const reloadViewportSources = () => {
@@ -897,10 +904,8 @@ addLyr({
     ).catch(() => {});
   }, 450);
 };
-
-     // map.on("moveend", reloadViewportSources);
-
-reloadViewportSources(); // ← bunu ekle
+map.on("moveend", reloadViewportSources);
+reloadViewportSources();
       requestAnimationFrame(() => {
 
   requestAnimationFrame(() => {
@@ -2091,3 +2096,4 @@ function normalizeEmergencyGeojson(data) {
 }
 
 export default App;
+

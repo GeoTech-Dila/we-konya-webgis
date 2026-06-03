@@ -56,7 +56,12 @@ def bbox_filter(bbox):
         )
 
     return (
-        "WHERE geom && ST_MakeEnvelope(:minx, :miny, :maxx, :maxy, 4326)",
+        """
+        WHERE ST_Intersects(
+            ST_Transform(geom, 4326),
+            ST_MakeEnvelope(:minx, :miny, :maxx, :maxy, 4326)
+        )
+        """,
         {"minx": minx, "miny": miny, "maxx": maxx, "maxy": maxy},
     )
 
