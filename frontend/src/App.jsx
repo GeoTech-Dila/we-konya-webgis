@@ -187,12 +187,15 @@ const [service15Visible, setService15Visible] = useState(false);
 
   // --- ACIL DURUM VERISI ---
   const loadEmergencyData = async (map = mapRef.current) => {
-    const cached = loadedLayersRef.current["emergency-points"];
-    if (cached) {
-      setEmergencyFeatures(cached.features || []);
-      map?.getSource("emergency-points")?.setData(cached);
-      return;
-    }
+    /*
+const cached = loadedLayersRef.current["emergency-points"];
+
+if (cached) {
+  setEmergencyFeatures(cached.features || []);
+  map?.getSource("emergency-points")?.setData(cached);
+  return;
+}
+*/
     try {
       const res = await fetch(`${API_URL}/layers/acil-durum`);
       if (!res.ok) return;
