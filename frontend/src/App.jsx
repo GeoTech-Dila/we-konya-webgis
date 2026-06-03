@@ -1889,6 +1889,18 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
     gap: "6px"
   }}
 >
+    <div
+    style={{
+      background: "blue",
+      color: "white",
+      padding: "8px",
+      borderRadius: "8px"
+    }}
+  >
+    İlk kayıt:
+    {visibleEvents[0]?.properties?.birincil_etiket}
+  </div>
+
   {visibleEvents.map((f) => (
                     <button key={f.properties?.kayit_id || Math.random()}
                       onClick={() => focusEmergencyEvent(f)}
