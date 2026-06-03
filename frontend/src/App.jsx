@@ -1911,16 +1911,20 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
   }}
 >
     <div
-    style={{
-      background: "blue",
-      color: "white",
-      padding: "8px",
-      borderRadius: "8px"
-    }}
-  >
-    İlk kayıt:
-    {visibleEvents[0]?.properties?.birincil_etiket}
-  </div>
+  style={{
+    background: "blue",
+    color: "white",
+    padding: "8px",
+    borderRadius: "8px",
+    fontSize: "10px"
+  }}
+>
+  {JSON.stringify(
+    visibleEvents[0]?.properties,
+    null,
+    2
+  )}
+</div>
 
   {visibleEvents.map((f, i) => (
                     <button
@@ -1934,8 +1938,8 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                         borderRadius: "10px", padding: "10px", textAlign: "left", cursor: "pointer", color: "inherit"
                       }}>
                   <div style={{ color: "green", fontSize: "11px" }}>
-      TEST: {i} - {f.properties?.birincil_etiket}
-    </div>
+  TEST: {i} - {f.properties?.birincil_etiket}
+</div>
                       <div style={{ fontSize: "11px", fontWeight: "750", color: emergencyCategoryColors[f.properties?.birincil_etiket] || "#f97316", marginBottom: "4px" }}>
                         {f.properties?.birincil_etiket || "Kategori yok"}
                       </div>
