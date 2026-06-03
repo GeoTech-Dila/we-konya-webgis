@@ -90,6 +90,7 @@ const [service15Visible, setService15Visible] = useState(false);
 
   const loadedLayersRef = useRef({});
   const regionSummaryRef = useRef({});
+  const viewportVisibilityRef = useRef({});
 
   // --- MEMO ---
   const emergencyCategories = useMemo(() => {
@@ -116,6 +117,35 @@ const [service15Visible, setService15Visible] = useState(false);
       .filter((f) => f.properties?.region_name)
       .sort((a, b) => Number(b.properties?.resilience_score || 0) - Number(a.properties?.resilience_score || 0));
   }, [neighborhoodRankFeatures]);
+
+  useEffect(() => {
+    viewportVisibilityRef.current = {
+      "major-roads": roadVisible,
+      "service-area-5-lines": service5Visible,
+      "service-area-10-lines": service10Visible,
+      "service-area-15-lines": service15Visible,
+      "service-area-5-polygons": service5Visible,
+      "service-area-10-polygons": service10Visible,
+      "service-area-15-polygons": service15Visible,
+      "buildings-3d": buildingsVisible,
+      "buildings-5": buildings5Visible,
+      "buildings-10": buildings10Visible,
+      "buildings-15": buildings15Visible,
+      "buildings-unreachable": buildingsUnreachableVisible,
+      "inaccessible-heatmap": heatmapVisible,
+    };
+  }, [
+    roadVisible,
+    service5Visible,
+    service10Visible,
+    service15Visible,
+    buildingsVisible,
+    buildings5Visible,
+    buildings10Visible,
+    buildings15Visible,
+    buildingsUnreachableVisible,
+    heatmapVisible,
+  ]);
 
   // --- REGION SUMMARY FONKSIYONLARI ---
   const setRegionSummarySource = (level, data, map = mapRef.current) => {
@@ -914,9 +944,11 @@ addLyr({
 
     Promise.all(
   viewportSourcePaths.map(async ([sourceId, path]) => {
+        if (!viewportVisibilityRef.current[sourceId]) return;
         const source = map.getSource(sourceId);
         if (!source) return;
         const data = await fetchGeojson(withMapBbox(path), 60000);
+        if (!data.features?.length) return;
         source.setData(data);
       })
     ).catch(() => {});
