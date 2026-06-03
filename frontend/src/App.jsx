@@ -1926,6 +1926,14 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
   )}
 </div>
 
+<div style={{ background: "yellow", color: "black" }}>
+  Top 5:
+  {visibleEvents
+    .slice(0, 5)
+    .map(x => x.properties?.birincil_etiket)
+    .join(" | ")}
+</div>
+
   {visibleEvents.map((f, i) => (
                     <button
   key={`${emergencyCategory}-${f.properties?.kayit_id}-${f.properties?.birincil_etiket}`}
@@ -1937,8 +1945,15 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                         border: `1px solid ${selectedEmergencyId === f.properties?.kayit_id ? "#f97316" : "rgba(255,255,255,0.12)"}`,
                         borderRadius: "10px", padding: "10px", textAlign: "left", cursor: "pointer", color: "inherit"
                       }}>
-                  <div style={{ color: "green", fontSize: "11px" }}>
-  TEST: {i} - {f.properties?.birincil_etiket}
+                  <div
+  style={{
+    color: "green",
+    fontSize: "9px",
+    whiteSpace: "pre-wrap",
+    overflowWrap: "break-word"
+  }}
+>
+  {JSON.stringify(f.properties, null, 2)}
 </div>
                       <div style={{ fontSize: "11px", fontWeight: "750", color: emergencyCategoryColors[f.properties?.birincil_etiket] || "#f97316", marginBottom: "4px" }}>
                         {f.properties?.birincil_etiket || "Kategori yok"}
