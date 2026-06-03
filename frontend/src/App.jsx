@@ -1901,8 +1901,9 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
     {visibleEvents[0]?.properties?.birincil_etiket}
   </div>
 
-  {visibleEvents.map((f) => (
-                    <button key={f.properties?.kayit_id || Math.random()}
+  {visibleEvents.map((f, i) => (
+                    <button
+  key={`${emergencyCategory}-${f.properties?.kayit_id}-${f.properties?.birincil_etiket}`}
                       onClick={() => focusEmergencyEvent(f)}
                       style={{
                         background: selectedEmergencyId === f.properties?.kayit_id ? "linear-gradient(135deg, rgba(192,132,252,0.30), rgba(129,140,248,0.26))"
@@ -1911,6 +1912,9 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                         border: `1px solid ${selectedEmergencyId === f.properties?.kayit_id ? "#f97316" : "rgba(255,255,255,0.12)"}`,
                         borderRadius: "10px", padding: "10px", textAlign: "left", cursor: "pointer", color: "inherit"
                       }}>
+                  <div style={{ color: "green", fontSize: "11px" }}>
+      TEST: {i} - {f.properties?.birincil_etiket}
+    </div>
                       <div style={{ fontSize: "11px", fontWeight: "750", color: emergencyCategoryColors[f.properties?.birincil_etiket] || "#f97316", marginBottom: "4px" }}>
                         {f.properties?.birincil_etiket || "Kategori yok"}
                       </div>
