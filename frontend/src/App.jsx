@@ -233,10 +233,7 @@ console.log(
     }
 
     try {
-      const res = await fetch(`${API_URL}/mahalleler`);
-      if (!res.ok) return EMPTY_FC;
-
-      const data = await res.json();
+      const data = await loadRegionSummary("neighborhood", map);
       mahalleDataRef.current = data.features || [];
       map?.getSource("mahalleler")?.setData(data);
       loadedLayersRef.current["mahalleler"] = data;
@@ -1020,7 +1017,6 @@ reloadViewportSources();
 
     if (mahalleVisible) {
       loadMahalleData(map).catch(() => {});
-      loadRegionSummary("neighborhood").catch(() => {});
     }
   }, [mahalleVisible]);
 

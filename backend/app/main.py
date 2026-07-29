@@ -1,11 +1,13 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from functools import lru_cache
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 import json
 import random
+from app.resilience import build_region_summary
 
 app = FastAPI()
 
@@ -93,7 +95,9 @@ def mahalleler():
         FROM (
             SELECT json_build_object(
                 'type', 'Feature',
-                'geometry', ST_AsGeoJSON(ST_Transform(geom, 4326))::json,
+                'geometry', ST_AsGeoJSON(
+                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.0001)
+                )::json,
                 'properties', json_build_object(
                     'id', id,
                     'adi_numara', adi_numara
@@ -660,106 +664,9 @@ def acil_durum():
 # --- REGION SUMMARY ---
 
 @app.get("/analysis/region-summary")
+@lru_cache(maxsize=2)
 def region_summary(level: str = "district"):
-    """
-    Mahalle veya ilçe bazında afet dirençlilik özeti.
-    Gerçek verilerden toplanma alanı sayısı hesaplanır,
-    diğer metrikler şimdilik deterministik mock skorlarla üretilir.
-    """
-
-    if level == "district":
-        # İlçeleri getir
-        ilce_query = text("""
-            SELECT id, name,
-                   ST_AsGeoJSON(ST_Transform(geom, 4326))::json AS geometry
-            FROM konya_ilceler
-            ORDER BY name
-        """)
-
-        with engine.connect() as conn:
-            rows = conn.execute(ilce_query).fetchall()
-
-        features = []
-        for row in rows:
-            ilce_id = row[0]
-            name = row[1] or "Bilinmiyor"
-
-            # Deterministik skor (id bazlı, her çalıştırmada aynı)
-            seed = sum(ord(c) for c in name)
-            score = 40 + (seed % 55)
-            level_label = "Yüksek" if score >= 75 else ("Orta" if score >= 55 else "Kritik")
-
-            features.append({
-                "type": "Feature",
-                "geometry": row[2],
-                "properties": {
-                    "region_name": name,
-                    "region_level": "İlçe",
-                    "resilience_score": score,
-                    "resilience_level": level_label,
-                    "emergency_count": seed % 30,
-                    "top_emergency_category": "YANGIN" if seed % 3 == 0 else ("DEPREM" if seed % 3 == 1 else "SEL_TASKIN"),
-                    "sinkhole_count": seed % 8,
-                    "fault_length_km": round((seed % 20) + 1.5, 1),
-                    "assembly_count": (seed % 12) + 1,
-                    "critical_facility_count": (seed % 20) + 2,
-                    "risk_index": 100 - score,
-                    "capacity_index": score - 5 + (seed % 10),
-                    "analysis_type": "region_resilience",
-                },
-            })
-
-        return {"type": "FeatureCollection", "features": features}
-
-    else:
-        # Mahalle bazında — gerçek toplanma alanı sayısı ile
-        mahalle_query = text("""
-            SELECT
-                m.id,
-                m.adi_numara,
-                ST_AsGeoJSON(ST_Transform(ST_SimplifyPreserveTopology(m.geom, 0.001), 4326))::json AS geometry,
-                COUNT(t.id) AS toplanma_sayisi
-            FROM konya_mahalleler m
-            LEFT JOIN konya_toplanma t
-                ON ST_Within(ST_Transform(t.geom, 4326), ST_Transform(m.geom, 4326))
-            GROUP BY m.id, m.adi_numara, m.geom
-            ORDER BY m.adi_numara
-        """)
-
-        with engine.connect() as conn:
-            rows = conn.execute(mahalle_query).fetchall()
-
-        features = []
-        for row in rows:
-            name = row[1] or "Bilinmiyor"
-            toplanma = int(row[3] or 0)
-
-            seed = sum(ord(c) for c in name)
-            # Toplanma alanı sayısı skoru etkilesin
-            score = min(95, max(20, 35 + (seed % 45) + min(toplanma * 5, 20)))
-            level_label = "Yüksek" if score >= 75 else ("Orta" if score >= 55 else "Kritik")
-
-            features.append({
-                "type": "Feature",
-                "geometry": row[2],
-                "properties": {
-                    "region_name": name,
-                    "region_level": "Mahalle",
-                    "resilience_score": score,
-                    "resilience_level": level_label,
-                    "emergency_count": seed % 15,
-                    "top_emergency_category": "YANGIN" if seed % 3 == 0 else ("DEPREM" if seed % 3 == 1 else "SEL_TASKIN"),
-                    "sinkhole_count": seed % 4,
-                    "fault_length_km": round((seed % 10) + 0.5, 1),
-                    "assembly_count": toplanma,
-                    "critical_facility_count": (seed % 8) + 1,
-                    "risk_index": 100 - score,
-                    "capacity_index": max(10, score - 8 + (seed % 15)),
-                    "analysis_type": "region_resilience",
-                },
-            })
-
-        return {"type": "FeatureCollection", "features": features}
+    return build_region_summary(engine, level)
 
 @app.get("/layers/ilce_nufuslu_hast_ashi_itfa")
 def ilce_nufuslu_hast_ashi_itfa():
