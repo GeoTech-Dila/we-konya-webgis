@@ -1892,7 +1892,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
             {isOpen && <div style={{ padding: "7px", display: "flex", flexDirection: "column", gap: "6px" }}>
               {group.items.map(({ label, color, checked, onChange, type, opacity, onOpacity }) => <div key={label} style={{ display: "flex", flexDirection: "column", gap: "5px", padding: "7px", borderRadius: "9px", background: "rgba(255,255,255,0.07)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}><div style={{ width: type === "point" ? "10px" : "16px", height: type === "point" ? "10px" : "4px", borderRadius: type === "point" ? "50%" : "999px", background: color, flexShrink: 0 }} /><span style={{ fontSize: "12px", fontWeight: "600" }}>{label}</span></div><button onClick={onChange} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "17px", padding: 0 }}>{checked ? "⦿" : "⦸"}</button></div>
-                {opacity !== undefined && onOpacity && <input type="range" min="0" max="1" step="0.1" value={opacity} onChange={(e) => onOpacity(Number(e.target.value))} style={{ accentColor: color, width: "100%" }} />}
+                {opacity !== undefined && onOpacity && <input type="range" min="0" max="1" step="0.1" value={opacity} onChange={(e) => onOpacity(Number(e.target.value))} className="koriz-opacity-slider" style={{ "--slider-color": color, "--slider-progress": `${opacity * 100}%`, width: "100%" }} />}
               </div>)}
             </div>}
           </div>;

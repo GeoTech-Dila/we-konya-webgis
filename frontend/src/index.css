@@ -19,3 +19,61 @@ body,
   overflow: hidden;
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
 }
+
+
+/* KOR-IZ modern opacity sliders */
+.koriz-opacity-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  margin: 4px 0 2px;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  background: transparent;
+}
+
+.koriz-opacity-slider::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--slider-color) 0%,
+    var(--slider-color) var(--slider-progress),
+    rgba(15, 23, 42, 0.18) var(--slider-progress),
+    rgba(15, 23, 42, 0.18) 100%
+  );
+}
+
+.koriz-opacity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 12px;
+  margin-top: -2px;
+  border: 2px solid rgba(255, 255, 255, 0.94);
+  border-radius: 5px;
+  background: var(--slider-color);
+  box-shadow: 0 3px 9px rgba(15, 23, 42, 0.28);
+}
+
+.koriz-opacity-slider::-moz-range-track {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.18);
+}
+
+.koriz-opacity-slider::-moz-range-progress {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--slider-color);
+}
+
+.koriz-opacity-slider::-moz-range-thumb {
+  width: 16px;
+  height: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.94);
+  border-radius: 4px;
+  background: var(--slider-color);
+  box-shadow: 0 3px 9px rgba(15, 23, 42, 0.28);
+}
