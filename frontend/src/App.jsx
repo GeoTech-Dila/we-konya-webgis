@@ -67,7 +67,7 @@ const [service15Visible, setService15Visible] = useState(false);
   const [buildingsOpacity, setBuildingsOpacity] = useState(0.88);
   const [heatmapOpacity, setHeatmapOpacity] = useState(0.40);
   // Açılış metinlerinin hızı: her aşama 700 ms sonra görünür.
-  const LOADING_STEP_DELAY_MS = 700;
+  const LOADING_STEP_DELAY_MS = 2000;
   const [appLoading, setAppLoading] = useState(true);
   const [loadingStep, setLoadingStep] = useState(0);
   const [mapReady, setMapReady] = useState(false);
