@@ -119,26 +119,33 @@ body,
   .layers-panel {
     top: 126px !important;
     left: 8px !important;
-    width: calc(48% - 10px) !important;
-    max-height: 44vh !important;
+    width: calc(46% - 10px) !important;
+    max-height: 42vh !important;
     padding: 10px !important;
+    z-index: 20 !important;
+  }
+  .layers-panel.is-open {
+    width: calc(100% - 16px) !important;
+    max-height: 52vh !important;
   }
   .resilience-score-panel {
-    top: 190px !important;
+    top: auto !important;
+    bottom: 78px !important;
     left: 8px !important;
-    width: calc(48% - 10px) !important;
+    width: calc(46% - 10px) !important;
     padding: 10px !important;
   }
   .side-events-panel {
     top: 126px !important;
     right: 8px !important;
     left: auto !important;
-    width: calc(52% - 14px) !important;
-    max-height: 48vh !important;
+    width: calc(54% - 14px) !important;
+    max-height: 46vh !important;
     border-radius: 14px !important;
   }
   .side-events-panel > div:first-child { padding: 10px !important; }
   .side-events-panel > div:first-child > div { font-size: 12px !important; }
+  .side-events-panel .clear-emergency-overlay-button { width: 66px !important; font-size: 8px !important; padding: 5px 4px !important; margin-right: 3px !important; }
   .side-events-panel select { max-width: 100%; }
 
   .region-summary-card {
@@ -155,5 +162,137 @@ body,
     top: auto !important;
     bottom: 70px !important;
     right: 10px !important;
+  }
+}
+
+
+/* Mobile Layers drawer: a small vertical tab slides the full panel in from the left. */
+@media (max-width: 768px) {
+  .layers-panel {
+    top: 126px !important;
+    left: 0 !important;
+    width: 264px !important;
+    max-height: 58vh !important;
+    transform: translateX(calc(-100% + 48px));
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+    z-index: 25 !important;
+    border-radius: 0 16px 16px 0 !important;
+  }
+  .layers-panel.is-open {
+    width: 264px !important;
+    transform: translateX(0);
+    box-shadow: 12px 12px 38px rgba(15,23,42,0.22) !important;
+  }
+  .layers-panel:not(.is-open) {
+    height: 50px !important;
+    min-height: 50px !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+  }
+  .layers-panel:not(.is-open) > button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 48px !important;
+    height: 50px;
+    padding: 4px 0 !important;
+    justify-content: center !important;
+    background: rgba(255,255,255,0.78) !important;
+  }
+  .layers-panel:not(.is-open) > button span:first-child {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+  .layers-panel:not(.is-open) > button span:last-child { display: none; }
+}
+
+
+/* Keep the closed mobile tab readable: horizontal text instead of vertical text. */
+@media (max-width: 768px) {
+  .layers-panel:not(.is-open) { transform: translateX(calc(-100% + 112px)); }
+  .layers-panel:not(.is-open) > button { width: 112px !important; flex-direction: row !important; }
+  .layers-panel:not(.is-open) > button span:first-child {
+    writing-mode: horizontal-tb;
+    transform: none;
+    font-size: 13px;
+    letter-spacing: 0;
+  }
+}
+
+
+/* Mobile Events drawer: only its title stays visible on the right until opened. */
+@media (max-width: 768px) {
+  .side-events-panel {
+    top: 126px !important;
+    right: 0 !important;
+    left: auto !important;
+    width: min(336px, calc(100vw - 16px)) !important;
+    max-height: 58vh !important;
+    transform: translateX(calc(100% - 154px));
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+    overflow: hidden !important;
+    z-index: 24 !important;
+    border-radius: 16px 0 0 16px !important;
+  }
+  .side-events-panel.is-open {
+    transform: translateX(0);
+    right: 8px !important;
+    box-shadow: -12px 12px 38px rgba(15,23,42,0.22) !important;
+  }
+  .side-events-panel:not(.is-open) {
+    height: 54px !important;
+    min-height: 54px !important;
+  }
+  .side-events-panel:not(.is-open) > div:first-child {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 154px;
+    height: 54px;
+    padding: 7px 10px !important;
+    background: rgba(255,255,255,0.80) !important;
+  }
+  .side-events-panel:not(.is-open) > div:first-child > div {
+    font-size: 11px !important;
+    line-height: 1.2;
+  }
+  .side-events-panel:not(.is-open) > div:not(:first-child) { display: none !important; }
+}
+
+
+/* The Events drawer opens by tapping its title; no separate arrow button is needed. */
+@media (max-width: 768px) {
+  .side-events-panel > div:first-child > button:last-child { display: none !important; }
+  .side-events-panel:not(.is-open) > div:first-child { justify-content: flex-start !important; }
+}
+
+
+@media (max-width: 768px) {
+  .side-events-panel:not(.is-open) .clear-emergency-overlay-button { display: none !important; }
+  .side-events-panel:not(.is-open) > div:first-child { justify-content: center !important; text-align: center; }
+  .side-events-panel:not(.is-open) > div:first-child > div { width: 100%; text-align: center; }
+}
+
+
+@media (max-width: 768px) {
+  .side-events-panel:not(.is-open) { transform: translateX(calc(100% - 176px)); }
+  .side-events-panel:not(.is-open) > div:first-child {
+    width: 176px;
+    height: 54px;
+    box-sizing: border-box;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .side-events-panel:not(.is-open) > div:first-child > div {
+    width: auto !important;
+    color: inherit;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    line-height: 1.2;
+    text-align: center !important;
   }
 }
