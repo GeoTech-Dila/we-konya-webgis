@@ -21,6 +21,7 @@ function App() {
   // --- KATMAN STATE ---
   // Katman panelinde başlangıçta yalnız başlıklar görünür.
   const [openLayerGroup, setOpenLayerGroup] = useState(null);
+  const [layersPanelOpen, setLayersPanelOpen] = useState(false);
 
   const [layerVisible, setLayerVisible] = useState(true);
   const [mahalleVisible, setMahalleVisible] = useState(false);
@@ -1985,13 +1986,18 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
       </div>
 
       <div style={{
-        position: "absolute", top: 110, left: 22, width: "230px", height: "300px",
-        overflowY: "auto", padding: "12px", borderRadius: "16px",
+        position: "absolute", top: 110, left: 22, width: "230px", height: layersPanelOpen ? "300px" : "auto",
+        overflowY: layersPanelOpen ? "auto" : "hidden", padding: "12px", borderRadius: "16px",
         background: "rgba(255,255,255,0.12)", backdropFilter: "blur(18px)",
         border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 10px 40px rgba(0,0,0,0.18)",
         zIndex: 10, scrollbarWidth: "thin"
       }}>
-        <div style={{ fontSize: "14px", fontWeight: "700", marginBottom: "10px" }}>Katmanlar</div>
+        <button onClick={() => setLayersPanelOpen((open) => !open)}
+          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "transparent", color: "inherit", border: "none", cursor: "pointer", padding: 0, fontSize: "14px", fontWeight: "700" }}>
+          <span>Katmanlar</span>
+          <span style={{ fontSize: "16px", color: "#64748b" }}>{layersPanelOpen ? "▲" : "▼"}</span>
+        </button>
+        {layersPanelOpen && <>
         {[
           {
             id: "boundaries", title: "Sınırlar ve Bölgeler", items: [
@@ -2043,6 +2049,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
             </div>}
           </div>;
         })}
+        </>}
       </div>
 
 {/* Dirençlilik Skoru Paneli */}
