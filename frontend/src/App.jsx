@@ -418,7 +418,7 @@ addSrc("service-area-15-polygons", {
 addSrc("buildings-3d", {
   type: "vector",
   tiles: [`${API_URL}/tiles/buildings-3d/{z}/{x}/{y}.pbf`],
-  minzoom: 12,
+  minzoom: 14,
   maxzoom: 16,
 });
 
@@ -596,7 +596,7 @@ addLyr({
 
   "source-layer": "buildings",
 
-  minzoom: 12,
+  minzoom: 14,
 
   layout: {
     visibility: "none"
