@@ -1861,11 +1861,11 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
 >
                 <div style={{
   fontSize: "9px",
-  color: "#ddd6fe",
+  color: "#475569",
   marginBottom: "4px",
   letterSpacing: "0.4px",
   textTransform: "uppercase",
-  fontWeight: "700"
+  fontWeight: "800"
 }}>{label}</div>
                 <div style={{ fontSize: "12px", fontWeight: "700" }}>{value ?? "—"}</div>
               </div>
