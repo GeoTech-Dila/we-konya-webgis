@@ -19,6 +19,9 @@ const emergencyCategoryColors = {
 
 function App() {
   // --- KATMAN STATE ---
+  // Katman panelinde başlangıçta yalnız başlıklar görünür.
+  const [openLayerGroup, setOpenLayerGroup] = useState(null);
+
   const [layerVisible, setLayerVisible] = useState(true);
   const [mahalleVisible, setMahalleVisible] = useState(false);
   const [toplanmaVisible, setToplanmaVisible] = useState(true);
@@ -1938,100 +1941,64 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
       </div>
 
       <div style={{
-  position: "absolute",
-
-  top: 110,
-
-  left: 22,
-
-  width: "230px",
-
-  height: "280px",
-
-  overflowY: "auto",
-        padding: "12px", borderRadius: "16px",
+        position: "absolute", top: 110, left: 22, width: "230px", maxHeight: "calc(100vh - 150px)",
+        overflowY: "auto", padding: "12px", borderRadius: "16px",
         background: "rgba(255,255,255,0.12)", backdropFilter: "blur(18px)",
-        border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 10px 40px rgba(0,0,0,0.18)", zIndex: 10,
-        overflowY: "auto", scrollbarWidth: "thin"
+        border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 10px 40px rgba(0,0,0,0.18)",
+        zIndex: 10, scrollbarWidth: "thin"
       }}>
         <div style={{ fontSize: "14px", fontWeight: "700", marginBottom: "10px" }}>Katmanlar</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {[
-            { label: "İlçe Sınırları", color: "#ef4444", checked: layerVisible, onChange: () => setLayerVisible((v) => !v), type: "line", opacity: districtOpacity, onOpacity: (v) => setDistrictOpacity(v) },
-            { label: "Mahalle Sınırları", color: "#2563eb", checked: mahalleVisible, onChange: () => setMahalleVisible((v) => !v), type: "line", opacity: mahalleOpacity, onOpacity: (v) => setMahalleOpacity(v) },
-            { label: "Toplanma Alanları", color: "#16a34a", checked: toplanmaVisible, onChange: () => setToplanmaVisible((v) => !v), type: "point", opacity: toplanmaOpacity, onOpacity: (v) => setToplanmaOpacity(v) },
-            { label: "Fay Hatları", color: "#dc2626", checked: faultVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!faultVisible, setFaultVisible, "fault-lines", ["fault-lines-line"], "/layers/fay-hatlari") },
-            { label: "Obruklar", color: "#7c2d12", checked: sinkholeVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!sinkholeVisible, setSinkholeVisible, "sinkholes", ["sinkholes-point"], `/layers/obruklar`) },
-            { label: "Kritik Tesisler", color: "#64748b", checked: facilityVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!facilityVisible, setFacilityVisible, "critical-facilities", ["critical-facilities-point"], `/layers/kritik-tesisler`) },
-            { label: "Ana Yollar", color: "#64748b", checked: roadVisible, type: "line", opacity: null, onChange: () => setRoadVisible((v) => !v) },
-            { label: "İl Sınırı", color: "#0f172a", checked: provinceBoundaryVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!provinceBoundaryVisible, setProvinceBoundaryVisible, "province-boundary", ["province-boundary-line"], `/layers/il-siniri`) },
-            { label: "Parklar", color: "#22c55e", checked: parksVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!parksVisible, setParksVisible, "parks", ["parks-fill", "parks-outline"], `/layers/parklar`) },
-            { label: "Kolluk", color: "#2563eb", checked: lawVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!lawVisible, setLawVisible, "law-enforcement", ["law-enforcement-point"], `/layers/kolluk`) },
-            { label: "Sağlık Noktaları", color: "#0891b2", checked: healthPointVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!healthPointVisible, setHealthPointVisible, "health-points", ["health-points-point"], `/layers/saglik-nokta`) },
-            { label: "Sağlık Alanları", color: "#06b6d4", checked: healthAreaVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!healthAreaVisible, setHealthAreaVisible, "health-areas", ["health-areas-fill", "health-areas-outline"], `/layers/saglik-alan`) },
-            { label: "Toplu Ulaşım Noktaları", color: "#9333ea", checked: transitPointVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!transitPointVisible, setTransitPointVisible, "transit-points", ["transit-points-point"], `/layers/toplu-ulasim-nokta`) },
-            {
-  label: "3D Binalar",
-  color: "#d1d5db",
-  checked: buildingsVisible,
-  type: "point",
-  opacity: buildingsOpacity,
-
-  onOpacity: (v) =>
-    setBuildingsOpacity(v),
-
-  onChange: () =>
-    setBuildingsVisible(
-      (v) => !v
-    ),
-},
-            {
-  label: "Toplu Ulaşım Alanları",
-  color: "#a855f7",
-  checked: transitAreaVisible,
-  type: "point",
-  opacity: null,
-  onChange: () =>
-    toggleDataLayer(
-      !transitAreaVisible,
-      setTransitAreaVisible,
-      "transit-areas",
-      ["transit-areas-fill", "transit-areas-outline"],
-      "/layers/toplu-ulasim-alan"
-    ),
-},
-            {
-              label: "Acil Durum Noktaları",
-              color: "#f97316",
-              checked: emergencyVisible,
-              type: "point",
-              opacity: null,
-              onChange: async () => {
-                const next = !emergencyVisible;
-                setEmergencyVisible(next);
-                if (next) await loadEmergencyData();
-                mapRef.current?.setLayoutProperty("emergency-points-circle", "visibility", next ? "visible" : "none");
-              },
-            },
-          ].map(({ label, color, checked, onChange, type, opacity, onOpacity }) => (
-            <div key={label} style={{ display: "flex", flexDirection: "column", gap: "5px", padding: "8px 9px", borderRadius: "11px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
-                  <div style={{ width: type === "point" ? "10px" : "16px", height: type === "point" ? "10px" : "4px", borderRadius: type === "point" ? "50%" : "999px", background: color, flexShrink: 0 }} />
-                  <span style={{ fontSize: "12px", fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
-                </div>
-                <button onClick={onChange} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "17px", padding: 0, lineHeight: 1, flexShrink: 0 }}>
-                  {checked ? "⦿" : "⦸"}
-                </button>
-              </div>
-              {opacity !== null && onOpacity && (
-                <input type="range" min="0" max="1" step="0.1" value={opacity}
-                  onChange={(e) => onOpacity(Number(e.target.value))}
-                  style={{ accentColor: color, width: "100%" }} />
-              )}
-            </div>
-          ))}
-        </div>
+        {[
+          {
+            id: "boundaries", title: "Sınırlar ve Bölgeler", items: [
+              { label: "İl Sınırı", color: "#0f172a", checked: provinceBoundaryVisible, type: "line", onChange: () => toggleDataLayer(!provinceBoundaryVisible, setProvinceBoundaryVisible, "province-boundary", ["province-boundary-line"], "/layers/il-siniri") },
+              { label: "İlçe Sınırları", color: "#ef4444", checked: layerVisible, type: "line", opacity: districtOpacity, onOpacity: setDistrictOpacity, onChange: () => setLayerVisible((v) => !v) },
+              { label: "Mahalle Sınırları", color: "#2563eb", checked: mahalleVisible, type: "line", opacity: mahalleOpacity, onOpacity: setMahalleOpacity, onChange: () => setMahalleVisible((v) => !v) },
+            ]
+          },
+          {
+            id: "risk", title: "Afet Riski", items: [
+              { label: "Fay Hatları", color: "#dc2626", checked: faultVisible, type: "line", onChange: () => toggleDataLayer(!faultVisible, setFaultVisible, "fault-lines", ["fault-lines-line"], "/layers/fay-hatlari") },
+              { label: "Obruklar", color: "#7c2d12", checked: sinkholeVisible, type: "point", onChange: () => toggleDataLayer(!sinkholeVisible, setSinkholeVisible, "sinkholes", ["sinkholes-point"], "/layers/obruklar") },
+            ]
+          },
+          {
+            id: "emergency", title: "Acil Durum ve Hizmetler", items: [
+              { label: "Toplanma Alanları", color: "#16a34a", checked: toplanmaVisible, type: "point", opacity: toplanmaOpacity, onOpacity: setToplanmaOpacity, onChange: () => setToplanmaVisible((v) => !v) },
+              { label: "Acil Durum Noktaları", color: "#f97316", checked: emergencyVisible, type: "point", onChange: async () => { const next = !emergencyVisible; setEmergencyVisible(next); if (next) await loadEmergencyData(); mapRef.current?.setLayoutProperty("emergency-points-circle", "visibility", next ? "visible" : "none"); } },
+              { label: "Kritik Tesisler", color: "#64748b", checked: facilityVisible, type: "point", onChange: () => toggleDataLayer(!facilityVisible, setFacilityVisible, "critical-facilities", ["critical-facilities-point"], "/layers/kritik-tesisler") },
+              { label: "Kolluk", color: "#2563eb", checked: lawVisible, type: "point", onChange: () => toggleDataLayer(!lawVisible, setLawVisible, "law-enforcement", ["law-enforcement-point"], "/layers/kolluk") },
+              { label: "Sağlık Noktaları", color: "#0891b2", checked: healthPointVisible, type: "point", onChange: () => toggleDataLayer(!healthPointVisible, setHealthPointVisible, "health-points", ["health-points-point"], "/layers/saglik-nokta") },
+              { label: "Sağlık Alanları", color: "#06b6d4", checked: healthAreaVisible, type: "point", onChange: () => toggleDataLayer(!healthAreaVisible, setHealthAreaVisible, "health-areas", ["health-areas-fill", "health-areas-outline"], "/layers/saglik-alan") },
+            ]
+          },
+          {
+            id: "transport", title: "Ulaşım", items: [
+              { label: "Ana Yollar", color: "#64748b", checked: roadVisible, type: "line", onChange: () => setRoadVisible((v) => !v) },
+              { label: "Toplu Ulaşım Noktaları", color: "#9333ea", checked: transitPointVisible, type: "point", onChange: () => toggleDataLayer(!transitPointVisible, setTransitPointVisible, "transit-points", ["transit-points-point"], "/layers/toplu-ulasim-nokta") },
+              { label: "Toplu Ulaşım Alanları", color: "#a855f7", checked: transitAreaVisible, type: "point", onChange: () => toggleDataLayer(!transitAreaVisible, setTransitAreaVisible, "transit-areas", ["transit-areas-fill", "transit-areas-outline"], "/layers/toplu-ulasim-alan") },
+            ]
+          },
+          {
+            id: "urban", title: "Kentsel Doku", items: [
+              { label: "Parklar", color: "#22c55e", checked: parksVisible, type: "point", onChange: () => toggleDataLayer(!parksVisible, setParksVisible, "parks", ["parks-fill", "parks-outline"], "/layers/parklar") },
+              { label: "3B Binalar", color: "#d1d5db", checked: buildingsVisible, type: "point", opacity: buildingsOpacity, onOpacity: setBuildingsOpacity, onChange: () => setBuildingsVisible((v) => !v) },
+            ]
+          },
+        ].map((group) => {
+          const isOpen = openLayerGroup === group.id;
+          return <div key={group.id} style={{ marginBottom: "7px", borderRadius: "11px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.06)" }}>
+            <button onClick={() => setOpenLayerGroup(isOpen ? null : group.id)} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px", background: "rgba(255,255,255,0.07)", color: "inherit", border: "none", cursor: "pointer", fontSize: "12px", fontWeight: "700", textAlign: "left" }}>
+              <span>{group.title}</span><span style={{ fontSize: "15px" }}>{isOpen ? "⌃" : "⌄"}</span>
+            </button>
+            {isOpen && <div style={{ padding: "7px", display: "flex", flexDirection: "column", gap: "6px" }}>
+              {group.items.map(({ label, color, checked, onChange, type, opacity, onOpacity }) => <div key={label} style={{ display: "flex", flexDirection: "column", gap: "5px", padding: "7px", borderRadius: "9px", background: "rgba(255,255,255,0.07)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}><div style={{ width: type === "point" ? "10px" : "16px", height: type === "point" ? "10px" : "4px", borderRadius: type === "point" ? "50%" : "999px", background: color, flexShrink: 0 }} /><span style={{ fontSize: "12px", fontWeight: "600" }}>{label}</span></div><button onClick={onChange} style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "17px", padding: 0 }}>{checked ? "⦿" : "⦸"}</button></div>
+                {opacity !== undefined && onOpacity && <input type="range" min="0" max="1" step="0.1" value={opacity} onChange={(e) => onOpacity(Number(e.target.value))} style={{ accentColor: color, width: "100%" }} />}
+              </div>)}
+            </div>}
+          </div>;
+        })}
       </div>
 
 {/* Dirençlilik Skoru Paneli */}
