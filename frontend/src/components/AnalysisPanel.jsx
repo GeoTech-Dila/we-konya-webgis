@@ -167,7 +167,11 @@ function AnalysisPanel({
 
 }) {
   const [activeCardId, setActiveCardId] = useState("service-area");
-  const [panelHeight, setPanelHeight] = useState(250);
+  const [panelHeight, setPanelHeight] = useState(() => (
+    typeof window !== "undefined" && window.innerWidth <= 768
+      ? Math.max(340, Math.floor(window.innerHeight * 0.62))
+      : 250
+  ));
   const resizeStart = useRef(null);
 
   const startResize = (event) => {
@@ -177,8 +181,10 @@ function AnalysisPanel({
     const startHeight = panelHeight;
     const onMove = (moveEvent) => {
       const nextHeight = startHeight + (startY - moveEvent.clientY);
+      const mobile = window.innerWidth <= 768;
+      const minHeight = mobile ? 340 : 250;
       const maxHeight = Math.floor(window.innerHeight * 0.78);
-      setPanelHeight(Math.max(250, Math.min(maxHeight, nextHeight)));
+      setPanelHeight(Math.max(minHeight, Math.min(maxHeight, nextHeight)));
     };
     const onEnd = () => {
       window.removeEventListener("pointermove", onMove);
@@ -197,13 +203,14 @@ function AnalysisPanel({
 
       <aside
       id="analysis-panel"
+      className="analysis-panel"
       style={{
         position: "absolute",
         left: 20,
 
 right: 390,
 
-bottom: analysisOpen ? 18 : -205,
+bottom: analysisOpen ? 18 : -(panelHeight - 48),
 
 height: `${panelHeight}px`,
 
@@ -273,6 +280,7 @@ height: `${panelHeight}px`,
   </div>
 </div>
       <div
+        className="analysis-panel-content"
         style={{
           display: "grid",
           gridTemplateColumns: "minmax(300px, 0.95fr) minmax(360px, 1.05fr)",
@@ -283,6 +291,7 @@ height: `${panelHeight}px`,
         }}
       >
         <div
+          className="analysis-card-list"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -328,6 +337,7 @@ height: `${panelHeight}px`,
         </div>
 
         <div
+  className="analysis-detail"
   style={{
     display: "flex",
     flexDirection: "column",

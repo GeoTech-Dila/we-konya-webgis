@@ -77,3 +77,12 @@ body,
   background: var(--slider-color);
   box-shadow: 0 3px 9px rgba(15, 23, 42, 0.28);
 }
+
+
+/* Phone layout: the analysis panel uses the screen width and scrolls vertically. */
+@media (max-width: 768px) {
+  #analysis-panel.analysis-panel { left: 8px !important; right: 8px !important; }
+  #analysis-panel .analysis-panel-content { grid-template-columns: 1fr !important; grid-template-rows: auto minmax(240px, 1fr) !important; overflow-y: auto !important; gap: 10px !important; }
+  #analysis-panel .analysis-card-list { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; max-height: 230px; padding-right: 2px !important; }
+  #analysis-panel .analysis-detail { min-height: 240px; }
+}
