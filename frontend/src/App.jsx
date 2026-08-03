@@ -66,7 +66,11 @@ const [service15Visible, setService15Visible] = useState(false);
   const [districtOpacity, setDistrictOpacity] = useState(1);
   const [buildingsOpacity, setBuildingsOpacity] = useState(0.88);
   const [heatmapOpacity, setHeatmapOpacity] = useState(0.40);
+  // Açılış metinlerinin hızı: her aşama 700 ms sonra görünür.
+  const LOADING_STEP_DELAY_MS = 700;
   const [appLoading, setAppLoading] = useState(true);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [mapReady, setMapReady] = useState(false);
 
 
   // --- UI STATE ---
@@ -307,12 +311,22 @@ console.log(
   }, [activeSideTab]);
 
   useEffect(() => {
-    const fallbackTimer = window.setTimeout(() => {
-      setAppLoading(false);
-    }, 25000);
-
-    return () => window.clearTimeout(fallbackTimer);
+    const secondStep = window.setTimeout(() => setLoadingStep(1), LOADING_STEP_DELAY_MS);
+    const thirdStep = window.setTimeout(() => setLoadingStep(2), LOADING_STEP_DELAY_MS * 2);
+    // Harita beklenmedik biçimde yüklenmezse açılış ekranı en fazla 25 saniye kalır.
+    const fallbackTimer = window.setTimeout(() => setMapReady(true), 25000);
+    return () => {
+      window.clearTimeout(secondStep);
+      window.clearTimeout(thirdStep);
+      window.clearTimeout(fallbackTimer);
+    };
   }, []);
+
+  useEffect(() => {
+    if (!mapReady || loadingStep < 2) return;
+    const closeTimer = window.setTimeout(() => setAppLoading(false), 350);
+    return () => window.clearTimeout(closeTimer);
+  }, [mapReady, loadingStep]);
 
   // --- ANA MAP EFFECT ---
   useEffect(() => {
@@ -976,7 +990,7 @@ reloadViewportSources();
 
   requestAnimationFrame(() => {
 
-    setAppLoading(false);
+    setMapReady(true);
 
   });
 
@@ -1616,7 +1630,23 @@ useEffect(() => {
         zIndex: 2,
       }}
     >
-      Veriler yükleniyor...
+      {[
+        "Harita hazırlanıyor...",
+        "Veriler yükleniyor...",
+        "Analizler yükleniyor...",
+      ].map((message, index) => {
+        const visible = loadingStep >= index;
+        return <div key={message} style={{
+          display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px",
+          opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(8px)",
+          transition: "opacity 350ms ease, transform 350ms ease",
+        }}>
+          <span style={{ color: visible && loadingStep > index ? "#86efac" : "#c4b5fd", fontSize: "15px" }}>
+            {visible && loadingStep > index ? "✓" : "•"}
+          </span>
+          <span>{message}</span>
+        </div>;
+      })}
     </div>
 
     {/* animation styles */}
