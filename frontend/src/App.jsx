@@ -1456,6 +1456,15 @@ useEffect(() => {
 
 }, [activeAnalysisLayer]);
 
+  const clearEmergencyOverlay = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    ["emergency-heatmap", "emergency-points-circle"].forEach((layerId) => {
+      if (map.getLayer(layerId)) map.setLayoutProperty(layerId, "visibility", "none");
+    });
+    setSelectedEmergencyId(null);
+  };
+
   const focusEmergencyEvent = async (feature) => {
   const map = mapRef.current;
   const coords = feature.geometry?.coordinates;
@@ -1848,8 +1857,13 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
           <div style={{ fontSize: "16px", fontWeight: "700" }}>
-            {activeSideTab === "events" ? "Acil Olaylar TEST 999" : "Dirençlilik Sıralaması"}
+            {activeSideTab === "events" ? "Acil Olaylar Sınıflandırması" : "Dirençlilik Sıralaması"}
           </div>
+          <button onClick={clearEmergencyOverlay}
+            title="Olay yoğunluğunu ve olay noktalarını haritadan kaldır"
+            style={{ background: "rgba(255,255,255,0.72)", border: "1px solid rgba(239,68,68,0.28)", borderRadius: "8px", color: "#b91c1c", cursor: "pointer", fontSize: "10px", fontWeight: "700", padding: "5px 7px", lineHeight: "1.2", textAlign: "center", width: "100px", marginLeft: "auto", marginRight: "6px" }}>
+            Acil Olaylar<br />Isı Haritasını Kaldır
+          </button>
           <button onClick={() => setEventsPanelOpen((p) => !p)}
             style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "18px", color: "#64748b" }}>
             {eventsPanelOpen ? "▲" : "▼"}
