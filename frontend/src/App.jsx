@@ -91,6 +91,7 @@ const [service15Visible, setService15Visible] = useState(false);
   // --- RISK / DIRENCLILIK STATE ---
   const [selectedRegionSummary, setSelectedRegionSummary] = useState(null);
   const [neighborhoodRankFeatures, setNeighborhoodRankFeatures] = useState([]);
+  const [resilienceRankOrder, setResilienceRankOrder] = useState("desc");
 
   // --- REFS ---
   const mahalleDataRef = useRef(null);
@@ -123,8 +124,11 @@ const [service15Visible, setService15Visible] = useState(false);
   const rankedNeighborhoods = useMemo(() => {
     return [...neighborhoodRankFeatures]
       .filter((f) => f.properties?.region_name)
-      .sort((a, b) => Number(b.properties?.resilience_score || 0) - Number(a.properties?.resilience_score || 0));
-  }, [neighborhoodRankFeatures]);
+      .sort((a, b) => {
+        const scoreDifference = Number(a.properties?.resilience_score || 0) - Number(b.properties?.resilience_score || 0);
+        return resilienceRankOrder === "asc" ? scoreDifference : -scoreDifference;
+      });
+  }, [neighborhoodRankFeatures, resilienceRankOrder]);
 
   useEffect(() => {
     viewportVisibilityRef.current = {
@@ -2001,9 +2005,16 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
               </>
             ) : (
               <>
-                <div style={{ padding: "8px 12px" }}>
-                  <div style={{ fontSize: "12px", color: "#0f766e", fontWeight: "800" }}>{rankedNeighborhoods.length} mahalle</div>
-                  <div style={{ fontSize: "11px", color: "#64748b" }}>En yüksek dirençlilik skoruna göre</div>
+                <div style={{ padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
+                  <div>
+                    <div style={{ fontSize: "12px", color: "#0f766e", fontWeight: "800" }}>{rankedNeighborhoods.length} mahalle</div>
+                    <div style={{ fontSize: "11px", color: "#64748b" }}>{resilienceRankOrder === "desc" ? "En yüksek dirençlilik skoruna göre" : "En düşük dirençlilik skoruna göre"}</div>
+                  </div>
+                  <select value={resilienceRankOrder} onChange={(e) => setResilienceRankOrder(e.target.value)} aria-label="Dirençlilik sıralama yönü"
+                    style={{ flexShrink: 0, fontSize: "10px", fontWeight: "700", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "6px", background: "rgba(255,255,255,0.85)", cursor: "pointer" }}>
+                    <option value="desc">Yüksek → Düşük</option>
+                    <option value="asc">Düşük → Yüksek</option>
+                  </select>
                 </div>
                 <div style={{ flex: 1, overflowY: "auto", padding: "0 8px 8px", display: "grid", gap: "6px" }}>
                   {rankedNeighborhoods.map((f, i) => {
