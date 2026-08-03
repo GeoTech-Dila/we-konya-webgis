@@ -41,6 +41,7 @@ function App() {
   const [transitAreaVisible, setTransitAreaVisible] = useState(false);
   const [resilienceVisible, setResilienceVisible] = useState(false);
   const [resilienceInfoOpen, setResilienceInfoOpen] = useState(false);
+  const [resilienceRankingHelpOpen, setResilienceRankingHelpOpen] = useState(false);
   const [buildingsVisible, setBuildingsVisible] = useState(false);
 
 const [buildings5Visible, setBuildings5Visible] = useState(false);
@@ -1873,6 +1874,22 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         </div>
       )}
 
+      {resilienceRankingHelpOpen && <div style={{ position: "fixed", inset: 0, zIndex: 31, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", background: "rgba(15,23,42,0.32)", backdropFilter: "blur(4px)" }} onClick={() => setResilienceRankingHelpOpen(false)}>
+        <div onClick={(e) => e.stopPropagation()} style={{ width: "min(390px, 100%)", borderRadius: "18px", padding: "20px", background: "rgba(255,255,255,0.98)", color: "#0f172a", boxShadow: "0 20px 55px rgba(15,23,42,0.25)" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "12px" }}>
+            <div><div style={{ color: "#0f766e", fontSize: "11px", fontWeight: "800", letterSpacing: ".05em", textTransform: "uppercase" }}>Mahalle görünümü</div><div style={{ marginTop: "4px", fontSize: "18px", fontWeight: "800" }}>Sıralamayı haritada gör</div></div>
+            <button onClick={() => setResilienceRankingHelpOpen(false)} aria-label="Bilgi panelini kapat" style={{ width: "32px", height: "32px", borderRadius: "9px", border: "none", cursor: "pointer", background: "#f1f5f9", color: "#475569", fontSize: "19px" }}>×</button>
+          </div>
+          <p style={{ margin: "0 0 14px", color: "#475569", fontSize: "13px", lineHeight: 1.55 }}>Mahalle dirençlilik sıralamasını haritada görmek ve bir mahalleye tıklayarak ayrıntısına ulaşmak için:</p>
+          <ol style={{ margin: 0, paddingLeft: "20px", color: "#334155", fontSize: "13px", lineHeight: 1.8 }}>
+            <li>Soldaki <strong>Katmanlar</strong> başlığını aç.</li>
+            <li><strong>Sınırlar ve Bölgeler</strong> grubunu aç.</li>
+            <li><strong>Mahalle Sınırları</strong> katmanını etkinleştir.</li>
+          </ol>
+          <div style={{ marginTop: "14px", padding: "10px 12px", borderRadius: "10px", background: "#ecfdf5", color: "#166534", fontSize: "12px", lineHeight: 1.45 }}>Sağdaki liste mahalleleri puana göre sıralar; katmanı açtığında aynı mahalleleri harita üzerinde de inceleyebilirsin.</div>
+        </div>
+      </div>}
+
       <div style={{
         position: "absolute", top: 90, right: 30,
         width: "340px", maxHeight: "calc(100vh - 120px)",
@@ -1882,14 +1899,15 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         display: "flex", flexDirection: "column", overflow: "hidden"
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
-          <div style={{ fontSize: "16px", fontWeight: "700" }}>
-            {activeSideTab === "events" ? "Acil Olaylar Sınıflandırması" : "Dirençlilik Sıralaması"}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "16px", fontWeight: "700" }}>
+            <span>{activeSideTab === "events" ? "Acil Olaylar Sınıflandırması" : "Dirençlilik Sıralaması"}</span>
+            {activeSideTab === "resilience" && <button onClick={() => setResilienceRankingHelpOpen(true)} title="Mahalle sıralamasını nasıl görüntüleyeceğini göster" style={{ border: "none", background: "transparent", color: "#64748b", cursor: "pointer", fontSize: "14px", padding: 0, lineHeight: 1 }}>ⓘ</button>}
           </div>
-          <button onClick={clearEmergencyOverlay}
+{activeSideTab === "events" &&           <button onClick={clearEmergencyOverlay}
             title="Olay yoğunluğunu ve olay noktalarını haritadan kaldır"
             style={{ background: "rgba(255,255,255,0.72)", border: "1px solid rgba(239,68,68,0.28)", borderRadius: "8px", color: "#b91c1c", cursor: "pointer", fontSize: "10px", fontWeight: "700", padding: "5px 7px", lineHeight: "1.2", textAlign: "center", width: "100px", marginLeft: "auto", marginRight: "6px" }}>
             Acil Olaylar<br />Isı Haritasını Kaldır
-          </button>
+          </button>}
           <button onClick={() => setEventsPanelOpen((p) => !p)}
             style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "18px", color: "#64748b" }}>
             {eventsPanelOpen ? "▲" : "▼"}
