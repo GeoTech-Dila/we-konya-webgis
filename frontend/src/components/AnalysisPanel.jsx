@@ -92,15 +92,15 @@ const analysisCards = [
 
   },
   {
-    id: "water-stress",
-    title: "Tarımsal Su Stresi",
-    method: "Çok kriterli analiz",
-    status: "Veri bekliyor",
+    id: "recommended-assembly",
+    title: "Öneri Olabilecek Nitelikte Toplanma Alanları",
+    method: "Nüfus + Mekânsal Yeterlilik Analizi",
+    status: "Gerçek veri hazır",
     summary:
-      "Tarımsal alanları su ihtiyacı, yeraltı su düşümü ve kuraklık göstergeleriyle birlikte değerlendirir.",
-    inputs: ["Tarım alanları", "Sulama verisi", "Kuraklık göstergesi"],
-    output: "Su stresi sınıfları",
-    image: "/kirilganlik_gorsel.png",
+      "Nüfusu, mevcut resmî toplanma alanlarını ve parkların kullanılabilir büyüklüğünü birlikte değerlendirerek öneri niteliğindeki alanları belirler.",
+    inputs: ["2025 mahalle nüfusu", "Resmî toplanma alanları", "Park alanları"],
+    output: "Resmî olmayan, değerlendirmeye uygun potansiyel toplanma alanları",
+    image: "/service_area1_gorsel.png",
   },
   {
     id: "service-impact",
@@ -161,6 +161,9 @@ function AnalysisPanel({
 
   heatmapOpacity,
   setHeatmapOpacity,
+
+  recommendedAssemblyVisible,
+  onToggleRecommendedAssembly,
 
   activeAnalysisLayer,
   setActiveAnalysisLayer,
@@ -407,6 +410,8 @@ height: `${panelHeight}px`,
               card={activeCard}
               activeAnalysisLayer={activeAnalysisLayer}
               setActiveAnalysisLayer={setActiveAnalysisLayer}
+              recommendedAssemblyVisible={recommendedAssemblyVisible}
+              onToggleRecommendedAssembly={onToggleRecommendedAssembly}
             />
           )}
         </div>
@@ -416,7 +421,7 @@ height: `${panelHeight}px`,
   );
 }
 
-function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer }) {
+function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, onToggleRecommendedAssembly }) {
   return (
     <div
       style={{
@@ -428,6 +433,21 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer }) {
         overflowY: "auto",
       }}
     >
+      {card.id === "recommended-assembly" && (
+        <div style={{ gridColumn: "1 / -1", padding: "4px 4px 0" }}>
+          <button
+            type="button"
+            onClick={onToggleRecommendedAssembly}
+            style={{ width: "100%", padding: "9px 13px", borderRadius: 12, border: "1px solid rgba(245,158,11,0.55)", background: recommendedAssemblyVisible ? "rgba(254,243,199,0.82)" : "rgba(255,255,255,0.12)", color: "#92400e", cursor: "pointer", fontWeight: 700, fontSize: 13, marginBottom: 6 }}
+          >
+            {recommendedAssemblyVisible ? "✓ Öneri Alanlarını Gizle" : "▶ Öneri Alanlarını Haritada Göster"}
+          </button>
+          <div style={{ fontSize: 11, lineHeight: 1.45, color: "#92400e", padding: "0 4px 7px" }}>
+            Bu alanlar resmî toplanma alanı değildir; saha incelemesi ve yetkili kurum değerlendirmesi gerektirir.
+          </div>
+        </div>
+      )}
+
       {/* Kritik Tesis için analiz butonu */}
       {card.id === "facility-access" && (
         <div style={{ gridColumn: "1 / -1", padding: "4px 4px 0" }}>

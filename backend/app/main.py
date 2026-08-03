@@ -154,6 +154,30 @@ def toplanma_alanlari():
         return conn.execute(query).scalar()
 
 
+@app.get("/layers/oneri-toplanma-alanlari")
+def oneri_toplanma_alanlari():
+    """Return non-official park-based assembly-area recommendations."""
+    query = text("""
+        SELECT json_build_object(
+            'type', 'FeatureCollection',
+            'features', COALESCE(json_agg(features.feature), '[]'::json)
+        )
+        FROM (
+            SELECT json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(geom, 4326))::json,
+                'properties', COALESCE(
+                    to_jsonb(konya_oneri_toplanma_alanlari_2025) - 'geom',
+                    '{}'::jsonb
+                )
+            ) AS feature
+            FROM konya_oneri_toplanma_alanlari_2025
+        ) AS features;
+    """)
+    with engine.connect() as conn:
+        return conn.execute(query).scalar()
+
+
 @app.get("/yollar")
 def yollar(bbox: str | None = None):
     where_sql, params = bbox_filter(bbox)

@@ -26,6 +26,7 @@ function App() {
   const [layerVisible, setLayerVisible] = useState(true);
   const [mahalleVisible, setMahalleVisible] = useState(false);
   const [toplanmaVisible, setToplanmaVisible] = useState(true);
+  const [recommendedAssemblyVisible, setRecommendedAssemblyVisible] = useState(false);
   const [faultVisible, setFaultVisible] = useState(false);
   const [sinkholeVisible, setSinkholeVisible] = useState(false);
   const [facilityVisible, setFacilityVisible] = useState(false);
@@ -409,6 +410,7 @@ const service15PolyData = EMPTY_FC;
       addSrc("districts", { type: "geojson", data: ilceData });
       addSrc("mahalleler", { type: "geojson", data: mahalleData });
       addSrc("toplanma", { type: "geojson", data: toplanmaData });
+      addSrc("recommended-assembly-parks", { type: "geojson", data: EMPTY_FC });
       addSrc("service-area-5-lines", {
   type: "geojson",
   data: service5Data,
@@ -870,6 +872,8 @@ addLyr({
       addLyr({ id: "province-boundary-line", type: "line", source: "province-boundary", layout: { visibility: "none" }, paint: { "line-color": "#0f172a", "line-opacity": 0.86, "line-width": ["interpolate", ["linear"], ["zoom"], 7, 1.3, 12, 3] } });
       addLyr({ id: "parks-fill", type: "fill", source: "parks", layout: { visibility: "none" }, paint: { "fill-color": "#22c55e", "fill-opacity": 0.24 } });
       addLyr({ id: "parks-outline", type: "line", source: "parks", layout: { visibility: "none" }, paint: { "line-color": "#15803d", "line-width": 0.8, "line-opacity": 0.8 } });
+      addLyr({ id: "recommended-assembly-parks-fill", type: "fill", source: "recommended-assembly-parks", layout: { visibility: "none" }, paint: { "fill-color": "#f59e0b", "fill-opacity": 0.32 } });
+      addLyr({ id: "recommended-assembly-parks-outline", type: "line", source: "recommended-assembly-parks", layout: { visibility: "none" }, paint: { "line-color": "#b45309", "line-width": 1.2, "line-opacity": 0.9 } });
       addLyr({ id: "law-enforcement-point", type: "circle", source: "law-enforcement", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#2563eb", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
       addLyr({ id: "health-points-point", type: "circle", source: "health-points", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#0891b2", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
       addLyr({ id: "health-areas-fill", type: "fill", source: "health-areas", layout: { visibility: "none" }, paint: { "fill-color": "#06b6d4", "fill-opacity": 0.22 } });
@@ -2212,6 +2216,15 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
 
         heatmapOpacity={heatmapOpacity}
         setHeatmapOpacity={setHeatmapOpacity}
+
+        recommendedAssemblyVisible={recommendedAssemblyVisible}
+        onToggleRecommendedAssembly={() => toggleDataLayer(
+          !recommendedAssemblyVisible,
+          setRecommendedAssemblyVisible,
+          "recommended-assembly-parks",
+          ["recommended-assembly-parks-fill", "recommended-assembly-parks-outline"],
+          "/layers/oneri-toplanma-alanlari"
+        )}
 
         buildings5Visible={buildings5Visible}
         setBuildings5Visible={setBuildings5Visible}
