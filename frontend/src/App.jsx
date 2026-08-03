@@ -22,7 +22,6 @@ function App() {
   const [layerVisible, setLayerVisible] = useState(true);
   const [mahalleVisible, setMahalleVisible] = useState(false);
   const [toplanmaVisible, setToplanmaVisible] = useState(true);
-  const [yollarVisible, setYollarVisible] = useState(true);
   const [faultVisible, setFaultVisible] = useState(false);
   const [sinkholeVisible, setSinkholeVisible] = useState(false);
   const [facilityVisible, setFacilityVisible] = useState(false);
@@ -59,7 +58,6 @@ const [service15Visible, setService15Visible] = useState(false);
 
   // --- OPASITE STATE ---
   const [mahalleOpacity, setMahalleOpacity] = useState(1);
-  const [yollarOpacity, setYollarOpacity] = useState(1);
   const [serviceOpacity, setServiceOpacity] = useState(1);
   const [toplanmaOpacity, setToplanmaOpacity] = useState(1);
   const [districtOpacity, setDistrictOpacity] = useState(1);
@@ -373,7 +371,6 @@ console.log(
 ]);
 
 const mahalleData = EMPTY_FC;
-const yollarData = EMPTY_FC;
 const service5Data = EMPTY_FC;
 const service10Data = EMPTY_FC;
 const service15Data = EMPTY_FC;
@@ -389,7 +386,6 @@ const service15PolyData = EMPTY_FC;
       addSrc("districts", { type: "geojson", data: ilceData });
       addSrc("mahalleler", { type: "geojson", data: mahalleData });
       addSrc("toplanma", { type: "geojson", data: toplanmaData });
-      addSrc("yollar", { type: "geojson", data: yollarData });
       addSrc("service-area-5-lines", {
   type: "geojson",
   data: service5Data,
@@ -516,7 +512,6 @@ addSrc("inaccessible-heatmap", {
       });
 
       addLyr({ id: "mahalle-outline", type: "line", source: "mahalleler", paint: { "line-color": "#2563eb", "line-width": 1 } });
-      addLyr({ id: "yollar-line", type: "line", source: "yollar", paint: { "line-color": "#f59e0b", "line-width": 0.5, "line-opacity": 0.8 } });
 
 addLyr({
 
@@ -1028,13 +1023,6 @@ reloadViewportSources();
     map.setLayoutProperty("toplanma-points", "visibility", toplanmaVisible ? "visible" : "none");
     map.setPaintProperty("toplanma-points", "circle-opacity", toplanmaOpacity);
   }, [toplanmaVisible, toplanmaOpacity]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !map.getLayer("yollar-line")) return;
-    map.setLayoutProperty("yollar-line", "visibility", yollarVisible ? "visible" : "none");
-    map.setPaintProperty("yollar-line", "line-opacity", yollarOpacity);
-  }, [yollarVisible, yollarOpacity]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -1968,7 +1956,6 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
             { label: "İlçe Sınırları", color: "#ef4444", checked: layerVisible, onChange: () => setLayerVisible((v) => !v), type: "line", opacity: districtOpacity, onOpacity: (v) => setDistrictOpacity(v) },
             { label: "Mahalle Sınırları", color: "#2563eb", checked: mahalleVisible, onChange: () => setMahalleVisible((v) => !v), type: "line", opacity: mahalleOpacity, onOpacity: (v) => setMahalleOpacity(v) },
             { label: "Toplanma Alanları", color: "#16a34a", checked: toplanmaVisible, onChange: () => setToplanmaVisible((v) => !v), type: "point", opacity: toplanmaOpacity, onOpacity: (v) => setToplanmaOpacity(v) },
-            { label: "Yol Ağı", color: "#f59e0b", checked: yollarVisible, onChange: () => setYollarVisible((v) => !v), type: "line", opacity: yollarOpacity, onOpacity: (v) => setYollarOpacity(v) },
             { label: "Fay Hatları", color: "#dc2626", checked: faultVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!faultVisible, setFaultVisible, "fault-lines", ["fault-lines-line"], "/layers/fay-hatlari") },
             { label: "Obruklar", color: "#7c2d12", checked: sinkholeVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!sinkholeVisible, setSinkholeVisible, "sinkholes", ["sinkholes-point"], `/layers/obruklar`) },
             { label: "Kritik Tesisler", color: "#64748b", checked: facilityVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!facilityVisible, setFacilityVisible, "critical-facilities", ["critical-facilities-point"], `/layers/kritik-tesisler`) },
