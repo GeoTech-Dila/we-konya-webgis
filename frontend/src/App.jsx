@@ -922,6 +922,30 @@ addLyr({
         setSelectedRegionSummary(e.features[0].properties);
       });
 
+      const toplanmaPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: true, offset: 10, maxWidth: "280px" });
+      const escapePopupHtml = (value) => String(value ?? "")
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      const assemblyFieldLabels = {
+        id: "Kayıt No", name: "Adı", ad: "Adı", adi: "Adı", alan_adi: "Alan adı",
+        adres: "Adres", mahalle: "Mahalle", ilce: "İlçe", ilçe: "İlçe",
+        kapasite: "Kapasite", capacity: "Kapasite", aciklama: "Açıklama", açıklama: "Açıklama"
+      };
+      map.on("mouseenter", "toplanma-points", () => { map.getCanvas().style.cursor = "pointer"; });
+      map.on("mouseleave", "toplanma-points", () => { map.getCanvas().style.cursor = ""; });
+      map.on("click", "toplanma-points", (e) => {
+        const properties = e.features?.[0]?.properties || {};
+        const title = properties.name || properties.ad || properties.adi || properties.alan_adi || "Acil Toplanma Alanı";
+        const rows = Object.entries(properties)
+          .filter(([key, value]) => value !== null && value !== "" && !["geom", "geometry", "name", "ad", "adi", "alan_adi"].includes(key))
+          .slice(0, 6)
+          .map(([key, value]) => `<div style="display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-top:1px solid #e2e8f0"><span style="color:#64748b">${escapePopupHtml(assemblyFieldLabels[key] || key.replaceAll("_", " "))}</span><strong style="text-align:right;color:#0f172a">${escapePopupHtml(value)}</strong></div>`)
+          .join("");
+        toplanmaPopup
+          .setLngLat(e.lngLat)
+          .setHTML(`<div style="min-width:190px;font-family:Arial,sans-serif"><div style="color:#15803d;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px">Acil toplanma alanı</div><div style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:8px">${escapePopupHtml(title)}</div>${rows || '<div style="font-size:12px;color:#64748b">Bu alan için ek kayıt bilgisi bulunmuyor.</div>'}</div>`)
+          .addTo(map);
+      });
+
       const mahallePopup = new maplibregl.Popup({ closeButton: false, closeOnClick: false });
       map.on("mousemove", "mahalle-fill", (e) => {
         map.getCanvas().style.cursor = "pointer";

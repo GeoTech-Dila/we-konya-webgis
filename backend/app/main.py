@@ -145,7 +145,7 @@ def toplanma_alanlari():
             SELECT json_build_object(
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(ST_Transform(geom, 4326))::json,
-                'properties', json_build_object('id', id)
+                'properties', COALESCE(to_jsonb(konya_toplanma) - 'geom', '{}'::jsonb)
             ) AS feature
             FROM konya_toplanma
         ) AS features;
