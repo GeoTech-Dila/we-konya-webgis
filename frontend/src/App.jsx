@@ -118,7 +118,6 @@ const [service15Visible, setService15Visible] = useState(false);
 
   useEffect(() => {
     viewportVisibilityRef.current = {
-      "major-roads": roadVisible,
       "service-area-5-lines": service5Visible,
       "service-area-10-lines": service10Visible,
       "service-area-15-lines": service15Visible,
@@ -450,7 +449,7 @@ addSrc("inaccessible-heatmap", {
       addSrc("fault-lines", { type: "geojson", data: EMPTY_FC });
       addSrc("sinkholes", { type: "geojson", data: EMPTY_FC });
       addSrc("critical-facilities", { type: "geojson", data: EMPTY_FC });
-      addSrc("major-roads", { type: "geojson", data: EMPTY_FC });
+      addSrc("major-roads", { type: "vector", tiles: [`${API_URL}/tiles/ana-yollar/{z}/{x}/{y}.pbf`], minzoom: 11, maxzoom: 16 });
       addSrc("emergency-points", { type: "geojson", data: EMPTY_FC });
       addSrc("province-boundary", { type: "geojson", data: EMPTY_FC });
       addSrc("parks", { type: "geojson", data: EMPTY_FC });
@@ -843,7 +842,7 @@ addLyr({
       addLyr({ id: "fault-lines-line", type: "line", source: "fault-lines", layout: { visibility: "none" }, paint: { "line-color": "#dc2626", "line-opacity": 0.92, "line-width": ["interpolate", ["linear"], ["zoom"], 8, 1, 13, 3] } });
       addLyr({ id: "sinkholes-point", type: "circle", source: "sinkholes", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 7], "circle-color": "#7c2d12", "circle-stroke-color": "#fff7ed", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
       addLyr({ id: "critical-facilities-point", type: "circle", source: "critical-facilities", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#64748b", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.88 } });
-      addLyr({ id: "major-roads-line", type: "line", source: "major-roads", layout: { visibility: "none" }, paint: { "line-color": "#64748b", "line-opacity": 0.58, "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.7, 13, 2.4] } });
+      addLyr({ id: "major-roads-line", type: "line", source: "major-roads", "source-layer": "roads", minzoom: 11, layout: { visibility: "none" }, paint: { "line-color": "#64748b", "line-opacity": 0.58, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.7, 15, 2.4] } });
       addLyr({ id: "province-boundary-line", type: "line", source: "province-boundary", layout: { visibility: "none" }, paint: { "line-color": "#0f172a", "line-opacity": 0.86, "line-width": ["interpolate", ["linear"], ["zoom"], 7, 1.3, 12, 3] } });
       addLyr({ id: "parks-fill", type: "fill", source: "parks", layout: { visibility: "none" }, paint: { "fill-color": "#22c55e", "fill-opacity": 0.24 } });
       addLyr({ id: "parks-outline", type: "line", source: "parks", layout: { visibility: "none" }, paint: { "line-color": "#15803d", "line-width": 0.8, "line-opacity": 0.8 } });
@@ -934,7 +933,6 @@ addLyr({
 
       const viewportSourcePaths = [
 
-  ["major-roads", "/layers/ana-yollar"],
 
   ["service-area-5-lines", "/service-area-5-lines"],
   ["service-area-10-lines", "/service-area-10-lines"],
@@ -1175,6 +1173,12 @@ useEffect(() => {
   buildingsVisible,
   buildingsOpacity,
 ]);
+
+useEffect(() => {
+  const map = mapRef.current;
+  if (!map?.getLayer("major-roads-line")) return;
+  map.setLayoutProperty("major-roads-line", "visibility", roadVisible ? "visible" : "none");
+}, [roadVisible]);
 
 // BUILDINGS 5
 
@@ -1959,7 +1963,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
             { label: "Fay Hatları", color: "#dc2626", checked: faultVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!faultVisible, setFaultVisible, "fault-lines", ["fault-lines-line"], "/layers/fay-hatlari") },
             { label: "Obruklar", color: "#7c2d12", checked: sinkholeVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!sinkholeVisible, setSinkholeVisible, "sinkholes", ["sinkholes-point"], `/layers/obruklar`) },
             { label: "Kritik Tesisler", color: "#64748b", checked: facilityVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!facilityVisible, setFacilityVisible, "critical-facilities", ["critical-facilities-point"], `/layers/kritik-tesisler`) },
-            { label: "Ana Yollar", color: "#64748b", checked: roadVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!roadVisible, setRoadVisible, "major-roads", ["major-roads-line"], `/layers/ana-yollar`) },
+            { label: "Ana Yollar", color: "#64748b", checked: roadVisible, type: "line", opacity: null, onChange: () => setRoadVisible((v) => !v) },
             { label: "İl Sınırı", color: "#0f172a", checked: provinceBoundaryVisible, type: "line", opacity: null, onChange: () => toggleDataLayer(!provinceBoundaryVisible, setProvinceBoundaryVisible, "province-boundary", ["province-boundary-line"], `/layers/il-siniri`) },
             { label: "Parklar", color: "#22c55e", checked: parksVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!parksVisible, setParksVisible, "parks", ["parks-fill", "parks-outline"], `/layers/parklar`) },
             { label: "Kolluk", color: "#2563eb", checked: lawVisible, type: "point", opacity: null, onChange: () => toggleDataLayer(!lawVisible, setLawVisible, "law-enforcement", ["law-enforcement-point"], `/layers/kolluk`) },

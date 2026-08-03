@@ -476,6 +476,33 @@ def kritik_tesisler():
         return conn.execute(query).scalar()
 
 
+@app.get("/tiles/ana-yollar/{z}/{x}/{y}.pbf", response_class=Response)
+def ana_yollar_tile(z: int, x: int, y: int):
+    """Return visible road segments as a compact map vector tile."""
+    query = text("""
+        WITH tile_bounds AS (
+            SELECT ST_TileEnvelope(:z, :x, :y) AS geom_3857
+        ),
+        mvt_rows AS (
+            SELECT
+                r.id,
+                ST_AsMVTGeom(ST_Transform(r.geom, 3857), t.geom_3857, 4096, 64, true) AS geom
+            FROM konya_yollar r
+            CROSS JOIN tile_bounds t
+            WHERE ST_Intersects(ST_Transform(r.geom, 3857), t.geom_3857)
+        )
+        SELECT ST_AsMVT(mvt_rows, 'roads', 4096, 'geom')
+        FROM mvt_rows;
+    """)
+    with engine.connect() as conn:
+        tile = conn.execute(query, {"z": z, "x": x, "y": y}).scalar() or b""
+    return Response(
+        content=bytes(tile),
+        media_type="application/vnd.mapbox-vector-tile",
+        headers={"Cache-Control": "public, max-age=300"},
+    )
+
+
 @app.get("/layers/ana-yollar")
 def ana_yollar(bbox: str | None = None):
     # konya_yollar tablosundan ana yolları döndür
