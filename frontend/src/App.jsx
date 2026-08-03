@@ -127,7 +127,6 @@ const [service15Visible, setService15Visible] = useState(false);
       "service-area-5-polygons": service5Visible,
       "service-area-10-polygons": service10Visible,
       "service-area-15-polygons": service15Visible,
-      "buildings-3d": buildingsVisible,
       "buildings-5": buildings5Visible,
       "buildings-10": buildings10Visible,
       "buildings-15": buildings15Visible,
@@ -421,8 +420,10 @@ addSrc("service-area-15-polygons", {
 });
 
 addSrc("buildings-3d", {
-  type: "geojson",
-  data: EMPTY_FC,
+  type: "vector",
+  tiles: [`${API_URL}/tiles/buildings-3d/{z}/{x}/{y}.pbf`],
+  minzoom: 10,
+  maxzoom: 16,
 });
 
 addSrc("buildings-5", {
@@ -598,7 +599,9 @@ addLyr({
 
   source: "buildings-3d",
 
-  minzoom: 8,
+  "source-layer": "buildings",
+
+  minzoom: 10,
 
   layout: {
     visibility: "none"
@@ -946,7 +949,6 @@ addLyr({
   ["service-area-10-polygons", "/service-area-10-polygons"],
   ["service-area-15-polygons", "/service-area-15-polygons"],
 
-  ["buildings-3d", "/buildings-3d"],
   ["buildings-5", "/buildings-5"],
   ["buildings-10", "/buildings-10"],
   ["buildings-15", "/buildings-15"],
@@ -1180,29 +1182,6 @@ useEffect(() => {
     );
   }
 
-  // DATA LOAD
-
-  if (
-    buildingsVisible &&
-    !loadedLayersRef.current["buildings-3d"]
-  ) {
-
-    fetch(
-  API_URL +
-  buildMapBboxEndpoint("/buildings-3d")
-)
-      .then((r) => r.json())
-      .then((data) => {
-
-        map
-          .getSource("buildings-3d")
-          ?.setData(data);
-
-        loadedLayersRef.current[
-          "buildings-3d"
-        ] = true;
-      });
-  }
 
 }, [
   buildingsVisible,

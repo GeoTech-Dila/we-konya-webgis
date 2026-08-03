@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from functools import lru_cache
@@ -703,6 +704,37 @@ json_build_object(
             }
 
         return result
+
+@app.get("/tiles/buildings-3d/{z}/{x}/{y}.pbf", response_class=Response)
+def buildings_3d_tile(z: int, x: int, y: int):
+    """Return only the buildings in one map tile as a vector tile."""
+    query = text("""
+        WITH tile_bounds AS (
+            SELECT
+                ST_TileEnvelope(:z, :x, :y) AS geom_3857,
+                ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) AS geom_4326
+        ),
+        mvt_rows AS (
+            SELECT
+                b.id,
+                15::integer AS height,
+                ST_AsMVTGeom(ST_Transform(b.geom, 3857), t.geom_3857, 4096, 64, true) AS geom
+            FROM konya_buildings b
+            CROSS JOIN tile_bounds t
+            WHERE b.geom && t.geom_4326
+              AND ST_Intersects(b.geom, t.geom_4326)
+        )
+        SELECT ST_AsMVT(mvt_rows, 'buildings', 4096, 'geom')
+        FROM mvt_rows;
+    """)
+    with engine.connect() as conn:
+        tile = conn.execute(query, {"z": z, "x": x, "y": y}).scalar() or b""
+    return Response(
+        content=bytes(tile),
+        media_type="application/vnd.mapbox-vector-tile",
+        headers={"Cache-Control": "public, max-age=300"},
+    )
+
 
 @app.get("/buildings-3d")
 def buildings_3d(bbox: str | None = None):
