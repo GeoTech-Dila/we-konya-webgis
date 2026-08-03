@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const analysisCards = [
   {
@@ -167,6 +167,28 @@ function AnalysisPanel({
 
 }) {
   const [activeCardId, setActiveCardId] = useState("service-area");
+  const [panelHeight, setPanelHeight] = useState(250);
+  const resizeStart = useRef(null);
+
+  const startResize = (event) => {
+    if (!analysisOpen) return;
+    event.preventDefault();
+    const startY = event.clientY;
+    const startHeight = panelHeight;
+    const onMove = (moveEvent) => {
+      const nextHeight = startHeight + (startY - moveEvent.clientY);
+      const maxHeight = Math.floor(window.innerHeight * 0.78);
+      setPanelHeight(Math.max(250, Math.min(maxHeight, nextHeight)));
+    };
+    const onEnd = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onEnd);
+      resizeStart.current = null;
+    };
+    resizeStart.current = { onMove, onEnd };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onEnd);
+  };
   const activeCard = analysisCards.find((card) => card.id === activeCardId) || analysisCards[0];
 
   return (
@@ -183,7 +205,7 @@ right: 390,
 
 bottom: analysisOpen ? 18 : -205,
 
-height: "250px",
+height: `${panelHeight}px`,
 
         zIndex: 30,
         display: "flex",
@@ -198,6 +220,16 @@ height: "250px",
       }}
       aria-label="Analiz paneli"
     >
+      {analysisOpen && <div
+        onPointerDown={startResize}
+        title="Panel yüksekliğini ayarlamak için yukarı veya aşağı sürükleyin"
+        style={{
+          height: "14px", flexShrink: 0, cursor: "ns-resize", touchAction: "none",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+      >
+        <div style={{ width: "46px", height: "4px", borderRadius: "2px", background: "rgba(71,85,105,0.45)" }} />
+      </div>}
       <div
   onClick={() => setAnalysisOpen(!analysisOpen)}
   style={{
