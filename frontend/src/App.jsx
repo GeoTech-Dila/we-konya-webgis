@@ -1737,6 +1737,78 @@ useEffect(() => {
 
       {selectedRegionSummary && (
         <div style={{
+          position: "absolute",
+
+top: 110,
+
+left: 280,
+
+height: "280px",
+          background:
+  "linear-gradient(135deg, rgba(199,210,254,0.22), rgba(196,181,253,0.20))", backdropFilter: "blur(22px)",
+border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
+          padding: "10px 12px", zIndex: 50, width: "280px", color: "black",
+          boxShadow: "0 16px 42px rgba(15,23,42,0.28)"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+            <div>
+              <div style={{ fontSize: "11px", color: "#94a3b8", marginBottom: "2px", textTransform: "uppercase", letterSpacing: "1px" }}>
+                {selectedRegionSummary.region_level || "Bölge"}
+              </div>
+              <div style={{ fontSize: "13px", fontWeight: "800" }}>{selectedRegionSummary.region_name}</div>
+            </div>
+            <button onClick={() => setSelectedRegionSummary(null)}
+              style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: "20px", lineHeight: 1 }}>✕</button>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "9px", padding: "9px", background: "rgba(255,255,255,0.06)", borderRadius: "12px" }}>
+            <ScoreGauge score={selectedRegionSummary.resilience_score} sizeOverride={42} />
+            <div>
+              <div style={{ fontWeight: "700", fontSize: "14px" }}>{selectedRegionSummary.resilience_level || "—"}</div>
+              <div style={{ color: "#94a3b8", fontSize: "11px", marginBottom: "3px" }}>Afet Dirençlilik Skoru</div>
+              <div style={{ fontSize: "21px", fontWeight: "900", color: getScoreColor(selectedRegionSummary.resilience_score) }}>
+                {selectedRegionSummary.resilience_score} <span style={{ fontSize: "12px", color: "#94a3b8" }}>/ 100</span>
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px" }}>
+            {[
+              ["🚨 Acil Olay", selectedRegionSummary.emergency_count],
+              ["⚡ Baskın Kategori", selectedRegionSummary.top_emergency_category || "—"],
+              ["🕳 Obruk", selectedRegionSummary.sinkhole_count],
+              ["📏 Fay Uzunluğu", selectedRegionSummary.fault_length_km != null ? `${selectedRegionSummary.fault_length_km} km` : "—"],
+              ["🏕 Toplanma Alanı", selectedRegionSummary.assembly_count],
+              ["🏥 Kritik Tesis", selectedRegionSummary.critical_facility_count],
+              ["📊 Risk Endeksi", selectedRegionSummary.risk_index ?? "—"],
+              ["💪 Kapasite Endeksi", selectedRegionSummary.capacity_index ?? "—"],
+            ].map(([label, value]) => (
+              <div
+  key={label}
+  style={{
+    background: "linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))",
+    borderRadius: "6px",
+    padding: "3px",
+    border: "1px solid rgba(255,255,255,0.08)",
+    backdropFilter: "blur(10px)",
+    boxShadow: "0 4px 14px rgba(0,0,0,0.12)",
+    transition: "0.2s"
+  }}
+>
+                <div style={{
+  fontSize: "9px",
+  color: "#ddd6fe",
+  marginBottom: "4px",
+  letterSpacing: "0.4px",
+  textTransform: "uppercase",
+  fontWeight: "700"
+}}>{label}</div>
+                <div style={{ fontSize: "12px", fontWeight: "700" }}>{value ?? "—"}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+        <div style={{
         position: "absolute", top: 110, left: 22, width: "230px", height: "300px",
         overflowY: "auto", padding: "12px", borderRadius: "16px",
         background: "rgba(255,255,255,0.12)", backdropFilter: "blur(18px)",
