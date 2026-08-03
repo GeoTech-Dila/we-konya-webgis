@@ -86,3 +86,74 @@ body,
   #analysis-panel .analysis-card-list { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; max-height: 230px; padding-right: 2px !important; }
   #analysis-panel .analysis-detail { min-height: 240px; }
 }
+
+
+/* Phone layout: prevent map controls, header and floating panels from overlapping. */
+@media (max-width: 768px) {
+  .app-header {
+    height: 64px !important;
+    padding: 0 12px !important;
+  }
+  .app-logo { font-size: 27px !important; }
+  .app-subtitle { display: none; }
+  .neighborhood-search {
+    top: 72px !important;
+    left: 10px !important;
+    right: 10px !important;
+    transform: none !important;
+    z-index: 12;
+  }
+  .neighborhood-search input {
+    width: 100% !important;
+    box-sizing: border-box;
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+  }
+  .team-badge {
+    right: 12px !important;
+    top: 14px !important;
+    padding: 7px 10px !important;
+  }
+  .team-badge span { font-size: 11px !important; }
+
+  .layers-panel {
+    top: 126px !important;
+    left: 8px !important;
+    width: calc(48% - 10px) !important;
+    max-height: 44vh !important;
+    padding: 10px !important;
+  }
+  .resilience-score-panel {
+    top: 190px !important;
+    left: 8px !important;
+    width: calc(48% - 10px) !important;
+    padding: 10px !important;
+  }
+  .side-events-panel {
+    top: 126px !important;
+    right: 8px !important;
+    left: auto !important;
+    width: calc(52% - 14px) !important;
+    max-height: 48vh !important;
+    border-radius: 14px !important;
+  }
+  .side-events-panel > div:first-child { padding: 10px !important; }
+  .side-events-panel > div:first-child > div { font-size: 12px !important; }
+  .side-events-panel select { max-width: 100%; }
+
+  .region-summary-card {
+    top: auto !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 66px !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: 45vh;
+    overflow-y: auto;
+  }
+  .maplibregl-ctrl-top-right {
+    top: auto !important;
+    bottom: 70px !important;
+    right: 10px !important;
+  }
+}

@@ -1729,15 +1729,15 @@ useEffect(() => {
   </div>
 )}
 
-      <div style={{
+      <div className="app-header" style={{
         position: "absolute", top: 0, left: 0, width: "100%", height: "72px",
         background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)",
         borderBottom: "1px solid rgba(255,255,255,0.18)",
         display: "flex", alignItems: "center", padding: "0 28px",
         zIndex: 10, boxShadow: "0 8px 32px rgba(0,0,0,0.12)"
       }}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ fontSize: "34px", fontWeight: "800", fontStyle: "italic", letterSpacing: "1px", display: "flex", alignItems: "center" }}>
+        <div className="app-brand" style={{ display: "flex", flexDirection: "column" }}>
+          <div className="app-logo" style={{ fontSize: "34px", fontWeight: "800", fontStyle: "italic", letterSpacing: "1px", display: "flex", alignItems: "center" }}>
             <span
   style={{
     color: "#ede9fe",
@@ -1754,10 +1754,10 @@ useEffect(() => {
   }}
 >İZ</span>
           </div>
-          <span style={{ color: "#94a3b8", fontSize: "13px", marginTop: "-2px" }}>Acil Durumda Koruma ve İzleme Sistemi</span>
+          <span className="app-subtitle" style={{ color: "#94a3b8", fontSize: "13px", marginTop: "-2px" }}>Acil Durumda Koruma ve İzleme Sistemi</span>
         </div>
 
-        <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+        <div className="neighborhood-search" style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
           <input
             type="text"
             placeholder="Mahalle ara..."
@@ -1783,7 +1783,7 @@ useEffect(() => {
             }}
           />
         </div>
-        <div style={{
+        <div className="team-badge" style={{
   position: "absolute",
   right: "80px",
   top: "18px",
@@ -1806,7 +1806,7 @@ useEffect(() => {
       </div>
 
       {selectedRegionSummary && (
-        <div style={{
+        <div className="region-summary-card" style={{
           position: "absolute",
 
 top: 110,
@@ -1894,7 +1894,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         </div>
       </div>}
 
-      <div style={{
+      <div className="side-events-panel" style={{
         position: "absolute", top: 90, right: 30,
         width: "340px", maxHeight: "calc(100vh - 120px)",
         background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)",
@@ -2039,7 +2039,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         )}
       </div>
 
-      <div style={{
+      <div className="layers-panel" style={{
         position: "absolute", top: 110, left: 22, width: "230px", height: layersPanelOpen ? "300px" : "auto",
         overflowY: layersPanelOpen ? "auto" : "hidden", padding: "12px", borderRadius: "16px",
         background: "rgba(255,255,255,0.12)", backdropFilter: "blur(18px)",
@@ -2150,7 +2150,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
       </div>}
 
 {/* Dirençlilik Skoru Paneli */}
-      <div style={{
+      <div className="resilience-score-panel" style={{
         position: "absolute",
         top: 450,
         left: 22,
