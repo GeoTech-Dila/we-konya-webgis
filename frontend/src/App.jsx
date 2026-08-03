@@ -40,6 +40,7 @@ function App() {
   const [transitPointVisible, setTransitPointVisible] = useState(false);
   const [transitAreaVisible, setTransitAreaVisible] = useState(false);
   const [resilienceVisible, setResilienceVisible] = useState(false);
+  const [resilienceInfoOpen, setResilienceInfoOpen] = useState(false);
   const [buildingsVisible, setBuildingsVisible] = useState(false);
 
 const [buildings5Visible, setBuildings5Visible] = useState(false);
@@ -2052,6 +2053,49 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         </>}
       </div>
 
+
+      {resilienceInfoOpen && <div style={{ position: "fixed", inset: 0, zIndex: 30, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", background: "rgba(15,23,42,0.42)", backdropFilter: "blur(5px)" }} onClick={() => setResilienceInfoOpen(false)}>
+        <div onClick={(e) => e.stopPropagation()} style={{ width: "min(760px, 100%)", maxHeight: "min(720px, calc(100vh - 40px))", overflowY: "auto", borderRadius: "20px", background: "rgba(255,255,255,0.97)", boxShadow: "0 24px 70px rgba(15,23,42,0.28)", padding: "24px", color: "#0f172a" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", marginBottom: "16px" }}>
+            <div>
+              <div style={{ color: "#0f766e", fontSize: "12px", fontWeight: "800", letterSpacing: "0.06em", textTransform: "uppercase" }}>KOR-İZ karar destek göstergesi</div>
+              <h2 style={{ margin: "5px 0 0", fontSize: "24px" }}>Afet Dirençlilik Skoru nedir?</h2>
+            </div>
+            <button onClick={() => setResilienceInfoOpen(false)} aria-label="Bilgi panelini kapat" style={{ border: "none", background: "#f1f5f9", color: "#475569", borderRadius: "10px", cursor: "pointer", fontSize: "21px", width: "36px", height: "36px" }}>×</button>
+          </div>
+
+          <p style={{ margin: "0 0 18px", color: "#475569", lineHeight: 1.6, fontSize: "14px" }}>
+            Bu puan, bir ilçe ya da mahallenin afetlere karşı <strong>göreli hazırlık durumunu</strong> gösterir. Risk arttıkça puan düşer; toplanma ve müdahale imkânları arttıkça puan yükselir.
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px", marginBottom: "16px" }}>
+            <div style={{ border: "1px solid #fecaca", borderRadius: "14px", padding: "15px", background: "#fff7f7" }}>
+              <div style={{ color: "#b91c1c", fontWeight: "800", marginBottom: "7px" }}>Risk puanı düşürür</div>
+              <div style={{ fontSize: "13px", color: "#475569", lineHeight: 1.55 }}>Acil olay yoğunluğu (%45), obruk yoğunluğu (%35) ve fay hattı yoğunluğu (%20) değerlendirilir.</div>
+            </div>
+            <div style={{ border: "1px solid #bbf7d0", borderRadius: "14px", padding: "15px", background: "#f5fff8" }}>
+              <div style={{ color: "#15803d", fontWeight: "800", marginBottom: "7px" }}>Kapasite puanı yükseltir</div>
+              <div style={{ fontSize: "13px", color: "#475569", lineHeight: 1.55 }}>Toplanma alanı yoğunluğu (%55) ve kritik tesis yoğunluğu (%45) değerlendirilir.</div>
+            </div>
+          </div>
+
+          <div style={{ borderRadius: "14px", padding: "15px", background: "#f8fafc", border: "1px solid #e2e8f0", marginBottom: "16px" }}>
+            <div style={{ fontWeight: "800", marginBottom: "7px" }}>Hesaplama mantığı</div>
+            <div style={{ fontSize: "13px", color: "#475569", lineHeight: 1.6 }}>
+              Her veri önce bölgenin yüzölçümüne bölünür. Böylece büyük ilçeler yalnızca büyüklükleri nedeniyle avantaj ya da dezavantaj almaz. Ardından ilçeler kendi aralarında, mahalleler de kendi aralarında karşılaştırılır ve sonuç 0–100 arasına getirilir.
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "9px", marginBottom: "18px" }}>
+            {[ ["0–54", "Kritik", "#dc2626"], ["55–74", "Orta", "#f59e0b"], ["75–100", "Güçlü", "#15803d"] ].map(([range, label, color]) => <div key={label} style={{ borderRadius: "12px", padding: "12px", border: `1px solid ${color}33`, textAlign: "center", background: "#fff" }}><div style={{ color, fontWeight: "900", fontSize: "16px" }}>{range}</div><div style={{ color: "#475569", fontSize: "12px", fontWeight: "700" }}>{label}</div></div>)}
+          </div>
+
+          <div style={{ fontSize: "12px", lineHeight: 1.55, color: "#64748b", borderTop: "1px solid #e2e8f0", paddingTop: "14px" }}>
+            Not: Bu skor, mutlak afet güvenliği kararı değil; Konya içindeki bölgeleri karşılaştırmaya yardımcı olan bir karar destek göstergesidir. Ayrıntıları görmek için haritada bir ilçe veya mahalleye tıklayabilirsin.
+          </div>
+        </div>
+      </div>}
+
 {/* Dirençlilik Skoru Paneli */}
       <div style={{
         position: "absolute",
@@ -2066,9 +2110,12 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         boxShadow: "0 10px 40px rgba(0,0,0,0.18)",
         zIndex: 10,
       }}>
-        <div style={{ fontSize: "14px", fontWeight: "700", marginBottom: "10px" }}>
-          Dirençlilik Skoru
-        </div>
+        <button onClick={() => setResilienceInfoOpen(true)}
+          title="Dirençlilik skorunun nasıl hesaplandığını göster"
+          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "6px", background: "transparent", border: "none", padding: 0, marginBottom: "10px", color: "inherit", cursor: "pointer", fontSize: "12px", fontWeight: "600", textAlign: "left" }}>
+          <span>Dirençlilik Skoru</span>
+          <span style={{ color: "#64748b", fontSize: "13px" }}>ⓘ</span>
+        </button>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
           <span style={{ fontSize: "12px", fontWeight: "600" }}>İlçe Renk Haritası</span>
           <button
