@@ -89,7 +89,7 @@ def health_db():
 @app.get("/mahalleler")
 def mahalleler(bbox: str | None = None):
     where_sql, params = bbox_filter(bbox)
-    query = text("""
+    query = text(f"""
         SELECT json_build_object(
             'type', 'FeatureCollection',
             'features', COALESCE(json_agg(features.feature), '[]'::json)
