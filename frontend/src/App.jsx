@@ -209,7 +209,7 @@ const [service15Visible, setService15Visible] = useState(false);
     const startedAt = Date.now();
     try {
       const response = await fetch(
-        `${API_URL}/analysis/region-detail?level=mahalle&region_id=${encodeURIComponent(selectedMahalle.id)}`
+        `${API_URL}/analysis/region-detail?level=${selectedMahalle.level || "mahalle"}&region_id=${encodeURIComponent(selectedMahalle.id)}`
       );
       if (!response.ok) throw new Error("Skor bulunamadı");
       const properties = await response.json();
@@ -218,7 +218,7 @@ const [service15Visible, setService15Visible] = useState(false);
       setSelectedRegionSummary(properties);
       setSelectedMahalle(null);
     } catch {
-      window.alert("Bu mahalle için hazır skor alınamadı. Lütfen tekrar deneyin.");
+      window.alert("Bu bölge için hazır skor alınamadı. Lütfen tekrar deneyin.");
     } finally {
       setMahalleScoreLoading(false);
     }
@@ -965,7 +965,9 @@ addLyr({
         map.getCanvas().style.cursor = "";
       });
       map.on("click", "district-fill", (e) => {
-        selectRegionSummary("district", e.features[0].properties, map);
+        const properties = e.features?.[0]?.properties || {};
+        setSelectedRegionSummary(null);
+        setSelectedMahalle({ id: properties.id, name: properties.name || "İlçe", level: "district" });
       });
       map.on("click", "resilience-district-fill", (e) => {
         setSelectedRegionSummary(e.features[0].properties);
@@ -1010,7 +1012,7 @@ addLyr({
       map.on("click", "mahalle-fill", (e) => {
         const properties = e.features?.[0]?.properties || {};
         setSelectedRegionSummary(null);
-        setSelectedMahalle({ id: properties.id, name: properties.adi_numara || properties.ADI_NUMARA || "Mahalle" });
+        setSelectedMahalle({ id: properties.id, name: properties.adi_numara || properties.ADI_NUMARA || "Mahalle", level: "mahalle" });
       });
       map.on("click", "resilience-neighborhood-fill", (e) => {
         setSelectedRegionSummary(e.features[0].properties);
@@ -1859,18 +1861,18 @@ useEffect(() => {
 
       {selectedMahalle && (
         <div className="region-summary-card" style={{
-          position: "absolute", top: 110, left: 280, width: "280px", padding: "16px",
-          borderRadius: "16px", zIndex: 50, color: "#0f172a",
-          background: "linear-gradient(135deg, rgba(255,251,235,0.96), rgba(255,247,237,0.94))",
-          border: "1px solid rgba(245,158,11,0.30)", backdropFilter: "blur(22px)",
-          boxShadow: "0 16px 42px rgba(15,23,42,0.24)"
+          position: "absolute", top: 410, left: 280, width: "280px", padding: "16px",
+          borderRadius: "18px", zIndex: 55, color: "#fff7f7",
+          background: "linear-gradient(135deg, rgba(185,28,28,0.76), rgba(127,29,29,0.66))",
+          border: "1px solid rgba(254,202,202,0.46)", backdropFilter: "blur(22px) saturate(150%)",
+          boxShadow: "0 18px 44px rgba(127,29,29,0.30)"
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "12px" }}>
-            <div><div style={{ color: "#b45309", fontSize: "11px", fontWeight: "800", letterSpacing: "0.07em" }}>MAHALLE ANALİZİ</div><div style={{ fontSize: "16px", fontWeight: "900", marginTop: "3px" }}>{selectedMahalle.name}</div></div>
-            <button onClick={() => setSelectedMahalle(null)} style={{ border: "none", background: "transparent", color: "#64748b", cursor: "pointer", fontSize: "20px" }}>×</button>
+            <div><div style={{ color: "#fee2e2", fontSize: "11px", fontWeight: "800", letterSpacing: "0.07em" }}>{selectedMahalle.level === "district" ? "İLÇE ANALİZİ" : "MAHALLE ANALİZİ"}</div><div style={{ fontSize: "16px", fontWeight: "900", marginTop: "3px" }}>{selectedMahalle.name}</div></div>
+            <button onClick={() => setSelectedMahalle(null)} style={{ border: "none", background: "transparent", color: "#fecaca", cursor: "pointer", fontSize: "20px" }}>×</button>
           </div>
-          <p style={{ margin: "0 0 14px", color: "#475569", fontSize: "12px", lineHeight: 1.5 }}>Mahallenin afet dirençlilik göstergelerini görmek için skoru hesaplayın.</p>
-          <button onClick={calculateSelectedMahalleScore} disabled={mahalleScoreLoading} style={{ width: "100%", border: "none", cursor: mahalleScoreLoading ? "wait" : "pointer", borderRadius: "10px", padding: "10px 12px", background: mahalleScoreLoading ? "#fbbf24" : "#d97706", color: "white", fontWeight: "800", fontSize: "13px" }}>
+          <p style={{ margin: "0 0 14px", color: "#fee2e2", fontSize: "12px", lineHeight: 1.5 }}>{selectedMahalle.level === "district" ? "İlçenin afet dirençlilik göstergelerini görmek için skoru hesaplayın." : "Mahallenin afet dirençlilik göstergelerini görmek için skoru hesaplayın."}</p>
+          <button onClick={calculateSelectedMahalleScore} disabled={mahalleScoreLoading} style={{ width: "100%", border: "none", cursor: mahalleScoreLoading ? "wait" : "pointer", borderRadius: "10px", padding: "10px 12px", background: mahalleScoreLoading ? "rgba(254,202,202,0.62)" : "rgba(255,255,255,0.92)", color: mahalleScoreLoading ? "#7f1d1d" : "#991b1b", fontWeight: "800", fontSize: "13px" }}>
             {mahalleScoreLoading ? "Göstergeler değerlendiriliyor..." : "Skoru Hesapla"}
           </button>
         </div>
