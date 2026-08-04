@@ -87,17 +87,20 @@ def health_db():
 
 
 @app.get("/mahalleler")
-def mahalleler():
-    query = text("""
+def mahalleler(bbox: str | None = None, detail: str = "detailed"):
+    """Return simplified boundaries for overview, detailed boundaries for the current viewport."""
+    where_sql, params = bbox_filter(bbox)
+    tolerance = 0.0012 if detail == "overview" else 0.00008
+    query = text(f"""
         SELECT json_build_object(
             'type', 'FeatureCollection',
-            'features', json_agg(features.feature)
+            'features', COALESCE(json_agg(features.feature), '[]'::json)
         )
         FROM (
             SELECT json_build_object(
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(
-                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), 0.0001)
+                    ST_SimplifyPreserveTopology(ST_Transform(geom, 4326), {tolerance})
                 )::json,
                 'properties', json_build_object(
                     'id', id,
@@ -105,10 +108,11 @@ def mahalleler():
                 )
             ) AS feature
             FROM konya_mahalleler
+            {where_sql}
         ) AS features;
     """)
     with engine.connect() as conn:
-        return conn.execute(query).scalar()
+        return conn.execute(query, params).scalar()
 
 
 @app.get("/ilceler")

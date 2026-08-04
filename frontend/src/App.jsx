@@ -7,6 +7,8 @@ import AnalysisPanel from "./components/AnalysisPanel";
 const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:8000";
 const EMPTY_FC = { type: "FeatureCollection", features: [] };
+// Bu zoomun altında Konya genel görünümü için sade geometri kullanılır.
+const MAHALLE_DETAIL_ZOOM = 9.2;
 
 const emergencyCategoryColors = {
   DEPREM: "#ef4444",
@@ -96,6 +98,7 @@ const [service15Visible, setService15Visible] = useState(false);
 
   // --- REFS ---
   const mahalleDataRef = useRef(null);
+  const mahalleRequestRef = useRef(null);
   const mapRef = useRef(null);
 
   const loadedLayersRef = useRef({});
@@ -144,8 +147,10 @@ const [service15Visible, setService15Visible] = useState(false);
       "buildings-15": buildings15Visible,
       "buildings-unreachable": buildingsUnreachableVisible,
       "inaccessible-heatmap": heatmapVisible,
+      "mahalleler": mahalleVisible,
     };
   }, [
+    mahalleVisible,
     roadVisible,
     service5Visible,
     service10Visible,
@@ -239,20 +244,27 @@ console.log(
   };
 
   const loadMahalleData = async (map = mapRef.current) => {
-    const cached = loadedLayersRef.current["mahalleler"];
-    if (cached) return cached;
+    if (!map) return EMPTY_FC;
+    mahalleRequestRef.current?.abort();
+    const controller = new AbortController();
+    mahalleRequestRef.current = controller;
+    const bounds = map.getBounds();
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+    const bbox = [sw.lng, sw.lat, ne.lng, ne.lat].map((value) => value.toFixed(6)).join(",");
+    const detail = map.getZoom() < MAHALLE_DETAIL_ZOOM ? "overview" : "detailed";
 
     try {
-      // Boundary rendering needs only simple geometry and names. The much heavier
-      // resilience calculation is requested separately only when the user needs it.
-      const res = await fetch(`${API_URL}/mahalleler`);
+      const res = await fetch(`${API_URL}/mahalleler?bbox=${bbox}&detail=${detail}`, { signal: controller.signal });
       if (!res.ok) return EMPTY_FC;
       const data = await res.json();
-      mahalleDataRef.current = data.features || [];
-      map?.getSource("mahalleler")?.setData(data);
-      loadedLayersRef.current["mahalleler"] = data;
+      if (mahalleRequestRef.current === controller) {
+        mahalleDataRef.current = data.features || [];
+        map.getSource("mahalleler")?.setData(data);
+      }
       return data;
-    } catch {
+    } catch (error) {
+      if (error?.name !== "AbortError") console.warn("Mahalle katmanı yüklenemedi", error);
       return EMPTY_FC;
     }
   };
@@ -368,6 +380,7 @@ console.log(
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl());
     let viewportReloadTimer = null;
+    let mahalleReloadTimer = null;
 
     map.on("load", async () => {
       const fetchGeojson = async (path, timeoutMs = 90000) => {
@@ -1024,6 +1037,11 @@ addLyr({
   }, 450);
 };
 map.on("moveend", reloadViewportSources);
+      map.on("moveend", () => {
+        if (!viewportVisibilityRef.current["mahalleler"]) return;
+        window.clearTimeout(mahalleReloadTimer);
+        mahalleReloadTimer = window.setTimeout(() => loadMahalleData(map).catch(() => {}), 250);
+      });
 reloadViewportSources();
       requestAnimationFrame(() => {
 
@@ -1039,6 +1057,7 @@ reloadViewportSources();
     return () => {
 
       window.clearTimeout(viewportReloadTimer);
+      window.clearTimeout(mahalleReloadTimer);
       map.remove();
     };
   }, []);
