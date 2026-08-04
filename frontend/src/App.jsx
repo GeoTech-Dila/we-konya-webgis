@@ -213,7 +213,7 @@ const [service15Visible, setService15Visible] = useState(false);
       );
       if (!response.ok) throw new Error("Skor bulunamadı");
       const properties = await response.json();
-      const remainingDelay = Math.max(0, 650 - (Date.now() - startedAt));
+      const remainingDelay = Math.max(0, 1000 - (Date.now() - startedAt));
       if (remainingDelay) await new Promise((resolve) => window.setTimeout(resolve, remainingDelay));
       setSelectedRegionSummary(properties);
       setSelectedMahalle(null);
