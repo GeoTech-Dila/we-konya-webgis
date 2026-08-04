@@ -762,6 +762,22 @@ def region_summary(level: str = "district"):
     cached = cached_region_summary(level)
     return cached if cached is not None else build_region_summary(engine, level)
 
+@app.get("/analysis/region-detail")
+def region_detail(level: str = "mahalle", region_id: str = ""):
+    """Return one precomputed region score without loading every neighborhood."""
+    normalized_level = "mahalle" if level in {"mahalle", "neighborhood"} else "district"
+    query = text("""
+        SELECT properties
+        FROM public.region_resilience_cache
+        WHERE analysis_level = :level AND region_id = :region_id
+    """)
+    with engine.connect() as conn:
+        result = conn.execute(query, {"level": normalized_level, "region_id": region_id}).scalar()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Hazır skor bulunamadı")
+    return result
+
+
 @app.get("/layers/ilce_nufuslu_hast_ashi_itfa")
 def ilce_nufuslu_hast_ashi_itfa():
 

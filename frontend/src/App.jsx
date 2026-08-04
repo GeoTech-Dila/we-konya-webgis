@@ -93,6 +93,8 @@ const [service15Visible, setService15Visible] = useState(false);
 
   // --- RISK / DIRENCLILIK STATE ---
   const [selectedRegionSummary, setSelectedRegionSummary] = useState(null);
+  const [selectedMahalle, setSelectedMahalle] = useState(null);
+  const [mahalleScoreLoading, setMahalleScoreLoading] = useState(false);
   const [neighborhoodRankFeatures, setNeighborhoodRankFeatures] = useState([]);
   const [resilienceRankOrder, setResilienceRankOrder] = useState("desc");
 
@@ -198,6 +200,27 @@ const [service15Visible, setService15Visible] = useState(false);
       if (feature) setSelectedRegionSummary(feature.properties);
     } catch {
       /* sessiz hata */
+    }
+  };
+
+  const calculateSelectedMahalleScore = async () => {
+    if (!selectedMahalle || mahalleScoreLoading) return;
+    setMahalleScoreLoading(true);
+    const startedAt = Date.now();
+    try {
+      const response = await fetch(
+        `${API_URL}/analysis/region-detail?level=mahalle&region_id=${encodeURIComponent(selectedMahalle.id)}`
+      );
+      if (!response.ok) throw new Error("Skor bulunamadı");
+      const properties = await response.json();
+      const remainingDelay = Math.max(0, 650 - (Date.now() - startedAt));
+      if (remainingDelay) await new Promise((resolve) => window.setTimeout(resolve, remainingDelay));
+      setSelectedRegionSummary(properties);
+      setSelectedMahalle(null);
+    } catch {
+      window.alert("Bu mahalle için hazır skor alınamadı. Lütfen tekrar deneyin.");
+    } finally {
+      setMahalleScoreLoading(false);
     }
   };
 
@@ -985,7 +1008,9 @@ addLyr({
         mahallePopup.remove();
       });
       map.on("click", "mahalle-fill", (e) => {
-        selectRegionSummary("neighborhood", e.features[0].properties, map);
+        const properties = e.features?.[0]?.properties || {};
+        setSelectedRegionSummary(null);
+        setSelectedMahalle({ id: properties.id, name: properties.adi_numara || properties.ADI_NUMARA || "Mahalle" });
       });
       map.on("click", "resilience-neighborhood-fill", (e) => {
         setSelectedRegionSummary(e.features[0].properties);
@@ -1831,6 +1856,25 @@ useEffect(() => {
   </span>
 </div>
       </div>
+
+      {selectedMahalle && (
+        <div className="region-summary-card" style={{
+          position: "absolute", top: 110, left: 280, width: "280px", padding: "16px",
+          borderRadius: "16px", zIndex: 50, color: "#0f172a",
+          background: "linear-gradient(135deg, rgba(255,251,235,0.96), rgba(255,247,237,0.94))",
+          border: "1px solid rgba(245,158,11,0.30)", backdropFilter: "blur(22px)",
+          boxShadow: "0 16px 42px rgba(15,23,42,0.24)"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "12px" }}>
+            <div><div style={{ color: "#b45309", fontSize: "11px", fontWeight: "800", letterSpacing: "0.07em" }}>MAHALLE ANALİZİ</div><div style={{ fontSize: "16px", fontWeight: "900", marginTop: "3px" }}>{selectedMahalle.name}</div></div>
+            <button onClick={() => setSelectedMahalle(null)} style={{ border: "none", background: "transparent", color: "#64748b", cursor: "pointer", fontSize: "20px" }}>×</button>
+          </div>
+          <p style={{ margin: "0 0 14px", color: "#475569", fontSize: "12px", lineHeight: 1.5 }}>Mahallenin afet dirençlilik göstergelerini görmek için skoru hesaplayın.</p>
+          <button onClick={calculateSelectedMahalleScore} disabled={mahalleScoreLoading} style={{ width: "100%", border: "none", cursor: mahalleScoreLoading ? "wait" : "pointer", borderRadius: "10px", padding: "10px 12px", background: mahalleScoreLoading ? "#fbbf24" : "#d97706", color: "white", fontWeight: "800", fontSize: "13px" }}>
+            {mahalleScoreLoading ? "Göstergeler değerlendiriliyor..." : "Skoru Hesapla"}
+          </button>
+        </div>
+      )}
 
       {selectedRegionSummary && (
         <div className="region-summary-card" style={{
