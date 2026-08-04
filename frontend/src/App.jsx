@@ -1861,7 +1861,7 @@ useEffect(() => {
 
       {selectedMahalle && (
         <div className="region-summary-card" style={{
-          position: "absolute", top: 525, left: 350, width: "340px", padding: "16px",
+          position: "absolute", top: 390, left: 280, width: "280px", height: "166px", padding: "12px",
           borderRadius: "18px", zIndex: 55, color: "#fff7f7",
           background: "linear-gradient(135deg, rgba(185,28,28,0.76), rgba(127,29,29,0.66))",
           border: "1px solid rgba(254,202,202,0.46)", backdropFilter: "blur(22px) saturate(150%)",
