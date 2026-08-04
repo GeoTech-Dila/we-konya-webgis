@@ -69,6 +69,25 @@ def bbox_filter(bbox):
     )
 
 
+def mahalle_bbox_filter(bbox):
+    """4326 mahalle geometrileri için GIST indeksinden yararlanan alan filtresi."""
+    if not bbox:
+        return "", {}
+
+    try:
+        minx, miny, maxx, maxy = [float(value) for value in bbox.split(",")]
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="bbox minx,miny,maxx,maxy formatında olmalı.")
+
+    return (
+        """
+        WHERE geom && ST_MakeEnvelope(:minx, :miny, :maxx, :maxy, 4326)
+          AND ST_Intersects(geom, ST_MakeEnvelope(:minx, :miny, :maxx, :maxy, 4326))
+        """,
+        {"minx": minx, "miny": miny, "maxx": maxx, "maxy": maxy},
+    )
+
+
 @app.get("/")
 def root():
     return {"message": "WebGIS Backend Çalışıyor"}
@@ -89,8 +108,8 @@ def health_db():
 @app.get("/mahalleler")
 def mahalleler(bbox: str | None = None, detail: str = "detailed"):
     """Return simplified boundaries for overview, detailed boundaries for the current viewport."""
-    where_sql, params = bbox_filter(bbox)
-    tolerance = 0.0012 if detail == "overview" else 0.00008
+    where_sql, params = mahalle_bbox_filter(bbox)
+    tolerance = 0.0025 if detail == "overview" else 0.00008
     query = text(f"""
         SELECT json_build_object(
             'type', 'FeatureCollection',
