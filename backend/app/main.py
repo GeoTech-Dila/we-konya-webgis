@@ -717,12 +717,50 @@ def acil_durum():
         return result
 
 
+def cached_region_summary(level: str):
+    """Read fast, precomputed resilience properties and join the live geometry."""
+    normalized_level = "mahalle" if level in {"mahalle", "neighborhood"} else "district"
+    region_table = "konya_mahalleler" if normalized_level == "mahalle" else "konya_ilceler"
+    tolerance = 0.0001 if normalized_level == "mahalle" else 0.00003
+    exists_query = text("""
+        SELECT EXISTS(
+            SELECT 1 FROM public.region_resilience_cache
+            WHERE analysis_level = :level
+        )
+    """)
+    with engine.connect() as conn:
+        if not conn.execute(exists_query, {"level": normalized_level}).scalar():
+            return None
+        query = text(f"""
+            WITH features AS (
+                SELECT
+                    c.region_name,
+                    json_build_object(
+                        'type', 'Feature',
+                        'geometry', ST_AsGeoJSON(
+                            ST_SimplifyPreserveTopology(ST_Transform(r.geom, 4326), {tolerance})
+                        )::json,
+                        'properties', c.properties
+                    ) AS feature
+                FROM public.region_resilience_cache c
+                JOIN public.{region_table} r ON r.id::text = c.region_id
+                WHERE c.analysis_level = :level
+            )
+            SELECT json_build_object(
+                'type', 'FeatureCollection',
+                'features', COALESCE(json_agg(feature ORDER BY region_name), '[]'::json)
+            )
+            FROM features
+        """)
+        return conn.execute(query, {"level": normalized_level}).scalar()
+
+
 # --- REGION SUMMARY ---
 
 @app.get("/analysis/region-summary")
-@lru_cache(maxsize=2)
 def region_summary(level: str = "district"):
-    return build_region_summary(engine, level)
+    cached = cached_region_summary(level)
+    return cached if cached is not None else build_region_summary(engine, level)
 
 @app.get("/layers/ilce_nufuslu_hast_ashi_itfa")
 def ilce_nufuslu_hast_ashi_itfa():
