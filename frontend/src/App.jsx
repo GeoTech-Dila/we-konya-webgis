@@ -357,8 +357,8 @@ console.log(
       },
       // Açılış görünümü: Konya ilini eğimli, perspektif bir genel bakışla gösterir.
       center: [32.55, 37.87],
-      zoom: 7.8,
-      pitch: 48,
+      zoom: 7.05,
+      pitch: 55,
       bearing: -18,
     });
 
