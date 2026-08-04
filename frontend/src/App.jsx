@@ -7,8 +7,6 @@ import AnalysisPanel from "./components/AnalysisPanel";
 const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:8000";
 const EMPTY_FC = { type: "FeatureCollection", features: [] };
-// Mahalle sınırları bu seviyeden sonra yalnızca görünür harita alanı için yüklenir.
-const MAHALLE_MIN_ZOOM = 6.8;
 
 const emergencyCategoryColors = {
   DEPREM: "#ef4444",
@@ -98,7 +96,6 @@ const [service15Visible, setService15Visible] = useState(false);
 
   // --- REFS ---
   const mahalleDataRef = useRef(null);
-  const mahalleRequestRef = useRef(null);
   const mapRef = useRef(null);
 
   const loadedLayersRef = useRef({});
@@ -147,10 +144,8 @@ const [service15Visible, setService15Visible] = useState(false);
       "buildings-15": buildings15Visible,
       "buildings-unreachable": buildingsUnreachableVisible,
       "inaccessible-heatmap": heatmapVisible,
-      "mahalleler": mahalleVisible,
     };
   }, [
-    mahalleVisible,
     roadVisible,
     service5Visible,
     service10Visible,
@@ -244,30 +239,17 @@ console.log(
   };
 
   const loadMahalleData = async (map = mapRef.current) => {
-    if (!map || map.getZoom() < MAHALLE_MIN_ZOOM) {
-      map?.getSource("mahalleler")?.setData(EMPTY_FC);
-      return EMPTY_FC;
+    if (loadedLayersRef.current["mahalleler"]) {
+      return loadedLayersRef.current["mahalleler"];
     }
 
-    mahalleRequestRef.current?.abort();
-    const controller = new AbortController();
-    mahalleRequestRef.current = controller;
-    const bounds = map.getBounds();
-    const sw = bounds.getSouthWest();
-    const ne = bounds.getNorthEast();
-    const bbox = [sw.lng, sw.lat, ne.lng, ne.lat].map((value) => value.toFixed(6)).join(",");
-
     try {
-      const res = await fetch(`${API_URL}/mahalleler?bbox=${bbox}`, { signal: controller.signal });
-      if (!res.ok) return EMPTY_FC;
-      const data = await res.json();
-      if (mahalleRequestRef.current === controller) {
-        mahalleDataRef.current = data.features || [];
-        map.getSource("mahalleler")?.setData(data);
-      }
+      const data = await loadRegionSummary("neighborhood", map);
+      mahalleDataRef.current = data.features || [];
+      map?.getSource("mahalleler")?.setData(data);
+      loadedLayersRef.current["mahalleler"] = data;
       return data;
-    } catch (error) {
-      if (error?.name !== "AbortError") console.warn("Mahalle katmanı yüklenemedi", error);
+    } catch {
       return EMPTY_FC;
     }
   };
@@ -542,7 +524,7 @@ addSrc("inaccessible-heatmap", {
   },
 });
 
-      addLyr({ id: "mahalle-fill", type: "fill", source: "mahalleler", minzoom: MAHALLE_MIN_ZOOM, paint: { "fill-color": "#2563eb", "fill-opacity": 0 } });
+      addLyr({ id: "mahalle-fill", type: "fill", source: "mahalleler", paint: { "fill-color": "#2563eb", "fill-opacity": 0 } });
 
       addLyr({
         id: "resilience-neighborhood-fill",
@@ -555,7 +537,7 @@ addSrc("inaccessible-heatmap", {
         },
       });
 
-      addLyr({ id: "mahalle-outline", type: "line", source: "mahalleler", minzoom: MAHALLE_MIN_ZOOM, paint: { "line-color": "#2563eb", "line-width": 1 } });
+      addLyr({ id: "mahalle-outline", type: "line", source: "mahalleler", paint: { "line-color": "#2563eb", "line-width": 1 } });
 
 addLyr({
 
@@ -1039,14 +1021,6 @@ addLyr({
   }, 450);
 };
 map.on("moveend", reloadViewportSources);
-      map.on("moveend", () => {
-        const mahalleActive = viewportVisibilityRef.current["mahalleler"];
-        const shouldShowMahalle = mahalleActive && map.getZoom() >= MAHALLE_MIN_ZOOM;
-        map.setLayoutProperty("mahalle-outline", "visibility", shouldShowMahalle ? "visible" : "none");
-        map.setLayoutProperty("mahalle-fill", "visibility", shouldShowMahalle ? "visible" : "none");
-        if (shouldShowMahalle) loadMahalleData(map).catch(() => {});
-        else if (!mahalleActive || map.getZoom() < MAHALLE_MIN_ZOOM) map.getSource("mahalleler")?.setData(EMPTY_FC);
-      });
 reloadViewportSources();
       requestAnimationFrame(() => {
 
@@ -1086,11 +1060,12 @@ reloadViewportSources();
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.getLayer("mahalle-outline")) return;
-    const shouldShowMahalle = mahalleVisible && map.getZoom() >= MAHALLE_MIN_ZOOM;
-    map.setLayoutProperty("mahalle-outline", "visibility", shouldShowMahalle ? "visible" : "none");
-    map.setLayoutProperty("mahalle-fill", "visibility", shouldShowMahalle ? "visible" : "none");
+    map.setLayoutProperty("mahalle-outline", "visibility", mahalleVisible ? "visible" : "none");
+    map.setLayoutProperty("mahalle-fill", "visibility", mahalleVisible ? "visible" : "none");
 
-    if (mahalleVisible) loadMahalleData(map).catch(() => {});
+    if (mahalleVisible) {
+      loadMahalleData(map).catch(() => {});
+    }
   }, [mahalleVisible]);
 
   useEffect(() => {

@@ -87,12 +87,11 @@ def health_db():
 
 
 @app.get("/mahalleler")
-def mahalleler(bbox: str | None = None):
-    where_sql, params = bbox_filter(bbox)
-    query = text(f"""
+def mahalleler():
+    query = text("""
         SELECT json_build_object(
             'type', 'FeatureCollection',
-            'features', COALESCE(json_agg(features.feature), '[]'::json)
+            'features', json_agg(features.feature)
         )
         FROM (
             SELECT json_build_object(
@@ -106,11 +105,10 @@ def mahalleler(bbox: str | None = None):
                 )
             ) AS feature
             FROM konya_mahalleler
-            {where_sql}
         ) AS features;
     """)
     with engine.connect() as conn:
-        return conn.execute(query, params).scalar()
+        return conn.execute(query).scalar()
 
 
 @app.get("/ilceler")
