@@ -355,10 +355,11 @@ console.log(
         },
         layers: [{ id: "carto-light-layer", type: "raster", source: "carto-light" }],
       },
-      center: [32.49, 37.87],
-      zoom: 11,
-      pitch: 60,
-      bearing: -20,
+      // Açılış görünümü: Konya ilini eğimli, perspektif bir genel bakışla gösterir.
+      center: [32.55, 37.87],
+      zoom: 7.8,
+      pitch: 48,
+      bearing: -18,
     });
 
     mapRef.current = map;
