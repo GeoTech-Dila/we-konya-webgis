@@ -1872,8 +1872,8 @@ useEffect(() => {
             <button onClick={() => setSelectedMahalle(null)} style={{ border: "none", background: "transparent", color: "#fecaca", cursor: "pointer", fontSize: "17px", padding: "0 2px" }}>×</button>
           </div>
           <p style={{ margin: "0 0 7px", color: "#fee2e2", fontSize: "11px", lineHeight: 1.35 }}>{selectedMahalle.level === "district" ? "İlçenin afet dirençlilik göstergelerini görmek için skoru hesaplayın." : "Mahallenin afet dirençlilik göstergelerini görmek için skoru hesaplayın."}</p>
-          <button onClick={calculateSelectedMahalleScore} disabled={mahalleScoreLoading} style={{ width: "100%", border: "none", cursor: mahalleScoreLoading ? "wait" : "pointer", borderRadius: "9px", padding: "7px 10px", background: mahalleScoreLoading ? "rgba(254,202,202,0.62)" : "rgba(255,255,255,0.92)", color: mahalleScoreLoading ? "#7f1d1d" : "#991b1b", fontWeight: "800", fontSize: "12px" }}>
-            {mahalleScoreLoading ? "Göstergeler değerlendiriliyor..." : "Skoru Hesapla"}
+          <button onClick={calculateSelectedMahalleScore} disabled={mahalleScoreLoading} style={{ width: "100%", border: "none", cursor: mahalleScoreLoading ? "wait" : "pointer", borderRadius: "9px", padding: "7px 10px", background: mahalleScoreLoading ? "rgba(254,202,202,0.62)" : "rgba(255,255,255,0.92)", color: mahalleScoreLoading ? "#7f1d1d" : "#991b1b", fontWeight: "800", fontSize: "12px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {mahalleScoreLoading ? "Hesaplanıyor…" : "Skoru Hesapla"}
           </button>
         </div>
       )}
