@@ -8,7 +8,7 @@ const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:8000";
 const EMPTY_FC = { type: "FeatureCollection", features: [] };
 // Mahalle sınırları bu seviyeden sonra yalnızca görünür harita alanı için yüklenir.
-const MAHALLE_MIN_ZOOM = 9.2;
+const MAHALLE_MIN_ZOOM = 6.8;
 
 const emergencyCategoryColors = {
   DEPREM: "#ef4444",
