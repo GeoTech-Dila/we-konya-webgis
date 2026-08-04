@@ -713,6 +713,51 @@ def toplu_ulasim_alan():
         return conn.execute(query).scalar()
 
 
+
+
+@app.get("/layers/acil-durum-sayfa")
+def acil_durum_sayfa(category: str | None = None, page: int = 1, page_size: int = 10):
+    """Return one compact page for the event list; the map heatmap keeps using the full endpoint."""
+    page = max(1, page)
+    page_size = min(max(1, page_size), 50)
+    offset = (page - 1) * page_size
+    params = {"category": category, "limit": page_size, "offset": offset}
+    where_sql = "WHERE (:category IS NULL OR COALESCE(birincil_etiket, 'Kategori yok') = :category)"
+
+    with engine.connect() as conn:
+        total = conn.execute(text(f"SELECT COUNT(*) FROM konya_acil_durum {where_sql}"), params).scalar() or 0
+        overall_total = conn.execute(text("SELECT COUNT(*) FROM konya_acil_durum")).scalar() or 0
+        category_rows = conn.execute(text("""
+            SELECT DISTINCT COALESCE(birincil_etiket, 'Kategori yok') AS category
+            FROM konya_acil_durum
+            ORDER BY category
+        """)).all()
+        result = conn.execute(text(f"""
+            SELECT json_build_object(
+                'type', 'FeatureCollection',
+                'features', COALESCE(json_agg(f.feature), '[]'::json)
+            )
+            FROM (
+                SELECT json_build_object(
+                    'type', 'Feature',
+                    'geometry', ST_AsGeoJSON(ST_Transform(geom, 4326))::json,
+                    'properties', to_jsonb(t) - 'geom'
+                ) AS feature
+                FROM konya_acil_durum t
+                {where_sql}
+                ORDER BY tarih_utc DESC NULLS LAST, kayit_id DESC
+                LIMIT :limit OFFSET :offset
+            ) AS f
+        """), params).scalar() or {"type": "FeatureCollection", "features": []}
+
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "overall_total": overall_total,
+        "categories": [row[0] for row in category_rows],
+        "features": result.get("features", []),
+    }
 @app.get("/layers/acil-durum")
 def acil_durum():
     query = text("""

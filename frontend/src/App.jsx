@@ -89,6 +89,12 @@ const [service15Visible, setService15Visible] = useState(false);
   // --- ACIL DURUM STATE ---
   const [emergencyFeatures, setEmergencyFeatures] = useState([]);
   const [emergencyCategory, setEmergencyCategory] = useState("Tümü");
+  const [emergencyPage, setEmergencyPage] = useState(1);
+  const [emergencyPageFeatures, setEmergencyPageFeatures] = useState([]);
+  const [emergencyPageTotal, setEmergencyPageTotal] = useState(0);
+  const [emergencyOverallTotal, setEmergencyOverallTotal] = useState(0);
+  const [emergencyPanelCategories, setEmergencyPanelCategories] = useState(["Tümü"]);
+  const [emergencyPageLoading, setEmergencyPageLoading] = useState(false);
   const [selectedEmergencyId, setSelectedEmergencyId] = useState(null);
 
   // --- RISK / DIRENCLILIK STATE ---
@@ -266,6 +272,27 @@ console.log(
     }
   };
 
+
+  const loadEmergencyPage = async (page = emergencyPage, category = emergencyCategory) => {
+    setEmergencyPageLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(page), page_size: "10" });
+      if (category !== "Tümü") params.set("category", category);
+      const res = await fetch(`${API_URL}/layers/acil-durum-sayfa?${params}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const normalized = normalizeEmergencyGeojson({ type: "FeatureCollection", features: data.features || [] });
+      setEmergencyPageFeatures(normalized.features || []);
+      setEmergencyPageTotal(Number(data.total || 0));
+      setEmergencyOverallTotal(Number(data.overall_total || 0));
+      setEmergencyPanelCategories(["Tümü", ...(data.categories || [])]);
+    } catch {
+      /* sessiz hata */
+    } finally {
+      setEmergencyPageLoading(false);
+    }
+  };
+
   const loadMahalleData = async (map = mapRef.current) => {
     if (!map) return EMPTY_FC;
     mahalleRequestRef.current?.abort();
@@ -347,6 +374,12 @@ console.log(
   };
 
   // --- MAHALLE RANK FONKSIYONU ---
+
+  useEffect(() => {
+    if (activeSideTab !== "events" || !eventsPanelOpen) return;
+    loadEmergencyPage(emergencyPage, emergencyCategory);
+  }, [activeSideTab, eventsPanelOpen, emergencyPage, emergencyCategory]);
+
   useEffect(() => {
     if (activeSideTab !== "resilience") return;
     loadRegionSummary("neighborhood")
@@ -2011,11 +2044,11 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
               <>
                 <div style={{ padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "12px", fontWeight: "700", background: "#fff7ed", color: "#c2410c", borderRadius: "999px", padding: "5px 9px" }}>
-                    {filteredEvents.length} kayıt
+                    {emergencyPageTotal} kayıt
                   </span>
-                  <select value={emergencyCategory} onChange={(e) => setEmergencyCategory(e.target.value)}
+                  <select value={emergencyCategory} onChange={(e) => { setEmergencyCategory(e.target.value); setEmergencyPage(1); }}
                     style={{ fontSize: "12px", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "5px 8px", background: "rgba(255,255,255,0.14)", cursor: "pointer" }}>
-                    {emergencyCategories.map((c) => <option key={c} value={c}>{c}</option>)}
+                    {emergencyPanelCategories.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
 
@@ -2033,7 +2066,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
   <br />
   Filtrelenen: {filteredEvents.length}
   <br />
-  Toplam: {emergencyFeatures.length}
+  Toplam: {emergencyOverallTotal}
 </div>
 
 <div
@@ -2049,7 +2082,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
 
 
 
-  {visibleEvents.map((f, i) => (
+  {emergencyPageFeatures.map((f, i) => (
                     <button
   key={`${emergencyCategory}-${f.properties?.kayit_id}-${f.properties?.birincil_etiket}`}
                       onClick={() => focusEmergencyEvent(f)}
@@ -2074,6 +2107,15 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                       </div>
                     </button>
                   ))}
+                </div>
+
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", padding: "8px 12px 12px", borderTop: "1px solid rgba(255,255,255,0.16)" }}>
+                  <button onClick={() => setEmergencyPage((p) => Math.max(1, p - 1))} disabled={emergencyPage <= 1 || emergencyPageLoading}
+                    style={{ border: "1px solid rgba(148,163,184,0.45)", background: "rgba(255,255,255,0.62)", borderRadius: "8px", padding: "6px 9px", fontSize: "11px", fontWeight: "700", cursor: emergencyPage <= 1 ? "not-allowed" : "pointer", opacity: emergencyPage <= 1 ? 0.42 : 1 }}>Önceki 10</button>
+                  <span style={{ fontSize: "11px", color: "#64748b", whiteSpace: "nowrap" }}>{emergencyPageLoading ? "Yükleniyor…" : `${emergencyPage}. sayfa`}</span>
+                  <button onClick={() => setEmergencyPage((p) => p + 1)} disabled={emergencyPage * 10 >= emergencyPageTotal || emergencyPageLoading}
+                    style={{ border: "1px solid rgba(148,163,184,0.45)", background: "rgba(255,255,255,0.62)", borderRadius: "8px", padding: "6px 9px", fontSize: "11px", fontWeight: "700", cursor: emergencyPage * 10 >= emergencyPageTotal ? "not-allowed" : "pointer", opacity: emergencyPage * 10 >= emergencyPageTotal ? 0.42 : 1 }}>Sonraki 10</button>
                 </div>
               </>
             ) : (
