@@ -7,6 +7,18 @@ import AnalysisPanel from "./components/AnalysisPanel";
 const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:8000";
 const EMPTY_FC = { type: "FeatureCollection", features: [] };
+// Türkçe karakterler ve büyük/küçük harf farkı arama sonucunu etkilemesin.
+const normalizeSearchText = (value = "") => String(value)
+  .toLocaleLowerCase("tr-TR")
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/ı/g, "i")
+  .replace(/ç/g, "c")
+  .replace(/ğ/g, "g")
+  .replace(/ö/g, "o")
+  .replace(/ş/g, "s")
+  .replace(/ü/g, "u")
+  .trim();
 // Bu zoomun altında Konya genel görünümü için sade geometri kullanılır.
 const MAHALLE_DETAIL_ZOOM = 9.2;
 
@@ -1869,7 +1881,7 @@ useEffect(() => {
                 await loadMahalleData();
               }
 
-              const found = mahalleDataRef.current?.find((m) => m.properties.adi_numara?.toLowerCase().includes(searchText.toLowerCase()));
+              const found = mahalleDataRef.current?.find((m) => normalizeSearchText(m.properties.adi_numara).includes(normalizeSearchText(searchText)));
               if (!found) return;
               const coords = found.geometry.type === "Polygon" ? found.geometry.coordinates[0] : found.geometry.coordinates[0][0];
               const bounds = coords.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
