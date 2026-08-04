@@ -239,12 +239,15 @@ console.log(
   };
 
   const loadMahalleData = async (map = mapRef.current) => {
-    if (loadedLayersRef.current["mahalleler"]) {
-      return loadedLayersRef.current["mahalleler"];
-    }
+    const cached = loadedLayersRef.current["mahalleler"];
+    if (cached) return cached;
 
     try {
-      const data = await loadRegionSummary("neighborhood", map);
+      // Boundary rendering needs only simple geometry and names. The much heavier
+      // resilience calculation is requested separately only when the user needs it.
+      const res = await fetch(`${API_URL}/mahalleler`);
+      if (!res.ok) return EMPTY_FC;
+      const data = await res.json();
       mahalleDataRef.current = data.features || [];
       map?.getSource("mahalleler")?.setData(data);
       loadedLayersRef.current["mahalleler"] = data;
