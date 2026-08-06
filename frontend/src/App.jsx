@@ -949,7 +949,8 @@ addLyr({
       });
 
       addLyr({ id: "fault-lines-line", type: "line", source: "fault-lines", layout: { visibility: "none" }, paint: { "line-color": "#dc2626", "line-opacity": 0.92, "line-width": ["interpolate", ["linear"], ["zoom"], 8, 1, 13, 3] } });
-      addLyr({ id: "sinkholes-point", type: "circle", source: "sinkholes", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 7], "circle-color": "#7c2d12", "circle-stroke-color": "#fff7ed", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
+      addLyr({ id: "sinkholes-fill", type: "fill", source: "sinkholes", layout: { visibility: "none" }, paint: { "fill-color": "#a16207", "fill-opacity": 0.30 } });
+      addLyr({ id: "sinkholes-outline", type: "line", source: "sinkholes", layout: { visibility: "none" }, paint: { "line-color": "#78350f", "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.8, 13, 2.2], "line-opacity": 0.95 } });
       addLyr({ id: "critical-facilities-point", type: "circle", source: "critical-facilities", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#64748b", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.88 } });
       addLyr({ id: "major-roads-line", type: "line", source: "major-roads", "source-layer": "roads", minzoom: 11, layout: { visibility: "none" }, paint: { "line-color": "#64748b", "line-opacity": 0.58, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.7, 15, 2.4] } });
       addLyr({ id: "province-boundary-line", type: "line", source: "province-boundary", layout: { visibility: "none" }, paint: { "line-color": "#0f172a", "line-opacity": 0.86, "line-width": ["interpolate", ["linear"], ["zoom"], 7, 1.3, 12, 3] } });
@@ -2188,7 +2189,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
           {
             id: "risk", title: "Afet Riski", items: [
               { label: "Fay Hatları", color: "#dc2626", checked: faultVisible, type: "line", onChange: () => toggleDataLayer(!faultVisible, setFaultVisible, "fault-lines", ["fault-lines-line"], "/layers/fay-hatlari") },
-              { label: "Obruklar", color: "#7c2d12", checked: sinkholeVisible, type: "point", onChange: () => toggleDataLayer(!sinkholeVisible, setSinkholeVisible, "sinkholes", ["sinkholes-point"], "/layers/obruklar") },
+              { label: "Obruklar", color: "#a16207", checked: sinkholeVisible, type: "area", onChange: () => toggleDataLayer(!sinkholeVisible, setSinkholeVisible, "sinkholes", ["sinkholes-fill", "sinkholes-outline"], "/layers/obruklar") },
             ]
           },
           {
