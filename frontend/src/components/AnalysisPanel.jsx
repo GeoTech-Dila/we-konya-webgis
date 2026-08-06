@@ -93,13 +93,13 @@ const analysisCards = [
   },
   {
     id: "recommended-assembly",
-    title: "Öneri Olabilecek Nitelikte Toplanma Alanları",
-    method: "Nüfus + Mekânsal Yeterlilik Analizi",
-    status: "Gerçek veri hazır",
+    title: "AFAD Ön Elemesi: Öneri Toplanma Alanları",
+    method: "Nüfus + Güvenli Park Parçası Analizi",
+    status: "Ön eleme senaryosu hazır",
     summary:
-      "Nüfusu, mevcut resmî toplanma alanlarını ve parkların kullanılabilir büyüklüğünü birlikte değerlendirerek öneri niteliğindeki alanları belirler.",
-    inputs: ["2025 mahalle nüfusu", "Resmî toplanma alanları", "Park alanları"],
-    output: "Resmî olmayan, değerlendirmeye uygun potansiyel toplanma alanları",
+      "Parkların binalardan 30 m uzakta kalan güvenli bölümlerini, obruk ve fay çakışmalarını ve 2025 mahalle nüfusunu birlikte değerlendirir.",
+    inputs: ["2025 mahalle nüfusu", "Park alanları", "Bina ayak izleri", "Fay hatları", "Obruklar"],
+    output: "Resmî olmayan, AFAD odaklı ön elemeden geçen güvenli park parçaları",
     image: "/service_area1_gorsel.png",
   },
   {
@@ -440,10 +440,10 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
             onClick={onToggleRecommendedAssembly}
             style={{ width: "100%", padding: "9px 13px", borderRadius: 12, border: "1px solid rgba(245,158,11,0.55)", background: recommendedAssemblyVisible ? "rgba(254,243,199,0.82)" : "rgba(255,255,255,0.12)", color: "#92400e", cursor: "pointer", fontWeight: 700, fontSize: 13, marginBottom: 6 }}
           >
-            {recommendedAssemblyVisible ? "✓ Öneri Alanlarını Gizle" : "▶ Öneri Alanlarını Haritada Göster"}
+            {recommendedAssemblyVisible ? "✓ AFAD Ön Eleme Alanlarını Gizle" : "▶ AFAD Ön Eleme Alanlarını Haritada Göster"}
           </button>
           <div style={{ fontSize: 11, lineHeight: 1.45, color: "#92400e", padding: "0 4px 7px" }}>
-            Bu alanlar resmî toplanma alanı değildir; saha incelemesi ve yetkili kurum değerlendirmesi gerektirir.
+            Bu alanlar resmî toplanma alanı değildir. Bina yüksekliği yerine 30 m sabit uzaklık kullanılmıştır; saha incelemesi ve yetkili kurum değerlendirmesi gerektirir.
           </div>
         </div>
       )}

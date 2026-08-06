@@ -179,7 +179,7 @@ def toplanma_alanlari():
 
 @app.get("/layers/oneri-toplanma-alanlari")
 def oneri_toplanma_alanlari():
-    """Return non-official park-based assembly-area recommendations."""
+    """Return preliminary AFAD-oriented safe-park assembly-area scenarios."""
     query = text("""
         SELECT json_build_object(
             'type', 'FeatureCollection',
@@ -190,11 +190,11 @@ def oneri_toplanma_alanlari():
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(ST_Transform(geom, 4326))::json,
                 'properties', COALESCE(
-                    to_jsonb(konya_oneri_toplanma_alanlari_2025) - 'geom',
+                    to_jsonb(konya_oneri_toplanma_alanlari_afad_2025) - 'geom',
                     '{}'::jsonb
                 )
             ) AS feature
-            FROM konya_oneri_toplanma_alanlari_2025
+            FROM konya_oneri_toplanma_alanlari_afad_2025
         ) AS features;
     """)
     with engine.connect() as conn:
