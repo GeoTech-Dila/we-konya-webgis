@@ -112,6 +112,8 @@ const [service15Visible, setService15Visible] = useState(false);
   // --- RISK / DIRENCLILIK STATE ---
   const [selectedRegionSummary, setSelectedRegionSummary] = useState(null);
   const [selectedMahalle, setSelectedMahalle] = useState(null);
+  const [selectedAssemblyScenario, setSelectedAssemblyScenario] = useState(null);
+  const [assemblyScenarioLoading, setAssemblyScenarioLoading] = useState(false);
   const [mahalleScoreLoading, setMahalleScoreLoading] = useState(false);
   const [neighborhoodRankFeatures, setNeighborhoodRankFeatures] = useState([]);
   const [resilienceRankOrder, setResilienceRankOrder] = useState("desc");
@@ -239,6 +241,22 @@ const [service15Visible, setService15Visible] = useState(false);
       window.alert("Bu bölge için hazır skor alınamadı. Lütfen tekrar deneyin.");
     } finally {
       setMahalleScoreLoading(false);
+    }
+  };
+
+
+  const loadAssemblyScenario = async (mahalleId) => {
+    if (!mahalleId) return;
+    setAssemblyScenarioLoading(true);
+    setSelectedAssemblyScenario(null);
+    try {
+      const response = await fetch(`${API_URL}/analysis/oneri-toplanma-ozet/${encodeURIComponent(mahalleId)}`);
+      if (!response.ok) throw new Error("Senaryo özeti bulunamadı");
+      setSelectedAssemblyScenario(await response.json());
+    } catch {
+      setSelectedAssemblyScenario(null);
+    } finally {
+      setAssemblyScenarioLoading(false);
     }
   };
 
@@ -1057,9 +1075,12 @@ addLyr({
         const properties = e.features?.[0]?.properties || {};
         setSelectedRegionSummary(null);
         setSelectedMahalle({ id: properties.id, name: properties.adi_numara || properties.ADI_NUMARA || "Mahalle", level: "mahalle" });
+        loadAssemblyScenario(properties.id);
       });
       map.on("click", "resilience-neighborhood-fill", (e) => {
-        setSelectedRegionSummary(e.features[0].properties);
+        const properties = e.features[0].properties || {};
+        setSelectedRegionSummary(properties);
+        loadAssemblyScenario(properties.region_id || properties.id);
       });
 
       loadEmergencyData(map);
@@ -2340,6 +2361,8 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         setHeatmapOpacity={setHeatmapOpacity}
 
         recommendedAssemblyVisible={recommendedAssemblyVisible}
+        selectedAssemblyScenario={selectedAssemblyScenario}
+        assemblyScenarioLoading={assemblyScenarioLoading}
         onToggleRecommendedAssembly={() => toggleDataLayer(
           !recommendedAssemblyVisible,
           setRecommendedAssemblyVisible,

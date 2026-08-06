@@ -163,6 +163,8 @@ function AnalysisPanel({
   setHeatmapOpacity,
 
   recommendedAssemblyVisible,
+  selectedAssemblyScenario,
+  assemblyScenarioLoading,
   onToggleRecommendedAssembly,
 
   activeAnalysisLayer,
@@ -411,6 +413,8 @@ height: `${panelHeight}px`,
               activeAnalysisLayer={activeAnalysisLayer}
               setActiveAnalysisLayer={setActiveAnalysisLayer}
               recommendedAssemblyVisible={recommendedAssemblyVisible}
+              selectedAssemblyScenario={selectedAssemblyScenario}
+              assemblyScenarioLoading={assemblyScenarioLoading}
               onToggleRecommendedAssembly={onToggleRecommendedAssembly}
             />
           )}
@@ -421,7 +425,7 @@ height: `${panelHeight}px`,
   );
 }
 
-function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, onToggleRecommendedAssembly }) {
+function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly }) {
   return (
     <div
       style={{
@@ -445,6 +449,43 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
           <div style={{ fontSize: 11, lineHeight: 1.45, color: "#92400e", padding: "0 4px 7px" }}>
             Bu alanlar resmî toplanma alanı değildir. Bina yüksekliği yerine 30 m sabit uzaklık kullanılmıştır; saha incelemesi ve yetkili kurum değerlendirmesi gerektirir.
           </div>
+
+          {(assemblyScenarioLoading || selectedAssemblyScenario) && (
+            <div style={{ margin: "2px 4px 8px", padding: "9px", borderRadius: 12, background: "rgba(255,247,237,0.82)", border: "1px solid rgba(234,88,12,0.22)", color: "#431407" }}>
+              <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 7 }}>Seçili Mahalle: Nüfus ve Öneri Kapasitesi</div>
+              {assemblyScenarioLoading ? (
+                <div style={{ fontSize: 11, color: "#9a3412" }}>Mahalle senaryosu yükleniyor…</div>
+              ) : (() => {
+                const population = Number(selectedAssemblyScenario.nufus || 0);
+                const capacity = Number(selectedAssemblyScenario.ihtiyatli_kapasite || 0);
+                const maximum = Math.max(population, capacity, 1);
+                const populationHeight = Math.max(8, Math.round((population / maximum) * 66));
+                const capacityHeight = capacity ? Math.max(8, Math.round((capacity / maximum) * 66)) : 3;
+                const requiredArea = Number(selectedAssemblyScenario.gerekli_alan_m2 || 0);
+                const safeArea = Number(selectedAssemblyScenario.guvenli_alan_m2 || 0);
+                const areaMaximum = Math.max(requiredArea, safeArea, 1);
+                const requiredAreaHeight = Math.max(8, Math.round((requiredArea / areaMaximum) * 54));
+                const safeAreaHeight = safeArea ? Math.max(8, Math.round((safeArea / areaMaximum) * 54)) : 3;
+                return <>
+                  <div style={{ fontSize: 10, color: "#9a3412", marginBottom: 6 }}>{selectedAssemblyScenario.mahalle_adi} · {selectedAssemblyScenario.oneri_alan_sayisi || 0} güvenli öneri alanı</div>
+                  <div style={{ height: 94, display: "flex", alignItems: "end", gap: 20, padding: "0 15px", borderBottom: "1px solid rgba(154,52,18,0.18)" }}>
+                    <div style={{ flex: 1, textAlign: "center" }}><div style={{ fontSize: 11, fontWeight: 800, marginBottom: 4 }}>{population.toLocaleString("tr-TR")}</div><div style={{ height: populationHeight, background: "linear-gradient(180deg,#64748b,#334155)", borderRadius: "7px 7px 2px 2px" }} /></div>
+                    <div style={{ flex: 1, textAlign: "center" }}><div style={{ fontSize: 11, fontWeight: 800, marginBottom: 4 }}>{capacity.toLocaleString("tr-TR")}</div><div style={{ height: capacityHeight, background: "linear-gradient(180deg,#fb923c,#c2410c)", borderRadius: "7px 7px 2px 2px" }} /></div>
+                  </div>
+                  <div style={{ display: "flex", gap: 20, padding: "4px 15px 0", fontSize: 10, fontWeight: 700 }}><span style={{ flex: 1, textAlign: "center", color: "#475569" }}>Mahalle nüfusu</span><span style={{ flex: 1, textAlign: "center", color: "#c2410c" }}>Öneri kapasitesi</span></div>
+                  <div style={{ marginTop: 10, paddingTop: 8, borderTop: "1px dashed rgba(154,52,18,0.20)" }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, marginBottom: 3 }}>Alan Karşılaştırması (m²)</div>
+                    <div style={{ height: 73, display: "flex", alignItems: "end", gap: 20, padding: "0 15px", borderBottom: "1px solid rgba(154,52,18,0.18)" }}>
+                      <div style={{ flex: 1, textAlign: "center" }}><div style={{ fontSize: 10, fontWeight: 800, marginBottom: 3 }}>{requiredArea.toLocaleString("tr-TR")}</div><div style={{ height: requiredAreaHeight, background: "linear-gradient(180deg,#94a3b8,#475569)", borderRadius: "7px 7px 2px 2px" }} /></div>
+                      <div style={{ flex: 1, textAlign: "center" }}><div style={{ fontSize: 10, fontWeight: 800, marginBottom: 3 }}>{safeArea.toLocaleString("tr-TR")}</div><div style={{ height: safeAreaHeight, background: "linear-gradient(180deg,#fbbf24,#b45309)", borderRadius: "7px 7px 2px 2px" }} /></div>
+                    </div>
+                    <div style={{ display: "flex", gap: 20, padding: "4px 15px 0", fontSize: 9, fontWeight: 700 }}><span style={{ flex: 1, textAlign: "center", color: "#475569" }}>Referans ihtiyaç</span><span style={{ flex: 1, textAlign: "center", color: "#b45309" }}>Güvenli park alanı</span></div>
+                  </div>
+                  <div style={{ marginTop: 7, fontSize: 10, color: "#7c2d12" }}>İhtiyatlı karşılama: <strong>%{selectedAssemblyScenario.karsilama_yuzdesi || 0}</strong> · Güvenli alan: <strong>{Number(selectedAssemblyScenario.guvenli_alan_m2 || 0).toLocaleString("tr-TR")} m²</strong></div>
+                </>;
+              })()}
+            </div>
+          )}
         </div>
       )}
 

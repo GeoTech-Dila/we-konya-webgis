@@ -201,6 +201,36 @@ def oneri_toplanma_alanlari():
         return conn.execute(query).scalar()
 
 
+@app.get("/analysis/oneri-toplanma-ozet/{mahalle_id}")
+def oneri_toplanma_ozet(mahalle_id: str):
+    """Return the small, selected-neighborhood assembly scenario payload."""
+    query = text("""
+        SELECT json_build_object(
+            'mahalle_id', n.mahalle_id,
+            'mahalle_adi', n.mahalle_adi,
+            'ilce_adi', n.ilce_adi,
+            'nufus', n.nufus,
+            'gerekli_alan_m2', ROUND((n.nufus::numeric * 1.29)::numeric, 1),
+            'oneri_alan_sayisi', COUNT(o.*)::int,
+            'guvenli_alan_m2', COALESCE(ROUND(SUM(o.bina_ve_obruklardan_guvenli_alan_m2)::numeric, 1), 0),
+            'ihtiyatli_kapasite', COALESCE(SUM(o.ihtiyatli_kisi_kapasitesi), 0)::bigint,
+            'karsilama_yuzdesi', COALESCE(
+                ROUND((SUM(o.ihtiyatli_kisi_kapasitesi)::numeric / NULLIF(n.nufus, 0) * 100)::numeric, 1), 0
+            )
+        )
+        FROM public.konya_mahalle_nufus n
+        LEFT JOIN public.konya_oneri_toplanma_alanlari_afad_2025 o
+          ON o.mahalle_id = n.mahalle_id
+        WHERE n.yil = 2025 AND n.mahalle_id = :mahalle_id
+        GROUP BY n.mahalle_id, n.mahalle_adi, n.ilce_adi, n.nufus
+    """)
+    with engine.connect() as conn:
+        result = conn.execute(query, {'mahalle_id': mahalle_id}).scalar()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Mahalle nüfus kaydı bulunamadı")
+    return result
+
+
 @app.get("/yollar")
 def yollar(bbox: str | None = None):
     where_sql, params = bbox_filter(bbox)
