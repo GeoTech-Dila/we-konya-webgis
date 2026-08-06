@@ -73,11 +73,11 @@ def build_region_summary(engine, level="district"):
             GROUP BY r.region_id
         ),
         critical_facilities AS MATERIALIZED (
+            -- Haritadaki “Kritik Tesisler” katmanıyla aynı kapsam:
+            -- sağlık noktaları ve kolluk noktaları. Sağlık alanları ayrı
+            -- bir katman olduğundan bu skor göstergesine dahil edilmez.
             SELECT ST_PointOnSurface(ST_Transform(geom, 3857)) AS geom
             FROM konya_saglik_nokta
-            UNION ALL
-            SELECT ST_PointOnSurface(ST_Transform(geom, 3857)) AS geom
-            FROM konya_saglik_alan
             UNION ALL
             SELECT ST_PointOnSurface(ST_Transform(geom, 3857)) AS geom
             FROM konya_kolluk
