@@ -2055,7 +2055,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         boxShadow: "0 8px 32px rgba(0,0,0,0.12)", zIndex: 10,
         display: "flex", flexDirection: "column", overflow: "hidden"
       }}>
-        <div onClick={() => setEventsPanelOpen((open) => !open)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "16px", fontWeight: "700" }}>
             <span>{activeSideTab === "events" ? "Acil Olaylar Sınıflandırması" : "Dirençlilik Sıralaması"}</span>
             {activeSideTab === "resilience" && <button onClick={(e) => { e.stopPropagation(); setResilienceRankingHelpOpen(true); }} title="Mahalle sıralamasını nasıl görüntüleyeceğini göster" style={{ border: "none", background: "transparent", color: "#64748b", cursor: "pointer", fontSize: "14px", padding: 0, lineHeight: 1 }}>ⓘ</button>}
@@ -2065,8 +2065,8 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
             style={{ background: "rgba(255,255,255,0.72)", border: "1px solid rgba(239,68,68,0.28)", borderRadius: "8px", color: "#b91c1c", cursor: "pointer", fontSize: "10px", fontWeight: "700", padding: "5px 7px", lineHeight: "1.2", textAlign: "center", width: "100px", marginLeft: "auto", marginRight: "6px" }}>
             Acil Olaylar<br />Isı Haritasını Kaldır
           </button>}
-          <button onClick={() => setEventsPanelOpen((open) => !open)}
-            style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "18px", color: "#64748b" }}>
+          <button onClick={() => setEventsPanelOpen((open) => !open)} aria-label={eventsPanelOpen ? "Paneli kapat" : "Paneli aç"}
+            style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "18px", color: "#64748b", padding: "6px", lineHeight: 1 }}>
             {eventsPanelOpen ? "▲" : "▼"}
           </button>
         </div>
