@@ -478,6 +478,7 @@ console.log(
 
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl());
+    map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: "metric" }), "bottom-left");
     let viewportReloadTimer = null;
     let mahalleReloadTimer = null;
 

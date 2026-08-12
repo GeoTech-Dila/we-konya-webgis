@@ -21,6 +21,22 @@ body,
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
 }
 
+/* Anlık harita ölçeği: analiz çekmecesinin üstünde, sol altta görünür. */
+.maplibregl-ctrl-bottom-left {
+  bottom: 86px !important;
+  left: 20px !important;
+  z-index: 15;
+}
+.maplibregl-ctrl-scale {
+  background: rgba(255,255,255,0.78) !important;
+  border-color: #334155 !important;
+  color: #1e293b !important;
+  border-radius: 3px 3px 0 0;
+  padding: 2px 5px 0;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 
 /* KOR-IZ modern opacity sliders */
 .koriz-opacity-slider {
@@ -94,6 +110,10 @@ body,
   .maplibregl-ctrl-top-right {
     top: 126px !important;
     right: 8px !important;
+  }
+  .maplibregl-ctrl-bottom-left {
+    bottom: 68px !important;
+    left: 10px !important;
   }
   .app-header {
     height: 64px !important;
