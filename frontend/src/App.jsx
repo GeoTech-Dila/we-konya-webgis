@@ -117,6 +117,7 @@ const [service15Visible, setService15Visible] = useState(false);
   const [mahalleScoreLoading, setMahalleScoreLoading] = useState(false);
   const [neighborhoodRankFeatures, setNeighborhoodRankFeatures] = useState([]);
   const [resilienceRankOrder, setResilienceRankOrder] = useState("desc");
+  const [resilienceRankPage, setResilienceRankPage] = useState(1);
 
   // --- REFS ---
   const mahalleDataRef = useRef(null);
@@ -155,6 +156,18 @@ const [service15Visible, setService15Visible] = useState(false);
         return resilienceRankOrder === "asc" ? scoreDifference : -scoreDifference;
       });
   }, [neighborhoodRankFeatures, resilienceRankOrder]);
+
+  const resilienceRankPageSize = 10;
+  const resilienceRankTotalPages = Math.max(1, Math.ceil(rankedNeighborhoods.length / resilienceRankPageSize));
+  const visibleRankedNeighborhoods = useMemo(() => {
+    const start = (resilienceRankPage - 1) * resilienceRankPageSize;
+    return rankedNeighborhoods.slice(start, start + resilienceRankPageSize);
+  }, [rankedNeighborhoods, resilienceRankPage]);
+
+  useEffect(() => { setResilienceRankPage(1); }, [resilienceRankOrder]);
+  useEffect(() => {
+    if (resilienceRankPage > resilienceRankTotalPages) setResilienceRankPage(resilienceRankTotalPages);
+  }, [resilienceRankPage, resilienceRankTotalPages]);
 
   useEffect(() => {
     viewportVisibilityRef.current = {
@@ -2164,12 +2177,13 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                   </select>
                 </div>
                 <div style={{ flex: 1, overflowY: "auto", padding: "0 8px 8px", display: "grid", gap: "6px" }}>
-                  {rankedNeighborhoods.map((f, i) => {
+                  {visibleRankedNeighborhoods.map((f, i) => {
+                    const absoluteIndex = (resilienceRankPage - 1) * resilienceRankPageSize + i;
                     const p = f.properties || {};
                     return (
-                      <button key={`${p.region_name}-${i}`} onClick={() => focusRankedRegion(f)}
+                      <button key={`${p.region_name}-${absoluteIndex}`} onClick={() => focusRankedRegion(f)}
                         style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "10px", textAlign: "left", cursor: "pointer", display: "grid", gridTemplateColumns: "28px 36px 1fr 36px", alignItems: "center", gap: "8px" }}>
-                        <span style={{ background: "#eef4ff", color: "#24579f", borderRadius: "50%", width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800" }}>{i + 1}</span>
+                        <span style={{ background: "#eef4ff", color: "#24579f", borderRadius: "50%", width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800" }}>{absoluteIndex + 1}</span>
                         <ScoreGauge score={p.resilience_score} compact />
                         <div>
                           <div style={{ fontSize: "12px", fontWeight: "700", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.region_name}</div>
@@ -2179,6 +2193,13 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                       </button>
                     );
                   })}
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", padding: "8px 12px 12px", borderTop: "1px solid rgba(255,255,255,0.16)" }}>
+                  <button onClick={() => setResilienceRankPage((p) => Math.max(1, p - 1))} disabled={resilienceRankPage <= 1}
+                    style={{ border: "1px solid rgba(148,163,184,0.45)", background: "rgba(255,255,255,0.62)", borderRadius: "8px", padding: "6px 9px", fontSize: "11px", fontWeight: "700", cursor: resilienceRankPage <= 1 ? "not-allowed" : "pointer", opacity: resilienceRankPage <= 1 ? 0.42 : 1 }}>Önceki 10</button>
+                  <span style={{ fontSize: "11px", color: "#64748b", whiteSpace: "nowrap" }}>{resilienceRankPage}. / {resilienceRankTotalPages}. sayfa</span>
+                  <button onClick={() => setResilienceRankPage((p) => Math.min(resilienceRankTotalPages, p + 1))} disabled={resilienceRankPage >= resilienceRankTotalPages}
+                    style={{ border: "1px solid rgba(148,163,184,0.45)", background: "rgba(255,255,255,0.62)", borderRadius: "8px", padding: "6px 9px", fontSize: "11px", fontWeight: "700", cursor: resilienceRankPage >= resilienceRankTotalPages ? "not-allowed" : "pointer", opacity: resilienceRankPage >= resilienceRankTotalPages ? 0.42 : 1 }}>Sonraki 10</button>
                 </div>
               </>
             )}
