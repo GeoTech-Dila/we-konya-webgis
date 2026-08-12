@@ -117,7 +117,7 @@ const [service15Visible, setService15Visible] = useState(false);
   const [mahalleScoreLoading, setMahalleScoreLoading] = useState(false);
   const [neighborhoodRankFeatures, setNeighborhoodRankFeatures] = useState([]);
   const [resilienceRankOrder, setResilienceRankOrder] = useState("desc");
-  const [resilienceRankPage, setResilienceRankPage] = useState(1);
+  const [resilienceRankDistrict, setResilienceRankDistrict] = useState("Tümü");
 
   // --- REFS ---
   const mahalleDataRef = useRef(null);
@@ -148,26 +148,22 @@ const [service15Visible, setService15Visible] = useState(false);
       .slice(0, 250);
   }, [filteredEvents]);
 
+  const resilienceRankDistricts = useMemo(() => {
+    return Array.from(new Set(neighborhoodRankFeatures
+      .map((f) => f.properties?.ilce_adi)
+      .filter(Boolean)))
+      .sort((a, b) => a.localeCompare(b, "tr"));
+  }, [neighborhoodRankFeatures]);
+
   const rankedNeighborhoods = useMemo(() => {
     return [...neighborhoodRankFeatures]
       .filter((f) => f.properties?.region_name)
+      .filter((f) => resilienceRankDistrict === "Tümü" || f.properties?.ilce_adi === resilienceRankDistrict)
       .sort((a, b) => {
         const scoreDifference = Number(a.properties?.resilience_score || 0) - Number(b.properties?.resilience_score || 0);
         return resilienceRankOrder === "asc" ? scoreDifference : -scoreDifference;
       });
-  }, [neighborhoodRankFeatures, resilienceRankOrder]);
-
-  const resilienceRankPageSize = 10;
-  const resilienceRankTotalPages = Math.max(1, Math.ceil(rankedNeighborhoods.length / resilienceRankPageSize));
-  const visibleRankedNeighborhoods = useMemo(() => {
-    const start = (resilienceRankPage - 1) * resilienceRankPageSize;
-    return rankedNeighborhoods.slice(start, start + resilienceRankPageSize);
-  }, [rankedNeighborhoods, resilienceRankPage]);
-
-  useEffect(() => { setResilienceRankPage(1); }, [resilienceRankOrder]);
-  useEffect(() => {
-    if (resilienceRankPage > resilienceRankTotalPages) setResilienceRankPage(resilienceRankTotalPages);
-  }, [resilienceRankPage, resilienceRankTotalPages]);
+  }, [neighborhoodRankFeatures, resilienceRankOrder, resilienceRankDistrict]);
 
   useEffect(() => {
     viewportVisibilityRef.current = {
@@ -2170,20 +2166,26 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                     <div style={{ fontSize: "12px", color: "#0f766e", fontWeight: "800" }}>{rankedNeighborhoods.length} mahalle</div>
                     <div style={{ fontSize: "11px", color: "#64748b" }}>{resilienceRankOrder === "desc" ? "En yüksek dirençlilik skoruna göre" : "En düşük dirençlilik skoruna göre"}</div>
                   </div>
-                  <select value={resilienceRankOrder} onChange={(e) => setResilienceRankOrder(e.target.value)} aria-label="Dirençlilik sıralama yönü"
-                    style={{ flexShrink: 0, fontSize: "10px", fontWeight: "700", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "6px", background: "rgba(255,255,255,0.85)", cursor: "pointer" }}>
-                    <option value="desc">Yüksek → Düşük</option>
-                    <option value="asc">Düşük → Yüksek</option>
-                  </select>
+                  <div style={{ display: "grid", gap: "5px", flexShrink: 0 }}>
+                    <select value={resilienceRankDistrict} onChange={(e) => setResilienceRankDistrict(e.target.value)} aria-label="İlçe filtresi"
+                      style={{ width: "118px", fontSize: "10px", fontWeight: "700", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "6px", background: "rgba(255,255,255,0.85)", cursor: "pointer" }}>
+                      <option value="Tümü">Tüm ilçeler</option>
+                      {resilienceRankDistricts.map((district) => <option key={district} value={district}>{district}</option>)}
+                    </select>
+                    <select value={resilienceRankOrder} onChange={(e) => setResilienceRankOrder(e.target.value)} aria-label="Dirençlilik sıralama yönü"
+                      style={{ width: "118px", fontSize: "10px", fontWeight: "700", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "6px", background: "rgba(255,255,255,0.85)", cursor: "pointer" }}>
+                      <option value="desc">Yüksek → Düşük</option>
+                      <option value="asc">Düşük → Yüksek</option>
+                    </select>
+                  </div>
                 </div>
                 <div style={{ flex: 1, overflowY: "auto", padding: "0 8px 8px", display: "grid", gap: "6px" }}>
-                  {visibleRankedNeighborhoods.map((f, i) => {
-                    const absoluteIndex = (resilienceRankPage - 1) * resilienceRankPageSize + i;
+                  {rankedNeighborhoods.map((f, i) => {
                     const p = f.properties || {};
                     return (
-                      <button key={`${p.region_name}-${absoluteIndex}`} onClick={() => focusRankedRegion(f)}
+                      <button key={`${p.region_name}-${i}`} onClick={() => focusRankedRegion(f)}
                         style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "10px", textAlign: "left", cursor: "pointer", display: "grid", gridTemplateColumns: "28px 36px 1fr 36px", alignItems: "center", gap: "8px" }}>
-                        <span style={{ background: "#eef4ff", color: "#24579f", borderRadius: "50%", width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800" }}>{absoluteIndex + 1}</span>
+                        <span style={{ background: "#eef4ff", color: "#24579f", borderRadius: "50%", width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800" }}>{i + 1}</span>
                         <ScoreGauge score={p.resilience_score} compact />
                         <div>
                           <div style={{ fontSize: "12px", fontWeight: "700", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.region_name}</div>
@@ -2193,13 +2195,6 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                       </button>
                     );
                   })}
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", padding: "8px 12px 12px", borderTop: "1px solid rgba(255,255,255,0.16)" }}>
-                  <button onClick={() => setResilienceRankPage((p) => Math.max(1, p - 1))} disabled={resilienceRankPage <= 1}
-                    style={{ border: "1px solid rgba(148,163,184,0.45)", background: "rgba(255,255,255,0.62)", borderRadius: "8px", padding: "6px 9px", fontSize: "11px", fontWeight: "700", cursor: resilienceRankPage <= 1 ? "not-allowed" : "pointer", opacity: resilienceRankPage <= 1 ? 0.42 : 1 }}>Önceki 10</button>
-                  <span style={{ fontSize: "11px", color: "#64748b", whiteSpace: "nowrap" }}>{resilienceRankPage}. / {resilienceRankTotalPages}. sayfa</span>
-                  <button onClick={() => setResilienceRankPage((p) => Math.min(resilienceRankTotalPages, p + 1))} disabled={resilienceRankPage >= resilienceRankTotalPages}
-                    style={{ border: "1px solid rgba(148,163,184,0.45)", background: "rgba(255,255,255,0.62)", borderRadius: "8px", padding: "6px 9px", fontSize: "11px", fontWeight: "700", cursor: resilienceRankPage >= resilienceRankTotalPages ? "not-allowed" : "pointer", opacity: resilienceRankPage >= resilienceRankTotalPages ? 0.42 : 1 }}>Sonraki 10</button>
                 </div>
               </>
             )}

@@ -816,6 +816,8 @@ def cached_region_summary(level: str):
     normalized_level = "mahalle" if level in {"mahalle", "neighborhood"} else "district"
     region_table = "konya_mahalleler" if normalized_level == "mahalle" else "konya_ilceler"
     tolerance = 0.0001 if normalized_level == "mahalle" else 0.00003
+    district_join = "LEFT JOIN public.konya_ilceler d ON ST_Covers(d.geom, ST_PointOnSurface(r.geom))" if normalized_level == "mahalle" else ""
+    district_properties = "c.properties || jsonb_build_object('ilce_adi', d.name)" if normalized_level == "mahalle" else "c.properties"
     exists_query = text("""
         SELECT EXISTS(
             SELECT 1 FROM public.region_resilience_cache
@@ -834,10 +836,11 @@ def cached_region_summary(level: str):
                         'geometry', ST_AsGeoJSON(
                             ST_SimplifyPreserveTopology(ST_Transform(r.geom, 4326), {tolerance})
                         )::json,
-                        'properties', c.properties
+                        'properties', {district_properties}
                     ) AS feature
                 FROM public.region_resilience_cache c
                 JOIN public.{region_table} r ON r.id::text = c.region_id
+                {district_join}
                 WHERE c.analysis_level = :level
             )
             SELECT json_build_object(
