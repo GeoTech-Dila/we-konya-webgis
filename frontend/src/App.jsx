@@ -117,7 +117,8 @@ const [service15Visible, setService15Visible] = useState(false);
   const [mahalleScoreLoading, setMahalleScoreLoading] = useState(false);
   const [neighborhoodRankFeatures, setNeighborhoodRankFeatures] = useState([]);
   const [resilienceRankOrder, setResilienceRankOrder] = useState("desc");
-  const [resilienceRankDistrict, setResilienceRankDistrict] = useState("Tümü");
+  const [resilienceDistrictOptions, setResilienceDistrictOptions] = useState([]);
+  const [resilienceDistrictId, setResilienceDistrictId] = useState("");
 
   // --- REFS ---
   const mahalleDataRef = useRef(null);
@@ -148,22 +149,14 @@ const [service15Visible, setService15Visible] = useState(false);
       .slice(0, 250);
   }, [filteredEvents]);
 
-  const resilienceRankDistricts = useMemo(() => {
-    return Array.from(new Set(neighborhoodRankFeatures
-      .map((f) => f.properties?.ilce_adi)
-      .filter(Boolean)))
-      .sort((a, b) => a.localeCompare(b, "tr"));
-  }, [neighborhoodRankFeatures]);
-
   const rankedNeighborhoods = useMemo(() => {
     return [...neighborhoodRankFeatures]
       .filter((f) => f.properties?.region_name)
-      .filter((f) => resilienceRankDistrict === "Tümü" || f.properties?.ilce_adi === resilienceRankDistrict)
       .sort((a, b) => {
         const scoreDifference = Number(a.properties?.resilience_score || 0) - Number(b.properties?.resilience_score || 0);
         return resilienceRankOrder === "asc" ? scoreDifference : -scoreDifference;
       });
-  }, [neighborhoodRankFeatures, resilienceRankOrder, resilienceRankDistrict]);
+  }, [neighborhoodRankFeatures, resilienceRankOrder]);
 
   useEffect(() => {
     viewportVisibilityRef.current = {
@@ -200,8 +193,9 @@ const [service15Visible, setService15Visible] = useState(false);
     map?.getSource(sourceId)?.setData(data);
   };
 
-  const loadRegionSummary = async (level = "district", map = mapRef.current) => {
-    const cached = regionSummaryRef.current[level];
+  const loadRegionSummary = async (level = "district", map = mapRef.current, districtId = "") => {
+    const cacheKey = districtId ? `${level}:${districtId}` : level;
+    const cached = regionSummaryRef.current[cacheKey];
     if (cached) {
       setRegionSummarySource(level, cached, map);
       if (level === "neighborhood") setNeighborhoodRankFeatures(cached.features || []);
@@ -209,11 +203,12 @@ const [service15Visible, setService15Visible] = useState(false);
     }
 
     const apiLevel = level === "neighborhood" ? "mahalle" : level;
-    const res = await fetch(`${API_URL}/analysis/region-summary?level=${apiLevel}`);
+    const districtQuery = districtId ? `&district_id=${encodeURIComponent(districtId)}` : "";
+    const res = await fetch(`${API_URL}/analysis/region-summary?level=${apiLevel}${districtQuery}`);
     if (!res.ok) throw new Error("Region summary yuklenemedi");
 
     const data = await res.json();
-    regionSummaryRef.current[level] = data;
+    regionSummaryRef.current[cacheKey] = data;
     setRegionSummarySource(level, data, map);
     if (level === "neighborhood") setNeighborhoodRankFeatures(data.features || []);
     return data;
@@ -420,11 +415,22 @@ console.log(
   }, [activeSideTab, eventsPanelOpen, emergencyPage, emergencyCategory]);
 
   useEffect(() => {
-    if (activeSideTab !== "resilience") return;
-    loadRegionSummary("neighborhood")
-      .then((data) => setNeighborhoodRankFeatures(data.features || []))
+    if (activeSideTab !== "resilience" || resilienceDistrictOptions.length) return;
+    fetch(`${API_URL}/analysis/resilience-district-options`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((rows) => setResilienceDistrictOptions(Array.isArray(rows) ? rows : []))
       .catch(() => {});
-  }, [activeSideTab]);
+  }, [activeSideTab, resilienceDistrictOptions.length]);
+
+  useEffect(() => {
+    if (activeSideTab !== "resilience" || !resilienceDistrictId) {
+      setNeighborhoodRankFeatures([]);
+      return;
+    }
+    loadRegionSummary("neighborhood", mapRef.current, resilienceDistrictId)
+      .then((data) => setNeighborhoodRankFeatures(data.features || []))
+      .catch(() => setNeighborhoodRankFeatures([]));
+  }, [activeSideTab, resilienceDistrictId]);
 
   useEffect(() => {
     const secondStep = window.setTimeout(() => setLoadingStep(1), LOADING_STEP_DELAY_MS);
@@ -2161,36 +2167,33 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
               </>
             ) : (
               <>
-                <div style={{ padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
+                <div style={{ padding: "8px 12px", display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: "7px 10px" }}>
                   <div>
-                    <div style={{ fontSize: "12px", color: "#0f766e", fontWeight: "800" }}>{rankedNeighborhoods.length} mahalle</div>
-                    <div style={{ fontSize: "11px", color: "#64748b" }}>{resilienceRankOrder === "desc" ? "En yüksek dirençlilik skoruna göre" : "En düşük dirençlilik skoruna göre"}</div>
+                    <div style={{ fontSize: "12px", color: "#0f766e", fontWeight: "800" }}>{resilienceDistrictId ? `${rankedNeighborhoods.length} mahalle` : "İlçe seçin"}</div>
+                    <div style={{ fontSize: "11px", color: "#64748b" }}>{resilienceDistrictId ? (resilienceRankOrder === "desc" ? "En yüksek dirençlilik skoruna göre" : "En düşük dirençlilik skoruna göre") : "Mahalle sıralamasını hızlı getirmek için"}</div>
                   </div>
-                  <div style={{ display: "grid", gap: "5px", flexShrink: 0 }}>
-                    <select value={resilienceRankDistrict} onChange={(e) => setResilienceRankDistrict(e.target.value)} aria-label="İlçe filtresi"
-                      style={{ width: "118px", fontSize: "10px", fontWeight: "700", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "6px", background: "rgba(255,255,255,0.85)", cursor: "pointer" }}>
-                      <option value="Tümü">Tüm ilçeler</option>
-                      {resilienceRankDistricts.map((district) => <option key={district} value={district}>{district}</option>)}
-                    </select>
-                    <select value={resilienceRankOrder} onChange={(e) => setResilienceRankOrder(e.target.value)} aria-label="Dirençlilik sıralama yönü"
-                      style={{ width: "118px", fontSize: "10px", fontWeight: "700", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "6px", background: "rgba(255,255,255,0.85)", cursor: "pointer" }}>
-                      <option value="desc">Yüksek → Düşük</option>
-                      <option value="asc">Düşük → Yüksek</option>
-                    </select>
-                  </div>
+                  <select value={resilienceRankOrder} onChange={(e) => setResilienceRankOrder(e.target.value)} disabled={!resilienceDistrictId} aria-label="Dirençlilik sıralama yönü"
+                    style={{ flexShrink: 0, fontSize: "10px", fontWeight: "700", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "6px", background: "rgba(255,255,255,0.85)", cursor: resilienceDistrictId ? "pointer" : "not-allowed", opacity: resilienceDistrictId ? 1 : 0.48 }}>
+                    <option value="desc">Yüksek → Düşük</option>
+                    <option value="asc">Düşük → Yüksek</option>
+                  </select>
+                  <select value={resilienceDistrictId} onChange={(e) => setResilienceDistrictId(e.target.value)} aria-label="İlçe seç"
+                    style={{ gridColumn: "1 / -1", width: "100%", fontSize: "11px", fontWeight: "700", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "7px 8px", background: "rgba(255,255,255,0.85)", cursor: "pointer" }}>
+                    <option value="">İlçe seçin…</option>
+                    {resilienceDistrictOptions.map((district) => <option key={district.id} value={district.id}>{district.name}</option>)}
+                  </select>
                 </div>
                 <div style={{ flex: 1, overflowY: "auto", padding: "0 8px 8px", display: "grid", gap: "6px" }}>
-                  {rankedNeighborhoods.map((f, i) => {
+                  {!resilienceDistrictId ? (
+                    <div style={{ padding: "20px 12px", textAlign: "center", color: "#64748b", fontSize: "12px", lineHeight: 1.55 }}>Bir ilçe seçtiğinde yalnızca o ilçenin mahalleleri yüklenir.</div>
+                  ) : rankedNeighborhoods.map((f, i) => {
                     const p = f.properties || {};
                     return (
                       <button key={`${p.region_name}-${i}`} onClick={() => focusRankedRegion(f)}
                         style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "10px", textAlign: "left", cursor: "pointer", display: "grid", gridTemplateColumns: "28px 36px 1fr 36px", alignItems: "center", gap: "8px" }}>
                         <span style={{ background: "#eef4ff", color: "#24579f", borderRadius: "50%", width: "26px", height: "26px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800" }}>{i + 1}</span>
                         <ScoreGauge score={p.resilience_score} compact />
-                        <div>
-                          <div style={{ fontSize: "12px", fontWeight: "700", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.region_name}</div>
-                          <div style={{ fontSize: "10px", color: "#64748b" }}>{p.resilience_level}</div>
-                        </div>
+                        <div><div style={{ fontSize: "12px", fontWeight: "700", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.region_name}</div><div style={{ fontSize: "10px", color: "#64748b" }}>{p.resilience_level}</div></div>
                         <span style={{ fontSize: "15px", fontWeight: "800", justifySelf: "end" }}>{p.resilience_score}</span>
                       </button>
                     );

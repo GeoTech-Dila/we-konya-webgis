@@ -811,52 +811,59 @@ def acil_durum():
         return result
 
 
-def cached_region_summary(level: str):
+def cached_region_summary(level: str, district_id: str | None = None):
     """Read fast, precomputed resilience properties and join the live geometry."""
     normalized_level = "mahalle" if level in {"mahalle", "neighborhood"} else "district"
     region_table = "konya_mahalleler" if normalized_level == "mahalle" else "konya_ilceler"
     tolerance = 0.0001 if normalized_level == "mahalle" else 0.00003
-    district_join = "LEFT JOIN public.konya_ilceler d ON ST_Covers(d.geom, ST_PointOnSurface(r.geom))" if normalized_level == "mahalle" else ""
-    district_properties = "c.properties || jsonb_build_object('ilce_adi', d.name)" if normalized_level == "mahalle" else "c.properties"
+    district_join = ""
+    district_where = ""
+    query_params = {"level": normalized_level}
+    if normalized_level == "mahalle" and district_id:
+        district_join = "JOIN public.konya_ilceler d ON ST_Intersects(ST_PointOnSurface(r.geom), d.geom)"
+        district_where = "AND d.id::text = :district_id"
+        query_params["district_id"] = district_id
     exists_query = text("""
-        SELECT EXISTS(
-            SELECT 1 FROM public.region_resilience_cache
-            WHERE analysis_level = :level
-        )
+        SELECT EXISTS(SELECT 1 FROM public.region_resilience_cache WHERE analysis_level = :level)
     """)
     with engine.connect() as conn:
         if not conn.execute(exists_query, {"level": normalized_level}).scalar():
             return None
         query = text(f"""
             WITH features AS (
-                SELECT
-                    c.region_name,
-                    json_build_object(
-                        'type', 'Feature',
-                        'geometry', ST_AsGeoJSON(
-                            ST_SimplifyPreserveTopology(ST_Transform(r.geom, 4326), {tolerance})
-                        )::json,
-                        'properties', {district_properties}
-                    ) AS feature
+                SELECT c.region_name, json_build_object(
+                    'type', 'Feature',
+                    'geometry', ST_AsGeoJSON(ST_SimplifyPreserveTopology(ST_Transform(r.geom, 4326), {tolerance}))::json,
+                    'properties', c.properties
+                ) AS feature
                 FROM public.region_resilience_cache c
                 JOIN public.{region_table} r ON r.id::text = c.region_id
                 {district_join}
-                WHERE c.analysis_level = :level
+                WHERE c.analysis_level = :level {district_where}
             )
-            SELECT json_build_object(
-                'type', 'FeatureCollection',
-                'features', COALESCE(json_agg(feature ORDER BY region_name), '[]'::json)
-            )
+            SELECT json_build_object('type', 'FeatureCollection', 'features', COALESCE(json_agg(feature ORDER BY region_name), '[]'::json))
             FROM features
         """)
-        return conn.execute(query, {"level": normalized_level}).scalar()
+        return conn.execute(query, query_params).scalar()
+
+
+@app.get("/analysis/resilience-district-options")
+def resilience_district_options():
+    query = text("""
+        SELECT region_id AS id, region_name AS name
+        FROM public.region_resilience_cache
+        WHERE analysis_level = 'district'
+        ORDER BY region_name
+    """)
+    with engine.connect() as conn:
+        return [dict(row._mapping) for row in conn.execute(query).all()]
 
 
 # --- REGION SUMMARY ---
 
 @app.get("/analysis/region-summary")
-def region_summary(level: str = "district"):
-    cached = cached_region_summary(level)
+def region_summary(level: str = "district", district_id: str | None = None):
+    cached = cached_region_summary(level, district_id)
     return cached if cached is not None else build_region_summary(engine, level)
 
 @app.get("/analysis/region-detail")
