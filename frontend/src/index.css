@@ -7,9 +7,10 @@ body,
   height: 100%;
 }
 
+/* Zoom controls sit immediately to the left of the right-hand information panel. */
 .maplibregl-ctrl-top-right {
-  top: 88px !important;
-  right: 18px !important;
+  top: 90px !important;
+  right: 382px !important;
   z-index: 15;
 }
 
@@ -90,6 +91,10 @@ body,
 
 /* Phone layout: prevent map controls, header and floating panels from overlapping. */
 @media (max-width: 768px) {
+  .maplibregl-ctrl-top-right {
+    top: 126px !important;
+    right: 8px !important;
+  }
   .app-header {
     height: 64px !important;
     padding: 0 12px !important;
