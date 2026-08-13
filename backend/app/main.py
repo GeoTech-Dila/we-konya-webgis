@@ -745,6 +745,25 @@ def toplu_ulasim_alan():
 
 
 
+@app.get("/layers/acil-durum-ozet")
+def acil_durum_ozet():
+    """Return small event totals for the overview card without loading the event list."""
+    with engine.connect() as conn:
+        total = conn.execute(text("SELECT COUNT(*) FROM konya_acil_durum")).scalar() or 0
+        categories = conn.execute(text("""
+            SELECT COALESCE(birincil_etiket, 'Kategori yok') AS category, COUNT(*)::integer AS count
+            FROM konya_acil_durum
+            GROUP BY COALESCE(birincil_etiket, 'Kategori yok')
+            ORDER BY count DESC, category
+        """)).mappings().all()
+        last_updated = conn.execute(text("SELECT MAX(tarih_utc) FROM konya_acil_durum")).scalar()
+    return {
+        "total": int(total),
+        "categories": [dict(row) for row in categories],
+        "last_updated": last_updated.isoformat() if last_updated else None,
+    }
+
+
 @app.get("/layers/acil-durum-sayfa")
 def acil_durum_sayfa(category: str | None = None, page: int = 1, page_size: int = 10):
     """Return one compact page for the event list; the map heatmap keeps using the full endpoint."""

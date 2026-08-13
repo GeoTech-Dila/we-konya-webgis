@@ -109,6 +109,8 @@ const [service15Visible, setService15Visible] = useState(false);
   const [emergencyPanelCategories, setEmergencyPanelCategories] = useState(["Tümü"]);
   const [emergencyPageLoading, setEmergencyPageLoading] = useState(false);
   const [selectedEmergencyId, setSelectedEmergencyId] = useState(null);
+  const [emergencyDetailsOpen, setEmergencyDetailsOpen] = useState(false);
+  const [emergencySummary, setEmergencySummary] = useState({ total: 0, categories: [], last_updated: null });
 
   // --- RISK / DIRENCLILIK STATE ---
   const [selectedRegionSummary, setSelectedRegionSummary] = useState(null);
@@ -328,6 +330,21 @@ console.log(
     }
   };
 
+  const loadEmergencySummary = async () => {
+    try {
+      const res = await fetch(`${API_URL}/layers/acil-durum-ozet`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setEmergencySummary({
+        total: Number(data.total || 0),
+        categories: Array.isArray(data.categories) ? data.categories : [],
+        last_updated: data.last_updated || null,
+      });
+    } catch {
+      /* sessiz hata */
+    }
+  };
+
   const loadMahalleData = async (map = mapRef.current) => {
     if (!map) return EMPTY_FC;
     mahalleRequestRef.current?.abort();
@@ -429,8 +446,9 @@ console.log(
 
   useEffect(() => {
     if (activeSideTab !== "events" || !eventsPanelOpen) return;
-    loadEmergencyPage(emergencyPage, emergencyCategory);
-  }, [activeSideTab, eventsPanelOpen, emergencyPage, emergencyCategory]);
+    loadEmergencySummary();
+    if (emergencyDetailsOpen) loadEmergencyPage(emergencyPage, emergencyCategory);
+  }, [activeSideTab, eventsPanelOpen, emergencyDetailsOpen, emergencyPage, emergencyCategory]);
 
   useEffect(() => {
     if (activeSideTab !== "resilience" || resilienceDistrictOptions.length) return;
@@ -2138,7 +2156,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         {eventsPanelOpen && (
           <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
             {activeSideTab === "events" ? (
-              <>
+              emergencyDetailsOpen ? <>
                 <div style={{ padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "12px", fontWeight: "700", background: "#fff7ed", color: "#c2410c", borderRadius: "999px", padding: "5px 9px" }}>
                     {emergencyPageTotal} kayıt
@@ -2214,7 +2232,31 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                   <button onClick={() => setEmergencyPage((p) => p + 1)} disabled={emergencyPage * 10 >= emergencyPageTotal || emergencyPageLoading}
                     style={{ border: "1px solid rgba(148,163,184,0.45)", background: "rgba(255,255,255,0.62)", borderRadius: "8px", padding: "6px 9px", fontSize: "11px", fontWeight: "700", cursor: emergencyPage * 10 >= emergencyPageTotal ? "not-allowed" : "pointer", opacity: emergencyPage * 10 >= emergencyPageTotal ? 0.42 : 1 }}>Sonraki 10</button>
                 </div>
-              </>
+              </> : (
+                <div style={{ flex: 1, overflowY: "auto", padding: "14px 12px 12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div style={{ padding: "18px 12px", textAlign: "center", borderRadius: "12px", background: "linear-gradient(135deg, rgba(254,242,242,0.90), rgba(255,255,255,0.62))", border: "1px solid rgba(239,68,68,0.16)" }}>
+                    <div style={{ color: "#64748b", fontSize: "11px", fontWeight: "700", marginBottom: "4px" }}>TOPLAM ACİL OLAY</div>
+                    <div style={{ color: "#dc2626", fontSize: "34px", lineHeight: 1, fontWeight: "800" }}>{emergencySummary.total.toLocaleString("tr-TR")}</div>
+                    <div style={{ color: "#64748b", fontSize: "11px", marginTop: "7px" }}>Tüm kategoriler</div>
+                  </div>
+                  <div style={{ color: "#64748b", fontSize: "11px", fontWeight: "800", letterSpacing: "0.04em" }}>KATEGORİ DAĞILIMI</div>
+                  <div style={{ display: "grid", gap: "6px" }}>
+                    {emergencySummary.categories.slice(0, 6).map((item) => (
+                      <div key={item.category} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 10px", borderRadius: "9px", background: "rgba(255,255,255,0.52)", border: "1px solid rgba(148,163,184,0.16)" }}>
+                        <span style={{ fontSize: "12px", fontWeight: "700", color: emergencyCategoryColors[item.category] || "#475569" }}>{item.category}</span>
+                        <strong style={{ fontSize: "13px", color: "#0f172a" }}>{Number(item.count || 0).toLocaleString("tr-TR")}</strong>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: "auto", color: "#64748b", fontSize: "10px" }}>
+                    Son güncelleme: {emergencySummary.last_updated ? new Date(emergencySummary.last_updated).toLocaleString("tr-TR") : "—"}
+                  </div>
+                  <button onClick={() => { setEmergencyPage(1); setEmergencyCategory("Tümü"); setEmergencyDetailsOpen(true); }}
+                    style={{ marginTop: "2px", border: "none", borderRadius: "9px", padding: "10px", cursor: "pointer", background: "linear-gradient(135deg, #dc2626, #ef4444)", color: "white", fontSize: "12px", fontWeight: "800", boxShadow: "0 5px 14px rgba(220,38,38,0.22)" }}>
+                    Detay Gör →
+                  </button>
+                </div>
+              )
             ) : (
               <>
                 <div style={{ padding: "8px 12px", display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: "7px 10px" }}>
