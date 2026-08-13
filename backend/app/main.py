@@ -539,6 +539,33 @@ def fay_hatlari():
         return conn.execute(query).scalar()
 
 
+@app.get("/layers/obruk-envanter-319")
+def obruk_envanter_319():
+    """Return the verified 319-point sinkhole inventory for the density heatmap."""
+    query = text("""
+        SELECT json_build_object(
+            'type', 'FeatureCollection',
+            'features', COALESCE(json_agg(f.feature), '[]'::json)
+        )
+        FROM (
+            SELECT json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(geom, 4326))::json,
+                'properties', json_build_object(
+                    'id', id,
+                    'obruk_adi', obruk_adi,
+                    'ilce', ilce,
+                    'derinlik', derinlik,
+                    'alan', alan
+                )
+            ) AS feature
+            FROM public.konya_obruk_envanter_319_2026
+        ) AS f;
+    """)
+    with engine.connect() as conn:
+        return conn.execute(query).scalar()
+
+
 @app.get("/layers/obruklar")
 def obruklar():
     query = text("""

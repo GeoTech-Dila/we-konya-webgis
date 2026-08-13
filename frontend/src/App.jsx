@@ -55,6 +55,7 @@ function App() {
   const [criticalServiceVisible, setCriticalServiceVisible] = useState(false);
   const [faultVisible, setFaultVisible] = useState(false);
   const [sinkholeVisible, setSinkholeVisible] = useState(false);
+  const [sinkholeInventoryHeatmapVisible, setSinkholeInventoryHeatmapVisible] = useState(false);
   const [facilityVisible, setFacilityVisible] = useState(false);
   const [roadVisible, setRoadVisible] = useState(false);
   const [emergencyVisible, setEmergencyVisible] = useState(false);
@@ -442,6 +443,21 @@ console.log(
     }
   };
 
+  // 319 noktalı obruk envanteri küçük bir katmandır; analiz kartı açıldığında
+  // beklememesi için temel harita hazır olduktan sonra arka planda yüklenir.
+  const loadSinkholeInventoryHeatmap = async () => {
+    if (loadedLayersRef.current["sinkhole-inventory-heatmap"]) return;
+    try {
+      const res = await fetch(`${API_URL}/layers/obruk-envanter-319`);
+      if (!res.ok) return;
+      const data = await res.json();
+      mapRef.current?.getSource("sinkhole-inventory-heatmap")?.setData(data);
+      loadedLayersRef.current["sinkhole-inventory-heatmap"] = true;
+    } catch {
+      /* Kullanıcı düğmeye bastığında normal yükleme yeniden denenir. */
+    }
+  };
+
   const toggleDataLayer = async (nextVisible, setter, sourceId, layerIds, endpoint) => {
     setter(nextVisible);
     if (nextVisible && !loadedLayersRef.current[sourceId]) {
@@ -472,7 +488,7 @@ console.log(
     [
       setLayerVisible, setMahalleVisible, setToplanmaVisible,
       setRecommendedAssemblyVisible, setSocioGeologicalVisible, setCriticalServiceVisible,
-      setFaultVisible, setSinkholeVisible, setFacilityVisible,
+      setFaultVisible, setSinkholeVisible, setSinkholeInventoryHeatmapVisible, setFacilityVisible,
       setRoadVisible, setEmergencyVisible, setProvinceBoundaryVisible,
       setParksVisible, setLawVisible, setHealthPointVisible,
       setHealthAreaVisible, setTransitPointVisible, setTransitAreaVisible,
@@ -493,7 +509,7 @@ console.log(
     [
       "district-fill", "district-outline", "district-hover",
       "mahalle-fill", "mahalle-outline", "toplanma-points",
-      "fault-lines-line", "sinkholes-fill", "sinkholes-outline",
+      "fault-lines-line", "sinkholes-fill", "sinkholes-outline", "sinkhole-inventory-heatmap",
       "critical-facilities-point", "major-roads-line", "province-boundary-line",
       "parks-fill", "parks-outline", "law-enforcement-point",
       "health-points-point", "health-areas-fill", "health-areas-outline",
@@ -668,7 +684,7 @@ const service15PolyData = EMPTY_FC;
       addSrc("socio-geological-risk", { type: "geojson", data: EMPTY_FC });
       addSrc("critical-service-load", { type: "geojson", data: EMPTY_FC });
       // Temel harita görünür olduktan kısa süre sonra katmanı önbelleğe al.
-      window.setTimeout(() => { loadSocioGeologicalRiskLayer(); loadCriticalServiceLayer(); }, 900);
+      window.setTimeout(() => { loadSocioGeologicalRiskLayer(); loadCriticalServiceLayer(); loadSinkholeInventoryHeatmap(); }, 900);
       addSrc("service-area-5-lines", {
   type: "geojson",
   data: service5Data,
@@ -732,6 +748,7 @@ addSrc("inaccessible-heatmap", {
 
       addSrc("fault-lines", { type: "geojson", data: EMPTY_FC });
       addSrc("sinkholes", { type: "geojson", data: EMPTY_FC });
+      addSrc("sinkhole-inventory-heatmap", { type: "geojson", data: EMPTY_FC });
       addSrc("critical-facilities", { type: "geojson", data: EMPTY_FC });
       addSrc("major-roads", { type: "vector", tiles: [`${API_URL}/tiles/ana-yollar/{z}/{x}/{y}.pbf`], minzoom: 11, maxzoom: 16 });
       addSrc("emergency-points", { type: "geojson", data: EMPTY_FC });
@@ -1126,6 +1143,13 @@ addLyr({
       addLyr({ id: "fault-lines-line", type: "line", source: "fault-lines", layout: { visibility: "none" }, paint: { "line-color": "#dc2626", "line-opacity": 0.92, "line-width": ["interpolate", ["linear"], ["zoom"], 8, 1, 13, 3] } });
       addLyr({ id: "sinkholes-fill", type: "fill", source: "sinkholes", layout: { visibility: "none" }, paint: { "fill-color": "#a16207", "fill-opacity": 0.30 } });
       addLyr({ id: "sinkholes-outline", type: "line", source: "sinkholes", layout: { visibility: "none" }, paint: { "line-color": "#78350f", "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.8, 13, 2.2], "line-opacity": 0.95 } });
+      addLyr({ id: "sinkhole-inventory-heatmap", type: "heatmap", source: "sinkhole-inventory-heatmap", maxzoom: 14, layout: { visibility: "none" }, paint: {
+        "heatmap-weight": 1,
+        "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 9, 1.1, 12, 1.8, 14, 2.2],
+        "heatmap-color": ["interpolate", ["linear"], ["heatmap-density"], 0, "rgba(127,29,29,0)", 0.18, "#fef3c7", 0.42, "#f59e0b", 0.68, "#ea580c", 1, "#991b1b"],
+        "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 5, 15, 9, 25, 12, 38, 14, 48],
+        "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.72, 12, 0.86, 14, 0]
+      } });
       addLyr({ id: "critical-facilities-point", type: "circle", source: "critical-facilities", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#64748b", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.88 } });
       addLyr({ id: "major-roads-line", type: "line", source: "major-roads", "source-layer": "roads", minzoom: 11, layout: { visibility: "none" }, paint: { "line-color": "#64748b", "line-opacity": 0.58, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.7, 15, 2.4] } });
       addLyr({ id: "province-boundary-line", type: "line", source: "province-boundary", layout: { visibility: "none" }, paint: { "line-color": "#0f172a", "line-opacity": 0.86, "line-width": ["interpolate", ["linear"], ["zoom"], 7, 1.3, 12, 3] } });
@@ -2605,6 +2629,14 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         recommendedAssemblyVisible={recommendedAssemblyVisible}
         socioGeologicalVisible={socioGeologicalVisible}
         criticalServiceVisible={criticalServiceVisible}
+        sinkholeInventoryHeatmapVisible={sinkholeInventoryHeatmapVisible}
+        onToggleSinkholeInventoryHeatmap={() => toggleDataLayer(
+          !sinkholeInventoryHeatmapVisible,
+          setSinkholeInventoryHeatmapVisible,
+          "sinkhole-inventory-heatmap",
+          ["sinkhole-inventory-heatmap"],
+          "/layers/obruk-envanter-319"
+        )}
         onToggleCriticalService={() => toggleDataLayer(
           !criticalServiceVisible,
           setCriticalServiceVisible,
