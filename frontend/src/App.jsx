@@ -408,6 +408,23 @@ console.log(
     });
   };
 
+  // Katmanlar panelindeki tüm temel harita katmanlarını tek seferde gizler.
+  const closeAllLayers = () => {
+    [
+      setLayerVisible, setMahalleVisible, setToplanmaVisible,
+      setFaultVisible, setSinkholeVisible, setFacilityVisible,
+      setRoadVisible, setEmergencyVisible, setProvinceBoundaryVisible,
+      setParksVisible, setLawVisible, setHealthPointVisible,
+      setHealthAreaVisible, setTransitPointVisible, setTransitAreaVisible,
+      setBuildingsVisible,
+    ].forEach((setVisible) => setVisible(false));
+    setOpenLayerGroup(null);
+    const map = mapRef.current;
+    if (map?.getLayer("emergency-points-circle")) {
+      map.setLayoutProperty("emergency-points-circle", "visibility", "none");
+    }
+  };
+
   // --- MAHALLE RANK FONKSIYONU ---
 
   useEffect(() => {
@@ -2245,11 +2262,17 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 10px 40px rgba(0,0,0,0.18)",
         zIndex: 10, scrollbarWidth: "thin"
       }}>
-        <button onClick={() => setLayersPanelOpen((open) => !open)}
-          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "transparent", color: "inherit", border: "none", cursor: "pointer", padding: 0, fontSize: "14px", fontWeight: "700" }}>
-          <span>Katmanlar</span>
-          <span style={{ fontSize: "16px", color: "#64748b" }}>{layersPanelOpen ? "▲" : "▼"}</span>
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+          <button onClick={() => setLayersPanelOpen((open) => !open)}
+            style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", background: "transparent", color: "inherit", border: "none", cursor: "pointer", padding: 0, fontSize: "14px", fontWeight: "700" }}>
+            <span>Katmanlar</span>
+            <span style={{ fontSize: "16px", color: "#64748b" }}>{layersPanelOpen ? "▲" : "▼"}</span>
+          </button>
+          {layersPanelOpen && <button onClick={closeAllLayers} title="Haritadaki tüm katmanları kapat"
+            style={{ border: "1px solid rgba(239,68,68,0.32)", borderRadius: "7px", background: "rgba(255,255,255,0.58)", color: "#b91c1c", cursor: "pointer", fontSize: "10px", fontWeight: "700", padding: "5px 7px", whiteSpace: "nowrap" }}>
+            Tümünü kapat
+          </button>}
+        </div>
         {layersPanelOpen && <>
         {[
           {

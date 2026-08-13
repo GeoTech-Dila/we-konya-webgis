@@ -292,6 +292,38 @@ body,
 }
 
 
+/* Katmanlar başlığı artık dış sarmalayıcı içindedir: kapalı telefonda okunur kalır. */
+@media (max-width: 768px) {
+  .layers-panel:not(.is-open) {
+    transform: translateX(calc(-100% + 154px)) !important;
+  }
+  .layers-panel:not(.is-open) > div:first-child {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 154px;
+    height: 50px;
+    padding: 0 11px !important;
+    box-sizing: border-box;
+    display: flex !important;
+    align-items: center;
+  }
+  .layers-panel:not(.is-open) > div:first-child > button:first-child {
+    width: 100% !important;
+    height: 50px;
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between !important;
+    padding: 0 !important;
+  }
+  .layers-panel:not(.is-open) > div:first-child > button:first-child span:first-child {
+    writing-mode: horizontal-tb !important;
+    transform: none !important;
+    font-size: 13px !important;
+    letter-spacing: 0 !important;
+  }
+}
+
 /* Mobile Events drawer: only its title stays visible on the right until opened. */
 @media (max-width: 768px) {
   .side-events-panel {
