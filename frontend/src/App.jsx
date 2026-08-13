@@ -56,6 +56,7 @@ function App() {
   const [faultVisible, setFaultVisible] = useState(false);
   const [sinkholeVisible, setSinkholeVisible] = useState(false);
   const [sinkholeInventoryHeatmapVisible, setSinkholeInventoryHeatmapVisible] = useState(false);
+  const [corineLandcoverVisible, setCorineLandcoverVisible] = useState(false);
   const [facilityVisible, setFacilityVisible] = useState(false);
   const [roadVisible, setRoadVisible] = useState(false);
   const [emergencyVisible, setEmergencyVisible] = useState(false);
@@ -191,6 +192,7 @@ const [service15Visible, setService15Visible] = useState(false);
       "buildings-15": buildings15Visible,
       "buildings-unreachable": buildingsUnreachableVisible,
       "inaccessible-heatmap": heatmapVisible,
+      "corine-landcover": corineLandcoverVisible,
       "mahalleler": mahalleVisible,
     };
   }, [
@@ -205,6 +207,7 @@ const [service15Visible, setService15Visible] = useState(false);
     buildings15Visible,
     buildingsUnreachableVisible,
     heatmapVisible,
+    corineLandcoverVisible,
   ]);
 
   // --- REGION SUMMARY FONKSIYONLARI ---
@@ -488,7 +491,7 @@ console.log(
     [
       setLayerVisible, setMahalleVisible, setToplanmaVisible,
       setRecommendedAssemblyVisible, setSocioGeologicalVisible, setCriticalServiceVisible,
-      setFaultVisible, setSinkholeVisible, setSinkholeInventoryHeatmapVisible, setFacilityVisible,
+      setFaultVisible, setSinkholeVisible, setSinkholeInventoryHeatmapVisible, setCorineLandcoverVisible, setFacilityVisible,
       setRoadVisible, setEmergencyVisible, setProvinceBoundaryVisible,
       setParksVisible, setLawVisible, setHealthPointVisible,
       setHealthAreaVisible, setTransitPointVisible, setTransitAreaVisible,
@@ -509,7 +512,7 @@ console.log(
     [
       "district-fill", "district-outline", "district-hover",
       "mahalle-fill", "mahalle-outline", "toplanma-points",
-      "fault-lines-line", "sinkholes-fill", "sinkholes-outline", "sinkhole-inventory-heatmap",
+      "fault-lines-line", "sinkholes-fill", "sinkholes-outline", "sinkhole-inventory-heatmap", "corine-landcover-fill", "corine-landcover-outline",
       "critical-facilities-point", "major-roads-line", "province-boundary-line",
       "parks-fill", "parks-outline", "law-enforcement-point",
       "health-points-point", "health-areas-fill", "health-areas-outline",
@@ -749,6 +752,7 @@ addSrc("inaccessible-heatmap", {
       addSrc("fault-lines", { type: "geojson", data: EMPTY_FC });
       addSrc("sinkholes", { type: "geojson", data: EMPTY_FC });
       addSrc("sinkhole-inventory-heatmap", { type: "geojson", data: EMPTY_FC });
+      addSrc("corine-landcover", { type: "geojson", data: EMPTY_FC });
       addSrc("critical-facilities", { type: "geojson", data: EMPTY_FC });
       addSrc("major-roads", { type: "vector", tiles: [`${API_URL}/tiles/ana-yollar/{z}/{x}/{y}.pbf`], minzoom: 11, maxzoom: 16 });
       addSrc("emergency-points", { type: "geojson", data: EMPTY_FC });
@@ -1150,6 +1154,17 @@ addLyr({
         "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 5, 15, 9, 25, 12, 38, 14, 48],
         "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.72, 12, 0.86, 14, 0]
       } });
+      const corineColor = ["case",
+        ["in", ["get", "code_18"], ["literal", ["111", "112", "121", "122", "123", "124", "131", "132", "133"]]], "#ef4444",
+        ["in", ["get", "code_18"], ["literal", ["211", "212", "213", "221", "222", "223", "231", "241", "242", "243", "244"]]], "#eab308",
+        ["in", ["get", "code_18"], ["literal", ["311", "312", "313", "321", "322", "323", "324"]]], "#16a34a",
+        ["in", ["get", "code_18"], ["literal", ["331", "332", "333", "334", "335"]]], "#84cc16",
+        ["in", ["get", "code_18"], ["literal", ["411", "412", "421", "422", "423"]]], "#14b8a6",
+        ["in", ["get", "code_18"], ["literal", ["511", "512", "521", "522", "523"]]], "#2563eb",
+        "#94a3b8"
+      ];
+      addLyr({ id: "corine-landcover-fill", type: "fill", source: "corine-landcover", minzoom: 8, layout: { visibility: "none" }, paint: { "fill-color": corineColor, "fill-opacity": 0.38 } });
+      addLyr({ id: "corine-landcover-outline", type: "line", source: "corine-landcover", minzoom: 8, layout: { visibility: "none" }, paint: { "line-color": corineColor, "line-width": 0.55, "line-opacity": 0.62 } });
       addLyr({ id: "critical-facilities-point", type: "circle", source: "critical-facilities", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#64748b", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.88 } });
       addLyr({ id: "major-roads-line", type: "line", source: "major-roads", "source-layer": "roads", minzoom: 11, layout: { visibility: "none" }, paint: { "line-color": "#64748b", "line-opacity": 0.58, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.7, 15, 2.4] } });
       addLyr({ id: "province-boundary-line", type: "line", source: "province-boundary", layout: { visibility: "none" }, paint: { "line-color": "#0f172a", "line-opacity": 0.86, "line-width": ["interpolate", ["linear"], ["zoom"], 7, 1.3, 12, 3] } });
@@ -1293,6 +1308,7 @@ addLyr({
   ["buildings-15", "/buildings-15"],
   ["buildings-unreachable", "/buildings-unreachable"],
   ["inaccessible-heatmap", "/inaccessible-buildings-heatmap"],
+  ["corine-landcover", "/layers/corine-2018"],
 
 ];
 
@@ -2630,6 +2646,14 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         socioGeologicalVisible={socioGeologicalVisible}
         criticalServiceVisible={criticalServiceVisible}
         sinkholeInventoryHeatmapVisible={sinkholeInventoryHeatmapVisible}
+        corineLandcoverVisible={corineLandcoverVisible}
+        onToggleCorineLandcover={() => toggleDataLayer(
+          !corineLandcoverVisible,
+          setCorineLandcoverVisible,
+          "corine-landcover",
+          ["corine-landcover-fill", "corine-landcover-outline"],
+          "/layers/corine-2018"
+        )}
         onToggleSinkholeInventoryHeatmap={() => toggleDataLayer(
           !sinkholeInventoryHeatmapVisible,
           setSinkholeInventoryHeatmapVisible,

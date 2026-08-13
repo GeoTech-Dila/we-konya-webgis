@@ -146,6 +146,8 @@ function AnalysisPanel({
   onToggleCriticalService,
   sinkholeInventoryHeatmapVisible,
   onToggleSinkholeInventoryHeatmap,
+  corineLandcoverVisible,
+  onToggleCorineLandcover,
 
   activeAnalysisLayer,
   setActiveAnalysisLayer,
@@ -448,6 +450,8 @@ height: `${panelHeight}px`,
               onToggleCriticalService={onToggleCriticalService}
               sinkholeInventoryHeatmapVisible={sinkholeInventoryHeatmapVisible}
               onToggleSinkholeInventoryHeatmap={onToggleSinkholeInventoryHeatmap}
+              corineLandcoverVisible={corineLandcoverVisible}
+              onToggleCorineLandcover={onToggleCorineLandcover}
             />
           )}
         </div>
@@ -457,7 +461,7 @@ height: `${panelHeight}px`,
   );
 }
 
-function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological, criticalServiceVisible, onToggleCriticalService, sinkholeInventoryHeatmapVisible, onToggleSinkholeInventoryHeatmap }) {
+function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological, criticalServiceVisible, onToggleCriticalService, sinkholeInventoryHeatmapVisible, onToggleSinkholeInventoryHeatmap, corineLandcoverVisible, onToggleCorineLandcover }) {
   return (
     <div
       style={{
@@ -585,6 +589,10 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
           <div style={{ padding: "8px 10px", borderRadius: 10, background: "rgba(255,247,237,0.78)", color: "#7c2d12", fontSize: 11, lineHeight: 1.45, marginBottom: 8 }}>
             Isı haritası, 319 kayıtlı obruğun mekânsal yoğunluğunu gösterir. Koyu renkler daha fazla envanter kaydını ifade eder; bu katman doğrudan tehlike veya risk sınıfı değildir.
           </div>
+          <button type="button" onClick={onToggleCorineLandcover} style={{ width: "100%", padding: "9px 13px", borderRadius: 12, border: "1px solid rgba(22,163,74,0.48)", background: corineLandcoverVisible ? "rgba(220,252,231,0.80)" : "rgba(255,255,255,0.14)", color: "#166534", cursor: "pointer", fontWeight: 700, fontSize: 13, marginBottom: 7 }}>
+            {corineLandcoverVisible ? "✓ CORINE Arazi Örtüsünü Gizle" : "▶ CORINE Arazi Örtüsünü Haritada Göster"}
+          </button>
+          <div style={{ fontSize: 10, color: "#166534", lineHeight: 1.4, padding: "0 4px 8px" }}>6.344 CORINE 2018 poligonu yalnızca ekranda görünen alanda yüklenir. Haritada görünmesi için biraz yakınlaşmalısın.</div>
           <div style={{ borderRadius: 12, padding: "11px", background: "linear-gradient(135deg, #fffaf0, #ffffff)", border: "1px solid #fed7aa", color: "#431407" }}>
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
               <div><div style={{ fontSize: 11, fontWeight: 800 }}>ESA WorldCover 2021 obruk arazi kullanımı</div><div style={{ fontSize: 9, color: "#9a3412", marginTop: 2 }}>10 m çözünürlük · Konya il geneli</div></div>

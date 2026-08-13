@@ -539,6 +539,29 @@ def fay_hatlari():
         return conn.execute(query).scalar()
 
 
+@app.get("/layers/corine-2018")
+def corine_2018(bbox: str | None = None):
+    """Return only the visible, simplified CORINE 2018 polygons."""
+    where_sql, params = mahalle_bbox_filter(bbox)
+    query = text(f"""
+        SELECT json_build_object(
+            'type', 'FeatureCollection',
+            'features', COALESCE(json_agg(f.feature), '[]'::json)
+        )
+        FROM (
+            SELECT json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_SimplifyPreserveTopology(geom, 0.00012))::json,
+                'properties', json_build_object('id', id, 'code_18', code_18, 'area_ha', area_ha)
+            ) AS feature
+            FROM public.konya_corine_2018
+            {where_sql}
+        ) AS f;
+    """)
+    with engine.connect() as conn:
+        return conn.execute(query, params).scalar()
+
+
 @app.get("/layers/obruk-envanter-319")
 def obruk_envanter_319():
     """Return the verified 319-point sinkhole inventory for the density heatmap."""
