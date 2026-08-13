@@ -324,6 +324,31 @@ body,
   }
 }
 
+/* Telefonda kapalı Katmanlar çekmecesi yalnız simge olarak kalır. */
+@media (max-width: 768px) {
+  .layers-panel:not(.is-open) {
+    transform: translateX(calc(-100% + 50px)) !important;
+  }
+  .layers-panel:not(.is-open) > div:first-child {
+    width: 50px !important;
+    padding: 0 !important;
+  }
+  .layers-panel:not(.is-open) > div:first-child > button:first-child {
+    justify-content: center !important;
+  }
+  .layers-panel:not(.is-open) > div:first-child > button:first-child > span:first-child {
+    font-size: 0 !important;
+    gap: 0 !important;
+  }
+  .layers-panel:not(.is-open) > div:first-child > button:first-child > span:first-child svg {
+    width: 21px;
+    height: 21px;
+  }
+  .layers-panel:not(.is-open) > div:first-child > button:first-child > span:last-child {
+    display: none !important;
+  }
+}
+
 /* Mobile Events drawer: only its title stays visible on the right until opened. */
 @media (max-width: 768px) {
   .side-events-panel {

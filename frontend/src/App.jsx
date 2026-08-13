@@ -2336,7 +2336,14 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
           <button onClick={() => setLayersPanelOpen((open) => !open)}
             style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", background: "transparent", color: "inherit", border: "none", cursor: "pointer", padding: 0, fontSize: "14px", fontWeight: "700" }}>
-            <span>Katmanlar</span>
+            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ color: "#64748b", flexShrink: 0 }}>
+                <path d="M12 3 3.5 7.5 12 12l8.5-4.5L12 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                <path d="m5.5 11.2 6.5 3.5 6.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="m5.5 15.2 6.5 3.5 6.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Katmanlar
+            </span>
             <span style={{ fontSize: "16px", color: "#64748b" }}>{layersPanelOpen ? "▲" : "▼"}</span>
           </button>
           {layersPanelOpen && <button onClick={closeAllLayers} title="Haritadaki tüm katmanları kapat"
