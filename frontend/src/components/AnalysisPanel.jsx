@@ -593,6 +593,25 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
             {corineLandcoverVisible ? "✓ CORINE Arazi Örtüsünü Gizle" : "▶ CORINE Arazi Örtüsünü Haritada Göster"}
           </button>
           <div style={{ fontSize: 10, color: "#166534", lineHeight: 1.4, padding: "0 4px 8px" }}>6.344 CORINE 2018 poligonu yalnızca ekranda görünen alanda yüklenir. Haritada görünmesi için biraz yakınlaşmalısın.</div>
+          <div style={{ marginBottom: 9, padding: "9px 10px", borderRadius: 10, background: "rgba(240,253,244,0.76)", border: "1px solid rgba(22,163,74,0.26)" }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#14532d", marginBottom: 7 }}>Harita Lejantı · CORINE 2018</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 8px" }}>
+              {[
+                ["#ef4444", "Yapay yüzeyler", "111–133"],
+                ["#eab308", "Tarım alanları", "211–244"],
+                ["#16a34a", "Orman / doğal alan", "311–324"],
+                ["#84cc16", "Açık alan / az bitkili", "331–335"],
+                ["#14b8a6", "Sulak alan", "411–423"],
+                ["#2563eb", "Su yüzeyleri", "511–523"],
+              ].map(([color, label, code]) => (
+                <div key={label} style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                  <span style={{ width: 12, height: 12, flex: "0 0 12px", borderRadius: 3, background: color, border: "1px solid rgba(15,23,42,0.16)" }} />
+                  <span style={{ minWidth: 0, fontSize: 9, fontWeight: 700, color: "#14532d", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+                  <span style={{ marginLeft: "auto", fontSize: 8, color: "#64748b" }}>{code}</span>
+                </div>
+              ))}
+            </div>
+          </div>
           <div style={{ borderRadius: 12, padding: "11px", background: "linear-gradient(135deg, #fffaf0, #ffffff)", border: "1px solid #fed7aa", color: "#431407" }}>
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
               <div><div style={{ fontSize: 11, fontWeight: 800 }}>ESA WorldCover 2021 obruk arazi kullanımı</div><div style={{ fontSize: 9, color: "#9a3412", marginTop: 2 }}>10 m çözünürlük · Konya il geneli</div></div>
