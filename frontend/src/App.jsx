@@ -414,6 +414,21 @@ console.log(
   return `${endpoint}${separator}bbox=${bbox}`;
 };
 
+  // 31 ilçe poligonu küçük olduğu için kullanıcı tıklamadan arka planda hazırlarız.
+  // Böylece analiz düğmesi ilk kullanımda bekletmez.
+  const loadSocioGeologicalRiskLayer = async () => {
+    if (loadedLayersRef.current["socio-geological-risk"]) return;
+    try {
+      const res = await fetch(`${API_URL}/layers/sosyo-ekonomik-jeolojik-tehlike`);
+      if (!res.ok) return;
+      const data = await res.json();
+      mapRef.current?.getSource("socio-geological-risk")?.setData(data);
+      loadedLayersRef.current["socio-geological-risk"] = true;
+    } catch {
+      /* Arka plan hazırlığı başarısız olsa bile kullanıcı düğmesi normal şekilde tekrar dener. */
+    }
+  };
+
   const toggleDataLayer = async (nextVisible, setter, sourceId, layerIds, endpoint) => {
     setter(nextVisible);
     if (nextVisible && !loadedLayersRef.current[sourceId]) {
@@ -611,6 +626,8 @@ const service15PolyData = EMPTY_FC;
       addSrc("toplanma", { type: "geojson", data: toplanmaData });
       addSrc("recommended-assembly-parks", { type: "geojson", data: EMPTY_FC });
       addSrc("socio-geological-risk", { type: "geojson", data: EMPTY_FC });
+      // Temel harita görünür olduktan kısa süre sonra katmanı önbelleğe al.
+      window.setTimeout(() => { loadSocioGeologicalRiskLayer(); }, 900);
       addSrc("service-area-5-lines", {
   type: "geojson",
   data: service5Data,

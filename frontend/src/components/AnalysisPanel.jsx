@@ -203,6 +203,7 @@ function AnalysisPanel({
     window.addEventListener("pointerup", onEnd);
   };
   const activeCard = analysisCards.find((card) => card.id === activeCardId) || analysisCards[0];
+  const [socioInfoOpen, setSocioInfoOpen] = useState(false);
 
   return (
     <>
@@ -370,7 +371,24 @@ height: `${panelHeight}px`,
 >
           <div style={{ padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
             <div style={{ color: "#6366f1", fontSize: 12, fontWeight: 800 }}>{activeCard.method}</div>
-            <div style={{ fontSize: 16, fontWeight: 800, marginTop: 2 }}>{activeCard.title}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 2 }}>
+              <div style={{ fontSize: 16, fontWeight: 800 }}>{activeCard.title}</div>
+              {activeCard.id === "vulnerability" && (
+                <button
+                  type="button"
+                  aria-label="Analiz yöntemi hakkında bilgi"
+                  title="Analiz yöntemi hakkında bilgi"
+                  onClick={() => setSocioInfoOpen((open) => !open)}
+                  style={{ width: 20, height: 20, padding: 0, borderRadius: "50%", border: "1px solid #94a3b8", background: "#ffffff", color: "#475569", cursor: "pointer", fontWeight: 800, lineHeight: 1 }}
+                >ⓘ</button>
+              )}
+            </div>
+            {activeCard.id === "vulnerability" && socioInfoOpen && (
+              <div style={{ marginTop: 8, padding: "10px 11px", borderRadius: 10, background: "#fff7ed", border: "1px solid #fed7aa", color: "#7c2d12", fontSize: 11, lineHeight: 1.5 }}>
+                <strong style={{ display: "block", marginBottom: 4 }}>Bu analiz neyi gösterir?</strong>
+                Fay uzunluğu ve obruk varlığıyla hesaplanan jeolojik tehlike puanı (1–5), alt ve en alt sosyo-ekonomik grupların oranıyla hesaplanan kırılganlık puanıyla (1–5) birleştirilir. Toplam puan 4–9 aralığındadır; amaç müdahale, sakınım ve kaynak önceliği için ilçe ölçeğinde karar desteği sağlamaktır. Bu, mevcut mahalle dirençlilik skorundan bağımsız bir analizdir.
+              </div>
+            )}
             <div style={{ color: "#64748b", fontSize: 13, marginTop: 4, lineHeight: 1.3 }}>{activeCard.summary}</div>
           </div>
 
@@ -447,7 +465,24 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
             {socioGeologicalVisible ? "✓ İlçe Risk Analizini Gizle" : "▶ İlçe Risk Analizini Haritada Göster"}
           </button>
           <div style={{ padding: "8px 10px", borderRadius: 10, background: "rgba(255,247,237,0.74)", color: "#7c2d12", fontSize: 11, lineHeight: 1.45 }}>
-            Skor, jeolojik risk ile sosyo-ekonomik riskin toplamıdır. Renkler düşükten kritiğe doğru yeşil, sarı, turuncu ve kırmızıdır.
+            Skor, jeolojik risk ile sosyo-ekonomik riskin toplamıdır. Aşağıdaki lejant haritada görünen renkleri açıklar.
+          </div>
+          <div style={{ marginTop: 8, padding: "9px 10px", borderRadius: 10, background: "rgba(255,255,255,0.78)", border: "1px solid rgba(148,163,184,0.36)" }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#334155", marginBottom: 7 }}>Harita Lejantı · Birleşik Risk Puanı</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 5 }}>
+              {[
+                ["#15803d", "4–5", "Düşük"],
+                ["#eab308", "6", "Orta"],
+                ["#f97316", "7–8", "Yüksek"],
+                ["#dc2626", "9", "Kritik"],
+              ].map(([color, score, label]) => (
+                <div key={label} style={{ minWidth: 0 }}>
+                  <div style={{ height: 8, borderRadius: 4, background: color, marginBottom: 4 }} />
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "#334155" }}>{score}</div>
+                  <div style={{ fontSize: 8, color: "#64748b" }}>{label}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
