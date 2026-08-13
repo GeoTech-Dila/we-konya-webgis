@@ -31,6 +31,16 @@ const emergencyCategoryColors = {
   DIGER_ACIL: "#64748b",
 };
 
+const USER_GUIDE_STEPS = [
+  { selector: ".layers-panel", title: "Katmanlar", text: "İlçe, mahalle, fay, obruk ve hizmet katmanlarını buradan açıp kapatabilirsin." },
+  { selector: ".analysis-panel", title: "Analiz Katmanları", text: "Erişilebilirlik ve öneri toplanma alanı gibi analizleri alt panelden inceleyebilirsin." },
+  { selector: ".side-events-panel", title: "Acil Olaylar", text: "Olayların toplamını ve kategori dağılımını görür; Detay Gör ile sayfalı listeye geçersin." },
+  { selector: ".resilience-score-panel", title: "Dirençlilik Skoru", text: "Renk haritasını buradan açabilirsin. Sağ panelde ilçe seçerek mahalle sıralamasını incelersin." },
+  { selector: ".neighborhood-search", title: "Mahalle Arama", text: "Mahalle adını büyük-küçük harf fark etmeden yaz; harita seni doğrudan o bölgeye götürür." },
+  { selector: ".maplibregl-ctrl-group", title: "Yakınlaştırma ve Kuzey", text: "+ ve − düğmeleriyle haritayı yakınlaştırıp uzaklaştırabilirsin. Pusula simgesine dokunarak haritayı tekrar kuzey yönüne çevirirsin." },
+  { selector: ".map-home-button", title: "Başlangıç Görünümü", text: "Ev simgesi haritayı KOR-İZ’in ilk açılış görünümüne geri döndürür." },
+];
+
 function App() {
   // --- KATMAN STATE ---
   // Katman panelinde başlangıçta yalnız başlıklar görünür.
@@ -90,6 +100,9 @@ const [service15Visible, setService15Visible] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [mapReady, setMapReady] = useState(false);
   const [mapStatus, setMapStatus] = useState({ coordinate: "—", scale: "—" });
+  const [guideOpen, setGuideOpen] = useState(() => localStorage.getItem("koriz-user-guide-seen") !== "1");
+  const [guideStep, setGuideStep] = useState(-1);
+  const [guideTargetRect, setGuideTargetRect] = useState(null);
 
 
   // --- UI STATE ---
@@ -485,6 +498,22 @@ console.log(
     const closeTimer = window.setTimeout(() => setAppLoading(false), 350);
     return () => window.clearTimeout(closeTimer);
   }, [mapReady, loadingStep]);
+
+  useEffect(() => {
+    if (!guideOpen || guideStep < 0) {
+      setGuideTargetRect(null);
+      return;
+    }
+    const updateTarget = () => {
+      const item = document.querySelector(USER_GUIDE_STEPS[guideStep]?.selector);
+      if (!item) return setGuideTargetRect(null);
+      const rect = item.getBoundingClientRect();
+      setGuideTargetRect({ left: Math.max(4, rect.left - 6), top: Math.max(4, rect.top - 6), width: rect.width + 12, height: rect.height + 12 });
+    };
+    requestAnimationFrame(updateTarget);
+    window.addEventListener("resize", updateTarget);
+    return () => window.removeEventListener("resize", updateTarget);
+  }, [guideOpen, guideStep]);
 
   // --- ANA MAP EFFECT ---
   useEffect(() => {
@@ -2503,8 +2532,35 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         activeAnalysisLayer={activeAnalysisLayer}
         setActiveAnalysisLayer={setActiveAnalysisLayer}
       />
-
-
+      <button onClick={() => { setGuideStep(-1); setGuideOpen(true); }} title="Kullanıcı rehberini aç"
+        style={{ position: "absolute", right: "18px", bottom: "18px", zIndex: 70, border: "1px solid rgba(255,255,255,0.70)", borderRadius: "999px", background: "rgba(15,23,42,0.82)", color: "white", padding: "8px 11px", cursor: "pointer", fontSize: "11px", fontWeight: "800" }}>
+        ? Rehber
+      </button>
+      {guideOpen && <>
+        {guideStep < 0 ? <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(15,23,42,0.56)", backdropFilter: "blur(3px)" }} /> : guideTargetRect && <div style={{ position: "fixed", left: guideTargetRect.left, top: guideTargetRect.top, width: guideTargetRect.width, height: guideTargetRect.height, zIndex: 1000, borderRadius: "16px", border: "2px solid #f59e0b", boxShadow: "0 0 0 9999px rgba(15,23,42,0.58), 0 0 28px rgba(245,158,11,0.62)", pointerEvents: "none" }} />}
+        <div role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 1001, left: "50%", top: guideStep >= 0 && guideTargetRect && guideTargetRect.top > window.innerHeight / 2 ? "24px" : "auto", bottom: guideStep >= 0 && guideTargetRect && guideTargetRect.top > window.innerHeight / 2 ? "auto" : "24px", transform: "translateX(-50%)", width: "min(370px, calc(100vw - 32px))", maxHeight: "calc(100vh - 48px)", overflowY: "auto", padding: "18px", borderRadius: "16px", background: "rgba(255,255,255,0.97)", color: "#0f172a", boxShadow: "0 16px 42px rgba(15,23,42,0.32)" }}>
+          {guideStep < 0 ? <>
+            <div style={{ color: "#dc2626", fontSize: "11px", fontWeight: "900", letterSpacing: "0.08em" }}>KOR-İZ KULLANICI REHBERİ</div>
+            <div style={{ fontSize: "21px", fontWeight: "800", marginTop: "6px" }}>Haritayı 1 dakikada keşfedin</div>
+            <p style={{ margin: "9px 0 16px", color: "#475569", fontSize: "13px", lineHeight: 1.55 }}>Katmanları, analizleri, acil olayları ve dirençlilik araçlarını kısa bir görsel turla tanıyın.</p>
+            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+              <button onClick={() => { localStorage.setItem("koriz-user-guide-seen", "1"); setGuideOpen(false); }} style={{ border: "none", background: "transparent", color: "#64748b", cursor: "pointer", padding: "8px" }}>Şimdi değil</button>
+              <button onClick={() => setGuideStep(0)} style={{ border: "none", borderRadius: "9px", background: "#dc2626", color: "white", cursor: "pointer", padding: "9px 13px", fontWeight: "800" }}>Turu Başlat</button>
+            </div>
+          </> : <>
+            <div style={{ color: "#dc2626", fontSize: "11px", fontWeight: "900" }}>{guideStep + 1} / {USER_GUIDE_STEPS.length}</div>
+            <div style={{ fontSize: "19px", fontWeight: "800", marginTop: "5px" }}>{USER_GUIDE_STEPS[guideStep].title}</div>
+            <p style={{ margin: "8px 0 16px", color: "#475569", fontSize: "13px", lineHeight: 1.55 }}>{USER_GUIDE_STEPS[guideStep].text}</p>
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", justifyContent: "space-between" }}>
+              <button onClick={() => { localStorage.setItem("koriz-user-guide-seen", "1"); setGuideOpen(false); }} style={{ border: "none", background: "transparent", color: "#64748b", cursor: "pointer", padding: "8px 0" }}>Turu Kapat</button>
+              <div style={{ display: "flex", gap: "7px" }}>
+                {guideStep > 0 && <button onClick={() => setGuideStep((step) => step - 1)} style={{ border: "1px solid #cbd5e1", borderRadius: "8px", background: "white", color: "#334155", cursor: "pointer", padding: "8px 10px", fontWeight: "700" }}>Geri</button>}
+                <button onClick={() => { if (guideStep === USER_GUIDE_STEPS.length - 1) { localStorage.setItem("koriz-user-guide-seen", "1"); setGuideOpen(false); } else setGuideStep((step) => step + 1); }} style={{ border: "none", borderRadius: "8px", background: "#dc2626", color: "white", cursor: "pointer", padding: "8px 11px", fontWeight: "800" }}>{guideStep === USER_GUIDE_STEPS.length - 1 ? "Bitir" : "Sonraki"}</button>
+              </div>
+            </div>
+          </>}
+        </div>
+      </>}
     </div>
   );
 }
