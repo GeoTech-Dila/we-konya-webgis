@@ -21,21 +21,27 @@ body,
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
 }
 
-/* Anlık harita ölçeği: analiz çekmecesinin üstünde, sol altta görünür. */
-.maplibregl-ctrl-bottom-left {
-  bottom: 86px !important;
-  left: 20px !important;
+/* QGIS esintili koordinat ve ölçek bilgi çubuğu. */
+.map-status-bar {
+  position: absolute;
+  left: 20px;
+  bottom: 88px;
   z-index: 15;
-}
-.maplibregl-ctrl-scale {
-  background: rgba(255,255,255,0.78) !important;
-  border-color: #334155 !important;
-  color: #1e293b !important;
-  border-radius: 3px 3px 0 0;
-  padding: 2px 5px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.15);
+  color: #475569;
   font-size: 11px;
-  font-weight: 700;
+  backdrop-filter: blur(10px);
+  pointer-events: none;
 }
+.map-status-bar strong { color: #0f172a; font-variant-numeric: tabular-nums; }
+.map-status-divider { width: 1px; height: 18px; background: rgba(100, 116, 139, 0.35); }
 
 
 /* KOR-IZ modern opacity sliders */
@@ -111,10 +117,14 @@ body,
     top: 126px !important;
     right: 8px !important;
   }
-  .maplibregl-ctrl-bottom-left {
-    bottom: 68px !important;
-    left: 10px !important;
+  .map-status-bar {
+    left: 10px;
+    bottom: 70px;
+    gap: 6px;
+    padding: 6px 8px;
+    font-size: 10px;
   }
+  .map-status-divider { height: 15px; }
   .app-header {
     height: 64px !important;
     padding: 0 12px !important;

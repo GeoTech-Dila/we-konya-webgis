@@ -89,6 +89,7 @@ const [service15Visible, setService15Visible] = useState(false);
   const [appLoading, setAppLoading] = useState(true);
   const [loadingStep, setLoadingStep] = useState(0);
   const [mapReady, setMapReady] = useState(false);
+  const [mapStatus, setMapStatus] = useState({ coordinate: "—", scale: "—" });
 
 
   // --- UI STATE ---
@@ -478,7 +479,21 @@ console.log(
 
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl());
-    map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: "metric" }), "bottom-left");
+    let lastCursorLngLat = map.getCenter();
+    const updateMapStatus = (lngLat = lastCursorLngLat) => {
+      lastCursorLngLat = lngLat;
+      // Ölçek imleçten değil, haritanın merkezinden hesaplanır.
+      const centerLatitude = map.getCenter().lat;
+      const resolutionMPerPixel = (156543.03392804097 * Math.cos(centerLatitude * Math.PI / 180)) / Math.pow(2, map.getZoom() + 1);
+      const scale = Math.max(1, Math.round(resolutionMPerPixel * 96 * 39.3701));
+      setMapStatus({
+        coordinate: `${Number(lngLat.lng).toFixed(5)}, ${Number(lngLat.lat).toFixed(5)}`,
+        scale: `1:${scale.toLocaleString("tr-TR")}`,
+      });
+    };
+    map.on("mousemove", (event) => updateMapStatus(event.lngLat));
+    map.on("move", () => updateMapStatus(lastCursorLngLat));
+    updateMapStatus();
     let viewportReloadTimer = null;
     let mahalleReloadTimer = null;
 
@@ -1666,6 +1681,11 @@ useEffect(() => {
   return (
     <div style={{ width: "100vw", height: "100vh", position: "relative", overflow: "hidden", background: "#e5e7eb" }}>
       <div id="map" style={{ width: "100%", height: "100%" }} />
+      <div className="map-status-bar" aria-label="Harita koordinat ve ölçek bilgisi">
+        <span>Koordinat <strong>{mapStatus.coordinate}</strong></span>
+        <span className="map-status-divider" />
+        <span>Ölçek <strong>{mapStatus.scale}</strong></span>
+      </div>
 
 {appLoading && (
 
