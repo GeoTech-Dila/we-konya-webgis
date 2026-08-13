@@ -454,21 +454,47 @@ console.log(
     });
   };
 
-  // Katmanlar panelindeki tüm temel harita katmanlarını tek seferde gizler.
+  // Katmanlar panelindeki temel ve analiz katmanlarının tamamını tek seferde gizler.
   const closeAllLayers = () => {
     [
       setLayerVisible, setMahalleVisible, setToplanmaVisible,
+      setRecommendedAssemblyVisible, setSocioGeologicalVisible,
       setFaultVisible, setSinkholeVisible, setFacilityVisible,
       setRoadVisible, setEmergencyVisible, setProvinceBoundaryVisible,
       setParksVisible, setLawVisible, setHealthPointVisible,
       setHealthAreaVisible, setTransitPointVisible, setTransitAreaVisible,
-      setBuildingsVisible,
+      setResilienceVisible, setBuildingsVisible,
+      setBuildings5Visible, setBuildings10Visible, setBuildings15Visible,
+      setBuildingsUnreachableVisible, setHeatmapVisible,
+      setService5Visible, setService10Visible, setService15Visible,
     ].forEach((setVisible) => setVisible(false));
+
+    setActiveAnalysisLayer(null);
+    setSelectedEmergencyId(null);
     setOpenLayerGroup(null);
+
+    // Bazı katmanlar ilk açıldıklarında doğrudan MapLibre'a görünür atanır.
+    // State güncellemesini beklemeden bunları burada da kapatıyoruz.
     const map = mapRef.current;
-    if (map?.getLayer("emergency-points-circle")) {
-      map.setLayoutProperty("emergency-points-circle", "visibility", "none");
-    }
+    if (!map) return;
+    [
+      "district-fill", "district-outline", "district-hover",
+      "mahalle-fill", "mahalle-outline", "toplanma-points",
+      "fault-lines-line", "sinkholes-fill", "sinkholes-outline",
+      "critical-facilities-point", "major-roads-line", "province-boundary-line",
+      "parks-fill", "parks-outline", "law-enforcement-point",
+      "health-points-point", "health-areas-fill", "health-areas-outline",
+      "transit-points-point", "transit-areas-fill", "transit-areas-outline",
+      "recommended-assembly-parks-fill", "recommended-assembly-parks-outline",
+      "socio-geological-risk-fill", "socio-geological-risk-outline",
+      "resilience-district-fill", "critical-accessibility-fill",
+      "emergency-points-circle", "emergency-heatmap",
+      "service-area-5-lines", "service-area-10-lines", "service-area-15-lines",
+      "buildings-5-fill", "buildings-10-fill", "buildings-15-fill",
+      "buildings-unreachable-fill", "inaccessible-heatmap",
+    ].forEach((layerId) => {
+      if (map.getLayer(layerId)) map.setLayoutProperty(layerId, "visibility", "none");
+    });
   };
 
   // --- MAHALLE RANK FONKSIYONU ---
