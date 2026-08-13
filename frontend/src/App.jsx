@@ -1681,6 +1681,10 @@ useEffect(() => {
   return (
     <div style={{ width: "100vw", height: "100vh", position: "relative", overflow: "hidden", background: "#e5e7eb" }}>
       <div id="map" style={{ width: "100%", height: "100%" }} />
+      <button className="map-home-button" title="Başlangıç görünümüne dön" aria-label="Başlangıç görünümüne dön"
+        onClick={() => mapRef.current?.flyTo({ center: [32.55, 37.87], zoom: 7.05, pitch: 55, bearing: -18, duration: 1200 })}>
+        ⌂
+      </button>
       <div className="map-status-bar" aria-label="Harita koordinat ve ölçek bilgisi">
         <span>Koordinat <strong>{mapStatus.coordinate}</strong></span>
         <span className="map-status-divider" />
