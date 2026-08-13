@@ -144,7 +144,7 @@ body,
   /* Telefon ekranında dirençlilik kutusunun üstüne binmez. */
   .map-status-bar {
     left: 10px;
-    bottom: 58px;
+    bottom: 55px;
     gap: 6px;
     padding: 6px 8px;
     font-size: 10px;
