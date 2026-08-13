@@ -58,7 +58,48 @@ body,
   color: #475569;
   font-size: 11px;
   backdrop-filter: blur(10px);
-  pointer-events: none;
+  pointer-events: auto;
+}
+.map-scale-trigger {
+  border: 0;
+  background: transparent;
+  color: #475569;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+.map-scale-trigger:hover { color: #0f766e; }
+.map-scale-editor {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 7px);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: rgba(255,255,255,0.97);
+  box-shadow: 0 10px 24px rgba(15,23,42,0.18);
+  color: #334155;
+}
+.map-scale-editor input {
+  width: 76px;
+  border: 1px solid #94a3b8;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font: inherit;
+  color: #0f172a;
+}
+.map-scale-editor button {
+  border: 0;
+  border-radius: 6px;
+  padding: 5px 8px;
+  background: #0f766e;
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }
 .map-status-bar strong { color: #0f172a; font-variant-numeric: tabular-nums; }
 .map-status-divider { width: 1px; height: 18px; background: rgba(100, 116, 139, 0.35); }
@@ -426,3 +467,142 @@ body,
     text-align: center !important;
   }
 }
+
+
+/* Inline map scale input */
+.map-status-bar { pointer-events: auto; }
+.map-scale-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+  color: #475569;
+  font: inherit;
+}
+.map-scale-inline input {
+  width: 82px;
+  min-width: 0;
+  border: 1px solid rgba(100, 116, 139, 0.50);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.70);
+  padding: 3px 5px;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+.map-scale-inline input:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.15);
+  background: #ffffff;
+}
+@media (max-width: 700px) {
+  .map-status-bar { gap: 5px; padding: 6px 7px; font-size: 10px; }
+  .map-scale-inline { gap: 2px; }
+  .map-scale-inline input { width: 68px; padding: 3px 4px; }
+}
+
+
+/* Compact inline map scale refinement */
+.map-status-bar {
+  gap: 7px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 10px;
+}
+.map-status-divider { height: 15px; }
+.map-scale-inline { gap: 2px; color: #64748b; }
+.map-scale-inline input {
+  width: 62px;
+  height: 18px;
+  box-sizing: border-box;
+  padding: 1px 5px;
+  border: 1px solid rgba(100, 116, 139, 0.35);
+  border-radius: 4px;
+  background: rgba(248, 250, 252, 0.82);
+  color: #334155;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+.map-scale-inline input:hover { border-color: rgba(15, 118, 110, 0.55); }
+.map-scale-inline input:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.10);
+}
+@media (max-width: 700px) {
+  .map-status-bar { gap: 4px; padding: 5px 6px; font-size: 9px; }
+  .map-scale-inline input { width: 56px; height: 17px; font-size: 9px; }
+}
+
+
+/* Compact scale apply button */
+.map-scale-inline .map-scale-apply {
+  width: 19px;
+  height: 19px;
+  min-width: 19px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(15, 118, 110, 0.30);
+  border-radius: 6px;
+  background: rgba(15, 118, 110, 0.09);
+  color: #0f766e;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+}
+.map-scale-inline .map-scale-apply:hover {
+  background: #0f766e;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+.map-scale-inline .map-scale-apply:active { transform: translateY(0); }
+@media (max-width: 700px) {
+  .map-scale-inline .map-scale-apply { width: 18px; height: 18px; min-width: 18px; font-size: 13px; }
+}
+
+
+/* Red scale apply button */
+.map-scale-inline .map-scale-apply {
+  border-color: rgba(220, 38, 38, 0.30);
+  background: rgba(220, 38, 38, 0.09);
+  color: #dc2626;
+}
+.map-scale-inline .map-scale-apply:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+
+/* Larger map status text */
+.map-status-bar { font-size: 11.5px; }
+.map-status-bar strong { font-size: 11.5px; }
+.map-scale-inline input { font-size: 11px; }
+@media (max-width: 700px) {
+  .map-status-bar { font-size: 10px; }
+  .map-status-bar strong { font-size: 10px; }
+  .map-scale-inline input { font-size: 10px; }
+}
+
+/* Map status bar: 1px lower */
+.map-status-bar { bottom: 87px; }
+
+
+/* Correct map status bar downward offset */
+.map-status-bar { transform: translateY(1px); }
+
+/* Map status bar: 20px further down */
+.map-status-bar { transform: translateY(21px); }
+
+/* Map status bar: 10px more down */
+.map-status-bar { transform: translateY(31px); }
+
+/* Map status bar: 3px more down */
+.map-status-bar { transform: translateY(34px); }
+
+/* Map status bar: 2px more down */
+.map-status-bar { transform: translateY(36px); }

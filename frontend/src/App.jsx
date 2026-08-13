@@ -101,6 +101,7 @@ const [service15Visible, setService15Visible] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [mapReady, setMapReady] = useState(false);
   const [mapStatus, setMapStatus] = useState({ coordinate: "—", scale: "—" });
+  const [scaleInput, setScaleInput] = useState("");
   const [guideOpen, setGuideOpen] = useState(() => localStorage.getItem("koriz-user-guide-seen") !== "1");
   const [guideStep, setGuideStep] = useState(-1);
   const [guideTargetRect, setGuideTargetRect] = useState(null);
@@ -1791,6 +1792,19 @@ useEffect(() => {
     setMahalleVisible(true);
   };
 
+  const applyManualScale = (event) => {
+    event.preventDefault();
+    const map = mapRef.current;
+    // 50000, 50.000 veya 1:50.000 biçimleri kabul edilir.
+    const targetScale = Number(String(scaleInput).replace(/^\s*1\s*:\s*/, "").replace(/[.\s]/g, "").replace(",", "."));
+    if (!map || !Number.isFinite(targetScale) || targetScale < 250) return;
+    const latitude = map.getCenter().lat;
+    const numerator = 156543.03392804097 * Math.cos(latitude * Math.PI / 180) * 96 * 39.3701;
+    const zoom = Math.log2(numerator / targetScale) - 1;
+    map.easeTo({ zoom: Math.max(0, Math.min(22, zoom)), duration: 850 });
+    setScaleInput("");
+  };
+
   return (
     <div style={{ width: "100vw", height: "100vh", position: "relative", overflow: "hidden", background: "#e5e7eb" }}>
       <div id="map" style={{ width: "100%", height: "100%" }} />
@@ -1801,7 +1815,19 @@ useEffect(() => {
       <div className="map-status-bar" aria-label="Harita koordinat ve ölçek bilgisi">
         <span>Koordinat <strong>{mapStatus.coordinate}</strong></span>
         <span className="map-status-divider" />
-        <span>Ölçek <strong>{mapStatus.scale}</strong></span>
+        <form className="map-scale-inline" onSubmit={applyManualScale}>
+          <span>Ölçek</span>
+          <label htmlFor="manual-map-scale">1:</label>
+          <input
+            id="manual-map-scale"
+            inputMode="numeric"
+            value={scaleInput || mapStatus.scale.replace(/^1:/, "")}
+            onFocus={() => setScaleInput(mapStatus.scale.replace(/^1:/, "").replace(/\./g, ""))}
+            onChange={(event) => setScaleInput(event.target.value)}
+            aria-label="Hedef ölçek"
+          />
+          <button type="submit" className="map-scale-apply" title="Bu ölçeğe git" aria-label="Bu ölçeğe git">↵</button>
+        </form>
       </div>
 
 {appLoading && (
