@@ -1938,25 +1938,22 @@ useEffect(() => {
             }}
           />
         </div>
-        <div className="team-badge" style={{
+        <div className="team-badge" title="OpenGIS Türkiye" style={{
   position: "absolute",
   right: "80px",
-  top: "18px",
-  padding: "8px 14px",
+  top: "10px",
+  width: "118px",
+  height: "52px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   borderRadius: "12px",
   background: "rgba(255,255,255,0.10)",
   border: "1px solid rgba(255,255,255,0.14)",
   backdropFilter: "blur(12px)",
   boxShadow: "0 4px 18px rgba(0,0,0,0.12)"
 }}>
-  <span style={{
-    color: "#7376F2",
-    fontSize: "13px",
-    fontWeight: "700",
-    letterSpacing: "0.5px"
-  }}>
-    Team KOR-İZ
-  </span>
+  <img src="/opengis-turkiye.png" alt="OpenGIS Türkiye" style={{ maxWidth: "104px", maxHeight: "42px", objectFit: "contain", display: "block" }} />
 </div>
       </div>
 
