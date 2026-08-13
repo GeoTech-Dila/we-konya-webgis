@@ -332,10 +332,13 @@ body,
 }
 
 
-/* The Events drawer opens by tapping its title; no separate arrow button is needed. */
+/* Telefonda hem başlık hem de sağdaki ok çekmeceyi açıp kapatabilir. */
 @media (max-width: 768px) {
-  .side-events-panel > div:first-child > button:last-child { display: none !important; }
-  .side-events-panel:not(.is-open) > div:first-child { justify-content: flex-start !important; }
+  .side-events-panel > div:first-child > button:last-child {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 
