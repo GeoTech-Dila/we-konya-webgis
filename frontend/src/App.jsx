@@ -52,6 +52,7 @@ function App() {
   const [toplanmaVisible, setToplanmaVisible] = useState(true);
   const [recommendedAssemblyVisible, setRecommendedAssemblyVisible] = useState(false);
   const [socioGeologicalVisible, setSocioGeologicalVisible] = useState(false);
+  const [criticalServiceVisible, setCriticalServiceVisible] = useState(false);
   const [faultVisible, setFaultVisible] = useState(false);
   const [sinkholeVisible, setSinkholeVisible] = useState(false);
   const [facilityVisible, setFacilityVisible] = useState(false);
@@ -417,6 +418,17 @@ console.log(
 
   // 31 ilçe poligonu küçük olduğu için kullanıcı tıklamadan arka planda hazırlarız.
   // Böylece analiz düğmesi ilk kullanımda bekletmez.
+  const loadCriticalServiceLayer = async () => {
+    if (loadedLayersRef.current["critical-service-load"]) return;
+    try {
+      const res = await fetch(`${API_URL}/layers/kritik-tesis-hizmet-yuku`);
+      if (!res.ok) return;
+      const data = await res.json();
+      mapRef.current?.getSource("critical-service-load")?.setData(data);
+      loadedLayersRef.current["critical-service-load"] = true;
+    } catch { /* Kullanıcı açtığında yeniden istenebilir. */ }
+  };
+
   const loadSocioGeologicalRiskLayer = async () => {
     if (loadedLayersRef.current["socio-geological-risk"]) return;
     try {
@@ -459,7 +471,7 @@ console.log(
   const closeAllLayers = () => {
     [
       setLayerVisible, setMahalleVisible, setToplanmaVisible,
-      setRecommendedAssemblyVisible, setSocioGeologicalVisible,
+      setRecommendedAssemblyVisible, setSocioGeologicalVisible, setCriticalServiceVisible,
       setFaultVisible, setSinkholeVisible, setFacilityVisible,
       setRoadVisible, setEmergencyVisible, setProvinceBoundaryVisible,
       setParksVisible, setLawVisible, setHealthPointVisible,
@@ -488,6 +500,7 @@ console.log(
       "transit-points-point", "transit-areas-fill", "transit-areas-outline",
       "recommended-assembly-parks-fill", "recommended-assembly-parks-outline",
       "socio-geological-risk-fill", "socio-geological-risk-outline",
+      "critical-service-load-fill", "critical-service-load-outline",
       "resilience-district-fill", "critical-accessibility-fill",
       "emergency-points-circle", "emergency-heatmap",
       "service-area-5-lines", "service-area-10-lines", "service-area-15-lines",
@@ -653,8 +666,9 @@ const service15PolyData = EMPTY_FC;
       addSrc("toplanma", { type: "geojson", data: toplanmaData });
       addSrc("recommended-assembly-parks", { type: "geojson", data: EMPTY_FC });
       addSrc("socio-geological-risk", { type: "geojson", data: EMPTY_FC });
+      addSrc("critical-service-load", { type: "geojson", data: EMPTY_FC });
       // Temel harita görünür olduktan kısa süre sonra katmanı önbelleğe al.
-      window.setTimeout(() => { loadSocioGeologicalRiskLayer(); }, 900);
+      window.setTimeout(() => { loadSocioGeologicalRiskLayer(); loadCriticalServiceLayer(); }, 900);
       addSrc("service-area-5-lines", {
   type: "geojson",
   data: service5Data,
@@ -1121,6 +1135,8 @@ addLyr({
       addLyr({ id: "recommended-assembly-parks-outline", type: "line", source: "recommended-assembly-parks", layout: { visibility: "none" }, paint: { "line-color": "#b45309", "line-width": 1.2, "line-opacity": 0.9 } });
       addLyr({ id: "socio-geological-risk-fill", type: "fill", source: "socio-geological-risk", layout: { visibility: "none" }, paint: { "fill-color": ["step", ["coalesce", ["to-number", ["get", "toplam_risk"]], 0], "#15803d", 6, "#eab308", 7, "#f97316", 9, "#dc2626"], "fill-opacity": 0.46 } });
       addLyr({ id: "socio-geological-risk-outline", type: "line", source: "socio-geological-risk", layout: { visibility: "none" }, paint: { "line-color": "#7f1d1d", "line-width": 1.35, "line-opacity": 0.84 } });
+      addLyr({ id: "critical-service-load-fill", type: "fill", source: "critical-service-load", layout: { visibility: "none" }, paint: { "fill-color": ["step", ["coalesce", ["to-number", ["get", "toplam_puan"]], 0], "#15803d", 6, "#eab308", 9, "#f97316", 12, "#dc2626"], "fill-opacity": 0.48 } });
+      addLyr({ id: "critical-service-load-outline", type: "line", source: "critical-service-load", layout: { visibility: "none" }, paint: { "line-color": "#9f1239", "line-width": 1.35, "line-opacity": 0.88 } });
       addLyr({ id: "law-enforcement-point", type: "circle", source: "law-enforcement", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#2563eb", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
       addLyr({ id: "health-points-point", type: "circle", source: "health-points", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#0891b2", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
       addLyr({ id: "health-areas-fill", type: "fill", source: "health-areas", layout: { visibility: "none" }, paint: { "fill-color": "#06b6d4", "fill-opacity": 0.22 } });
@@ -2588,6 +2604,14 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
 
         recommendedAssemblyVisible={recommendedAssemblyVisible}
         socioGeologicalVisible={socioGeologicalVisible}
+        criticalServiceVisible={criticalServiceVisible}
+        onToggleCriticalService={() => toggleDataLayer(
+          !criticalServiceVisible,
+          setCriticalServiceVisible,
+          "critical-service-load",
+          ["critical-service-load-fill", "critical-service-load-outline"],
+          "/layers/kritik-tesis-hizmet-yuku"
+        )}
         onToggleSocioGeological={() => toggleDataLayer(
           !socioGeologicalVisible,
           setSocioGeologicalVisible,

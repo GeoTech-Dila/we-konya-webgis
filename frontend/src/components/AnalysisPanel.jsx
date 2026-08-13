@@ -69,27 +69,13 @@ const analysisCards = [
   },
   {
     id: "facility-access",
-
-  title: "Kritik Tesis Erişilebilirliği",
-
-  method: "Network Analysis",
-
-  status: "Gerçek veri hazır",
-
-  summary:
-    "Afet anında kapanabilecek yolları ağdan çıkarıp kritik tesislere erişilebilirliği tekrar hesaplar.",
-
-  inputs: [
-    "Yol ağı",
-    "Kritik tesisler",
-    "Kapanma senaryosu"
-  ],
-
-  output: "Erişilebilir / erişilemez tesisler",
-
-  image: "/network_centrality_gorsel.png",
-
-
+    title: "Kritik Tesis Servis Etki Alanı ve Hizmet Yükü",
+    method: "Mekansal Sayım + Hizmet Yükü İndeksi",
+    status: "Doğrulanmış analiz hazır",
+    summary: "İtfaiye, ASHİ/112 ve hastanelerin ilçe nüfusu ile yapı stoğu karşısındaki hizmet yükünü değerlendirir.",
+    inputs: ["İtfaiye istasyonları", "ASHİ / 112 noktaları", "Hastaneler", "İlçe nüfusu", "Yapı stoğu"],
+    output: "1-4 derece kritik tesis yeterliliği ve öncelikli yatırım alanları",
+    image: "/service_area1_gorsel.png",
   },
   {
     id: "recommended-assembly",
@@ -100,17 +86,6 @@ const analysisCards = [
       "Parkların binalardan 30 m uzakta kalan güvenli bölümlerini, obruk ve fay çakışmalarını ve 2025 mahalle nüfusunu birlikte değerlendirir.",
     inputs: ["2025 mahalle nüfusu", "Park alanları", "Bina ayak izleri", "Fay hatları", "Obruklar"],
     output: "Resmî olmayan, AFAD odaklı ön elemeden geçen güvenli park parçaları",
-    image: "/service_area1_gorsel.png",
-  },
-  {
-    id: "service-impact",
-    title: "Tesis Servis Etki Alanı",
-    method: "Voronoi / Hub Distance",
-    status: "Hazırlanıyor",
-    summary:
-      "İtfaiye veya sağlık tesislerinin hizmet alanındaki nüfusla kişi / tesis oranını hesaplar.",
-    inputs: ["Tesis noktaları", "Nüfus verisi", "Hizmet alanı yöntemi"],
-    output: "Tesis başına düşen nüfus",
     image: "/service_area1_gorsel.png",
   },
   {
@@ -168,6 +143,8 @@ function AnalysisPanel({
   onToggleRecommendedAssembly,
   socioGeologicalVisible,
   onToggleSocioGeological,
+  criticalServiceVisible,
+  onToggleCriticalService,
 
   activeAnalysisLayer,
   setActiveAnalysisLayer,
@@ -438,6 +415,8 @@ height: `${panelHeight}px`,
               onToggleRecommendedAssembly={onToggleRecommendedAssembly}
               socioGeologicalVisible={socioGeologicalVisible}
               onToggleSocioGeological={onToggleSocioGeological}
+              criticalServiceVisible={criticalServiceVisible}
+              onToggleCriticalService={onToggleCriticalService}
             />
           )}
         </div>
@@ -447,7 +426,7 @@ height: `${panelHeight}px`,
   );
 }
 
-function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological }) {
+function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological, criticalServiceVisible, onToggleCriticalService }) {
   return (
     <div
       style={{
@@ -550,30 +529,22 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
         </div>
       )}
 
-      {/* Kritik Tesis için analiz butonu */}
       {card.id === "facility-access" && (
         <div style={{ gridColumn: "1 / -1", padding: "4px 4px 0" }}>
-          <button
-            type="button"
-            onClick={() => setActiveAnalysisLayer(
-              activeAnalysisLayer === "critical-accessibility" ? null : "critical-accessibility"
-            )}
-            style={{
-              width: "100%", padding: "9px 13px", borderRadius: 12,
-              border: "1px solid rgba(37,99,235,0.35)",
-              background: activeAnalysisLayer === "critical-accessibility"
-                ? "rgba(37,99,235,0.22)" : "rgba(255,255,255,0.12)",
-              color: activeAnalysisLayer === "critical-accessibility" ? "#3b82f6" : "#64748b",
-              cursor: "pointer", fontWeight: 700, fontSize: 13, marginBottom: 6
-            }}
-          >
-            {activeAnalysisLayer === "critical-accessibility"
-              ? "✓ Analiz Aktif — Kapat"
-              : "▶ Analizi Haritada Göster"}
+          <button type="button" onClick={onToggleCriticalService} style={{ width: "100%", padding: "9px 13px", borderRadius: 12, border: "1px solid rgba(220,38,38,0.45)", background: criticalServiceVisible ? "rgba(254,226,226,0.88)" : "rgba(255,255,255,0.12)", color: "#991b1b", cursor: "pointer", fontWeight: 700, fontSize: 13, marginBottom: 7 }}>
+            {criticalServiceVisible ? "✓ Hizmet Yükü Analizini Gizle" : "▶ Hizmet Yükü Analizini Haritada Göster"}
           </button>
+          <div style={{ padding: "9px 10px", borderRadius: 10, background: "rgba(255,247,237,0.74)", color: "#7c2d12", fontSize: 11, lineHeight: 1.45 }}>
+            İtfaiye başına yapı sayısı; ASHİ ve hastane başına nüfus hesaplanır. Üç hizmet yükü 1-5 risk puanına dönüştürülerek toplam 3-15 puan üretilir.
+          </div>
+          <div style={{ marginTop: 8, padding: "9px 10px", borderRadius: 10, background: "rgba(255,255,255,0.78)", border: "1px solid rgba(148,163,184,0.36)" }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#334155", marginBottom: 7 }}>Harita Lejantı · Toplam Hizmet Yükü</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 5 }}>
+              {[["#15803d", "3-5", "Yeterli"], ["#eab308", "6-8", "Orta"], ["#f97316", "9-11", "Yüksek"], ["#dc2626", "12-15", "Çok yüksek"]].map(([color, score, label]) => <div key={label}><div style={{ height: 8, borderRadius: 4, background: color, marginBottom: 4 }} /><div style={{ fontSize: 9, fontWeight: 800, color: "#334155" }}>{score}</div><div style={{ fontSize: 8, color: "#64748b" }}>{label}</div></div>)}
+            </div>
+          </div>
         </div>
       )}
-
 
       <div
         style={{

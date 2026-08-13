@@ -177,6 +177,27 @@ def toplanma_alanlari():
         return conn.execute(query).scalar()
 
 
+@app.get("/layers/kritik-tesis-hizmet-yuku")
+def kritik_tesis_hizmet_yuku():
+    """Return district critical-facility service-load analysis."""
+    query = text("""
+        SELECT json_build_object(
+            'type', 'FeatureCollection',
+            'features', COALESCE(json_agg(f.feature), '[]'::json)
+        )
+        FROM (
+            SELECT json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(geom, 4326))::json,
+                'properties', COALESCE(to_jsonb(t) - 'geom', '{}'::jsonb)
+            ) AS feature
+            FROM public.konya_ilce_kritik_tesis_hizmet_yuku_2026 AS t
+        ) AS f;
+    """)
+    with engine.connect() as conn:
+        return conn.execute(query).scalar()
+
+
 @app.get("/layers/sosyo-ekonomik-jeolojik-tehlike")
 def sosyo_ekonomik_jeolojik_tehlike():
     """Return the verified district SES + geological hazard layer."""
