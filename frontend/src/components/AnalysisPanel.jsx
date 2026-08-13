@@ -418,6 +418,8 @@ height: `${panelHeight}px`,
               selectedAssemblyScenario={selectedAssemblyScenario}
               assemblyScenarioLoading={assemblyScenarioLoading}
               onToggleRecommendedAssembly={onToggleRecommendedAssembly}
+              socioGeologicalVisible={socioGeologicalVisible}
+              onToggleSocioGeological={onToggleSocioGeological}
             />
           )}
         </div>
