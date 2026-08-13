@@ -141,9 +141,10 @@ body,
     top: 242px;
     right: 8px;
   }
+  /* Telefon ekranında dirençlilik kutusunun üstüne binmez. */
   .map-status-bar {
     left: 10px;
-    bottom: 70px;
+    bottom: 58px;
     gap: 6px;
     padding: 6px 8px;
     font-size: 10px;
@@ -168,13 +169,22 @@ body,
     padding: 10px 14px !important;
     font-size: 13px !important;
   }
+  /* Header içindeki OpenGIS Türkiye Ekibi logosu telefonda taşmaz. */
   .team-badge {
-    right: 12px !important;
-    top: 14px !important;
-    padding: 7px 10px !important;
+    right: 10px !important;
+    top: 3px !important;
+    width: 104px !important;
+    height: 48px !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
   }
+  .team-badge img { width: 48px !important; height: 48px !important; }
   .team-badge span { font-size: 11px !important; }
-  .team-badge .opengis-team-label { font-size: 5.5px !important; }
+  .team-badge .opengis-team-label {
+    font-size: 5.2px !important;
+    margin-left: -13.5px !important;
+    margin-bottom: 1px !important;
+  }
 
   .layers-panel {
     top: 126px !important;
