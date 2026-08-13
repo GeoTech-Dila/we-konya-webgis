@@ -181,6 +181,7 @@ function AnalysisPanel({
   };
   const activeCard = analysisCards.find((card) => card.id === activeCardId) || analysisCards[0];
   const [socioInfoOpen, setSocioInfoOpen] = useState(false);
+  const [criticalFacilityInfoOpen, setCriticalFacilityInfoOpen] = useState(false);
 
   return (
     <>
@@ -350,6 +351,15 @@ height: `${panelHeight}px`,
             <div style={{ color: "#6366f1", fontSize: 12, fontWeight: 800 }}>{activeCard.method}</div>
             <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 2 }}>
               <div style={{ fontSize: 16, fontWeight: 800 }}>{activeCard.title}</div>
+              {activeCard.id === "facility-access" && (
+                <button
+                  type="button"
+                  aria-label="Kritik tesis hizmet yükü analizi hakkında bilgi"
+                  title="Analiz yöntemi hakkında bilgi"
+                  onClick={() => setCriticalFacilityInfoOpen((open) => !open)}
+                  style={{ width: 20, height: 20, padding: 0, borderRadius: "50%", border: "1px solid #fca5a5", background: "#fff7f7", color: "#b91c1c", cursor: "pointer", fontWeight: 800, lineHeight: 1 }}
+                >ⓘ</button>
+              )}
               {activeCard.id === "vulnerability" && (
                 <button
                   type="button"
@@ -360,6 +370,24 @@ height: `${panelHeight}px`,
                 >ⓘ</button>
               )}
             </div>
+            {activeCard.id === "facility-access" && criticalFacilityInfoOpen && (
+              <div style={{ marginTop: 8, padding: "12px", borderRadius: 11, background: "#fff7f7", border: "1px solid #fecaca", color: "#7f1d1d", fontSize: 11, lineHeight: 1.55, maxHeight: 250, overflowY: "auto" }}>
+                <strong style={{ display: "block", marginBottom: 6, fontSize: 12 }}>Kritik tesis hizmet yükü neyi gösterir?</strong>
+                <p style={{ margin: "0 0 8px" }}>Bu analiz, Konya ilçelerindeki itfaiye istasyonları, Acil Sağlık Hizmetleri İstasyonları (ASHİ/112) ve hastanelerin; nüfus ve yapı stoğu karşısında yeterli olup olmadığını karşılaştırır. Amaç yalnızca tesisin varlığını değil, afet veya kriz anında kapasite aşımı ve operasyonel yetersizlik olasılığını görünür kılmaktır.</p>
+                <strong>1. Mekânsal sayım</strong>
+                <p style={{ margin: "3px 0 8px" }}>Her ilçe poligonu içinde kalan itfaiye, ASHİ ve hastane noktaları sayılır. Böylece tesislerin ilçe içindeki mevcut dağılımı analiz edilir.</p>
+                <strong>2. Hizmet yükü hesapları</strong>
+                <ul style={{ margin: "3px 0 8px", paddingLeft: 17 }}>
+                  <li><b>İtfaiye yükü:</b> ilçedeki yapı sayısı ÷ itfaiye sayısıdır. Yapı başına müdahale kapasitesini temsil eder.</li>
+                  <li><b>ASHİ yükü:</b> ilçe nüfusu ÷ ASHİ sayısıdır. İlk tıbbi müdahaleye yetişme baskısını gösterir.</li>
+                  <li><b>Hastane yükü:</b> ilçe nüfusu ÷ hastane sayısıdır. Afet sonrası yataklı tedavi ve ağır müdahale kapasitesi baskısını gösterir.</li>
+                </ul>
+                <strong>3. Risk puanlama ve sınıflama</strong>
+                <p style={{ margin: "3px 0 8px" }}>Her üç yük değeri 1 ile 5 arasında puanlanır. Tesisi hiç bulunmayan ilçeler doğrudan en yüksek risk puanını alır; tesis başına düşen nüfus veya yapı sayısı büyüdükçe risk de yükselir. Üç puanın toplamı 3-15 arasındadır: 3-5 yeterli altyapı, 6-8 orta düzey, 9-11 yüksek tesis yükü, 12-15 çok yüksek kritik tesis yetersizliği olarak gösterilir.</p>
+                <strong>Nasıl yorumlanmalı?</strong>
+                <p style={{ margin: "3px 0" }}>Kırmızı ve turuncu ilçeler, yeni itfaiye istasyonu, 112 noktası, hastane kapasitesi veya ayrıntılı saha değerlendirmesi için öncelik taşıyan yerleri işaret eder. Bu katman resmî yatırım kararı vermez; kaynak planlamasını destekleyen ilçe ölçekli karşılaştırmalı bir karar destek çıktısıdır.</p>
+              </div>
+            )}
             {activeCard.id === "vulnerability" && socioInfoOpen && (
               <div style={{ marginTop: 8, padding: "10px 11px", borderRadius: 10, background: "#fff7ed", border: "1px solid #fed7aa", color: "#7c2d12", fontSize: 11, lineHeight: 1.5 }}>
                 <strong style={{ display: "block", marginBottom: 4 }}>Bu analiz neyi gösterir?</strong>
