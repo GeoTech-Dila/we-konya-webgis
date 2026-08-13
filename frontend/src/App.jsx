@@ -479,21 +479,23 @@ console.log(
 
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl());
-    let lastCursorLngLat = map.getCenter();
-    const updateMapStatus = (lngLat = lastCursorLngLat) => {
-      lastCursorLngLat = lngLat;
-      // Ölçek imleçten değil, haritanın merkezinden hesaplanır.
+    const updateScale = () => {
       const centerLatitude = map.getCenter().lat;
       const resolutionMPerPixel = (156543.03392804097 * Math.cos(centerLatitude * Math.PI / 180)) / Math.pow(2, map.getZoom() + 1);
       const scale = Math.max(1, Math.round(resolutionMPerPixel * 96 * 39.3701));
-      setMapStatus({
-        coordinate: `${Number(lngLat.lng).toFixed(5)}, ${Number(lngLat.lat).toFixed(5)}`,
-        scale: `1:${scale.toLocaleString("tr-TR")}`,
-      });
+      setMapStatus((previous) => ({ ...previous, scale: `1:${scale.toLocaleString("tr-TR")}` }));
     };
-    map.on("mousemove", (event) => updateMapStatus(event.lngLat));
-    map.on("move", () => updateMapStatus(lastCursorLngLat));
-    updateMapStatus();
+    const updateCoordinate = (lngLat) => {
+      setMapStatus((previous) => ({
+        ...previous,
+        coordinate: `${Number(lngLat.lng).toFixed(5)}, ${Number(lngLat.lat).toFixed(5)}`,
+      }));
+    };
+    // Koordinat fare/parmak konumuyla değişir; ölçek yalnızca zoom sonunda yenilenir.
+    map.on("mousemove", (event) => updateCoordinate(event.lngLat));
+    map.on("zoomend", updateScale);
+    updateCoordinate(map.getCenter());
+    updateScale();
     let viewportReloadTimer = null;
     let mahalleReloadTimer = null;
 
