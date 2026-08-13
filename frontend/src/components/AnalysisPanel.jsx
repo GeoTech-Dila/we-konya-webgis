@@ -25,13 +25,13 @@ const analysisCards = [
   },
   {
     id: "vulnerability",
-    title: "Sosyo-Ekonomik Kırılganlık",
-    method: "Join + Graduated Symbology",
-    status: "Tamamlandı",
+    title: "Sosyo-Ekonomik Kırılganlık ve Jeolojik Tehlike",
+    method: "İlçe Bazlı Birleşik Risk Sınıflaması",
+    status: "Doğrulanmış analiz hazır",
     summary:
-      "İlçe veya mahalle ölçeğinde kırılganlık göstergelerini birleştirip sınıflı tematik harita üretir.",
-    inputs: ["Nüfus", "Yaş grubu", "Gelir / sosyal göstergeler"],
-    output: "Kırılganlık skoru",
+      "İlçelerin sosyo-ekonomik kırılganlığını, fay uzunluğu ve obruk varlığıyla birlikte değerlendirir. Mevcut mahalle dirençlilik skorundan bağımsız bir ilçe analizidir.",
+    inputs: ["Sosyo-ekonomik grup oranları", "2026 aktif fay verisi", "Obruk envanteri"],
+    output: "1–4 derece birleşik jeolojik ve sosyo-ekonomik risk grubu",
     image: "/kirilganlik_gorsel.png",
   },
   {
@@ -166,6 +166,8 @@ function AnalysisPanel({
   selectedAssemblyScenario,
   assemblyScenarioLoading,
   onToggleRecommendedAssembly,
+  socioGeologicalVisible,
+  onToggleSocioGeological,
 
   activeAnalysisLayer,
   setActiveAnalysisLayer,
@@ -425,7 +427,7 @@ height: `${panelHeight}px`,
   );
 }
 
-function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly }) {
+function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological }) {
   return (
     <div
       style={{
@@ -437,6 +439,16 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
         overflowY: "auto",
       }}
     >
+      {card.id === "vulnerability" && (
+        <div style={{ gridColumn: "1 / -1", padding: "4px 4px 0" }}>
+          <button type="button" onClick={onToggleSocioGeological} style={{ width: "100%", padding: "9px 13px", borderRadius: 12, border: "1px solid rgba(220,38,38,0.45)", background: socioGeologicalVisible ? "rgba(254,226,226,0.88)" : "rgba(255,255,255,0.12)", color: "#991b1b", cursor: "pointer", fontWeight: 700, fontSize: 13, marginBottom: 6 }}>
+            {socioGeologicalVisible ? "✓ İlçe Risk Analizini Gizle" : "▶ İlçe Risk Analizini Haritada Göster"}
+          </button>
+          <div style={{ padding: "8px 10px", borderRadius: 10, background: "rgba(255,247,237,0.74)", color: "#7c2d12", fontSize: 11, lineHeight: 1.45 }}>
+            Skor, jeolojik risk ile sosyo-ekonomik riskin toplamıdır. Renkler düşükten kritiğe doğru yeşil, sarı, turuncu ve kırmızıdır.
+          </div>
+        </div>
+      )}
       {card.id === "recommended-assembly" && (
         <div style={{ gridColumn: "1 / -1", padding: "4px 4px 0" }}>
           <button

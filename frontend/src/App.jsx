@@ -51,6 +51,7 @@ function App() {
   const [mahalleVisible, setMahalleVisible] = useState(false);
   const [toplanmaVisible, setToplanmaVisible] = useState(true);
   const [recommendedAssemblyVisible, setRecommendedAssemblyVisible] = useState(false);
+  const [socioGeologicalVisible, setSocioGeologicalVisible] = useState(false);
   const [faultVisible, setFaultVisible] = useState(false);
   const [sinkholeVisible, setSinkholeVisible] = useState(false);
   const [facilityVisible, setFacilityVisible] = useState(false);
@@ -609,6 +610,7 @@ const service15PolyData = EMPTY_FC;
       addSrc("mahalleler", { type: "geojson", data: mahalleData });
       addSrc("toplanma", { type: "geojson", data: toplanmaData });
       addSrc("recommended-assembly-parks", { type: "geojson", data: EMPTY_FC });
+      addSrc("socio-geological-risk", { type: "geojson", data: EMPTY_FC });
       addSrc("service-area-5-lines", {
   type: "geojson",
   data: service5Data,
@@ -1073,6 +1075,8 @@ addLyr({
       addLyr({ id: "parks-outline", type: "line", source: "parks", layout: { visibility: "none" }, paint: { "line-color": "#15803d", "line-width": 0.8, "line-opacity": 0.8 } });
       addLyr({ id: "recommended-assembly-parks-fill", type: "fill", source: "recommended-assembly-parks", layout: { visibility: "none" }, paint: { "fill-color": "#f59e0b", "fill-opacity": 0.32 } });
       addLyr({ id: "recommended-assembly-parks-outline", type: "line", source: "recommended-assembly-parks", layout: { visibility: "none" }, paint: { "line-color": "#b45309", "line-width": 1.2, "line-opacity": 0.9 } });
+      addLyr({ id: "socio-geological-risk-fill", type: "fill", source: "socio-geological-risk", layout: { visibility: "none" }, paint: { "fill-color": ["step", ["coalesce", ["to-number", ["get", "toplam_risk"]], 0], "#15803d", 6, "#eab308", 7, "#f97316", 9, "#dc2626"], "fill-opacity": 0.46 } });
+      addLyr({ id: "socio-geological-risk-outline", type: "line", source: "socio-geological-risk", layout: { visibility: "none" }, paint: { "line-color": "#7f1d1d", "line-width": 1.35, "line-opacity": 0.84 } });
       addLyr({ id: "law-enforcement-point", type: "circle", source: "law-enforcement", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#2563eb", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
       addLyr({ id: "health-points-point", type: "circle", source: "health-points", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#0891b2", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
       addLyr({ id: "health-areas-fill", type: "fill", source: "health-areas", layout: { visibility: "none" }, paint: { "fill-color": "#06b6d4", "fill-opacity": 0.22 } });
@@ -2514,6 +2518,14 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         setHeatmapOpacity={setHeatmapOpacity}
 
         recommendedAssemblyVisible={recommendedAssemblyVisible}
+        socioGeologicalVisible={socioGeologicalVisible}
+        onToggleSocioGeological={() => toggleDataLayer(
+          !socioGeologicalVisible,
+          setSocioGeologicalVisible,
+          "socio-geological-risk",
+          ["socio-geological-risk-fill", "socio-geological-risk-outline"],
+          "/layers/sosyo-ekonomik-jeolojik-tehlike"
+        )}
         selectedAssemblyScenario={selectedAssemblyScenario}
         assemblyScenarioLoading={assemblyScenarioLoading}
         onToggleRecommendedAssembly={() => toggleDataLayer(
