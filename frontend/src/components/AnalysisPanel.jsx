@@ -606,6 +606,25 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
                 </div>
               ))}
             </div>
+            <div style={{ marginTop: 10, paddingTop: 9, borderTop: "1px solid #fed7aa" }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: "#7c2d12", marginBottom: 6 }}>CORINE 2018 ile karşılaştırma</div>
+              <div style={{ fontSize: 9, color: "#9a3412", lineHeight: 1.35, marginBottom: 7 }}>Aynı 319 obruk kaydının iki farklı arazi örtüsü veri setindeki dağılımı.</div>
+              <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 44px 44px", gap: "4px 7px", alignItems: "center", fontSize: 9 }}>
+                <div style={{ color: "#92400e", fontWeight: 800 }}>Sınıf</div><div style={{ textAlign: "right", color: "#0369a1", fontWeight: 800 }}>ESA 2021</div><div style={{ textAlign: "right", color: "#7c3aed", fontWeight: 800 }}>CORINE</div>
+                {[
+                  ["Tarım alanları", "146 · %45,8", "183 · %57,4"],
+                  ["Mera / doğal bitki", "168 · %52,7", "121 · %37,9"],
+                  ["Su", "4 · %1,3", "0 · %0"],
+                  ["Yerleşim", "1 · %0,3", "0 · %0"],
+                  ["Diğer", "0 · %0", "15 · %4,7"],
+                ].map(([label, esa, corine]) => <>
+                  <div key={`${label}-name`} style={{ borderTop: "1px solid rgba(254,215,170,0.72)", paddingTop: 4, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</div>
+                  <div key={`${label}-esa`} style={{ borderTop: "1px solid rgba(254,215,170,0.72)", paddingTop: 4, textAlign: "right", color: "#0369a1", fontWeight: 700 }}>{esa}</div>
+                  <div key={`${label}-corine`} style={{ borderTop: "1px solid rgba(254,215,170,0.72)", paddingTop: 4, textAlign: "right", color: "#7c3aed", fontWeight: 700 }}>{corine}</div>
+                </>)}
+              </div>
+              <div style={{ marginTop: 7, fontSize: 8, color: "#9a3412", lineHeight: 1.35 }}>ESA 10 m çözünürlüklü daha ayrıntılı bir sınıflama sunduğu için değerlerin birebir aynı olması beklenmez.</div>
+            </div>
             <div style={{ marginTop: 9, paddingTop: 8, borderTop: "1px solid #fed7aa", fontSize: 10, lineHeight: 1.45, color: "#7c2d12" }}>
               <b>Yorum:</b> Kayıtlı obrukların %98,4’ü tarım veya doğal açık alan sınıflarında bulunur. ESA’nın 10 m çözünürlüğü, eski CORINE 2018 genelleştirmesine göre nadas, otlak ve küçük su yüzeylerini daha ayrıntılı ayırır.
             </div>
