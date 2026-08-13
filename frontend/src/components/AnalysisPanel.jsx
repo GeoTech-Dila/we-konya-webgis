@@ -58,13 +58,12 @@ const analysisCards = [
   },
   {
     id: "sinkhole-building",
-    title: "Obruk & Yapı Stoğu",
-    method: "Kernel Density",
-    status: "Hazırlanıyor",
-    summary:
-      "Obruk yoğunluk yüzeyi ile yapı stoğunu çakıştırarak yapıların duyarlılık seviyesini belirler.",
-    inputs: ["Obruk noktaları", "Bina verisi", "Yoğunluk yarıçapı"],
-    output: "Yapı bazlı obruk duyarlılığı",
+    title: "Obrukların Arazi Kullanımı Dağılımı",
+    method: "ESA WorldCover 2021 · 10 m Mekânsal Çakıştırma",
+    status: "Doğrulanmış analiz hazır",
+    summary: "319 kayıtlı obruğun ESA WorldCover 2021 arazi örtüsü sınıflarıyla kesişimini gösterir.",
+    inputs: ["319 obruk envanteri", "ESA WorldCover 2021", "10 m arazi örtüsü sınıfları"],
+    output: "Obrukların tarım, mera, su ve yapılaşmış alanlardaki dağılımı",
     image: "/heatmap1_gorsel.png",
   },
   {
@@ -569,6 +568,36 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
             <div style={{ fontSize: 10, fontWeight: 800, color: "#334155", marginBottom: 7 }}>Harita Lejantı · Toplam Hizmet Yükü</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 5 }}>
               {[["#15803d", "3-5", "Yeterli"], ["#eab308", "6-8", "Orta"], ["#f97316", "9-11", "Yüksek"], ["#dc2626", "12-15", "Çok yüksek"]].map(([color, score, label]) => <div key={label}><div style={{ height: 8, borderRadius: 4, background: color, marginBottom: 4 }} /><div style={{ fontSize: 9, fontWeight: 800, color: "#334155" }}>{score}</div><div style={{ fontSize: 8, color: "#64748b" }}>{label}</div></div>)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {card.id === "sinkhole-building" && (
+        <div style={{ gridColumn: "1 / -1", padding: "4px 4px 2px" }}>
+          <div style={{ borderRadius: 12, padding: "11px", background: "linear-gradient(135deg, #fffaf0, #ffffff)", border: "1px solid #fed7aa", color: "#431407" }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+              <div><div style={{ fontSize: 11, fontWeight: 800 }}>ESA WorldCover 2021 obruk arazi kullanımı</div><div style={{ fontSize: 9, color: "#9a3412", marginTop: 2 }}>10 m çözünürlük · Konya il geneli</div></div>
+              <div style={{ borderRadius: 999, padding: "4px 7px", background: "#fff7ed", color: "#c2410c", fontSize: 10, fontWeight: 900 }}>319 OBRUK</div>
+            </div>
+            <div style={{ display: "grid", gap: 7 }}>
+              {[
+                ["Mera, otlak ve doğal bitki", 168, "52,7", "#65a30d"],
+                ["Tarım alanları", 146, "45,8", "#eab308"],
+                ["Su kütleleri / göllenmiş alan", 4, "1,3", "#0284c7"],
+                ["Yerleşim / yapılaşmış alan", 1, "0,3", "#64748b"],
+              ].map(([label, count, percent, color]) => (
+                <div key={label} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 36px", gap: 8, alignItems: "center" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 6, fontSize: 10, fontWeight: 700, marginBottom: 3 }}><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span><span>{percent}%</span></div>
+                    <div style={{ height: 8, background: "#ffedd5", borderRadius: 5, overflow: "hidden" }}><div style={{ height: "100%", width: `${Number(String(percent).replace(',', '.'))}%`, minWidth: count ? 3 : 0, borderRadius: 5, background: color }} /></div>
+                  </div>
+                  <strong style={{ fontSize: 12, textAlign: "right", color }}>{count}</strong>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 9, paddingTop: 8, borderTop: "1px solid #fed7aa", fontSize: 10, lineHeight: 1.45, color: "#7c2d12" }}>
+              <b>Yorum:</b> Kayıtlı obrukların %98,4’ü tarım veya doğal açık alan sınıflarında bulunur. ESA’nın 10 m çözünürlüğü, eski CORINE 2018 genelleştirmesine göre nadas, otlak ve küçük su yüzeylerini daha ayrıntılı ayırır.
             </div>
           </div>
         </div>
