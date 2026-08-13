@@ -1942,34 +1942,29 @@ useEffect(() => {
             }}
           />
         </div>
-        <div className="team-badge" title="OpenGIS Türkiye" style={{
+        <div className="team-badge" title="OpenGIS Türkiye Ekibi" style={{
   position: "absolute",
   right: "80px",
   top: "10px",
-  width: "166px",
+  width: "104px",
   height: "52px",
   display: "flex",
   alignItems: "center",
-  justifyContent: "center",
-  gap: "2px",
-  borderRadius: "12px",
-  background: "rgba(255,255,255,0.10)",
-  border: "1px solid rgba(255,255,255,0.14)",
-  backdropFilter: "blur(12px)",
-  boxShadow: "0 4px 18px rgba(0,0,0,0.12)"
+  background: "transparent",
+  border: "none",
+  boxShadow: "none"
 }}>
-  <img src="/opengis-turkiye.png" alt="OpenGIS Türkiye" style={{ width: "108px", maxHeight: "42px", objectFit: "contain", display: "block", transform: "translateX(-6px)" }} />
-  <span style={{
-    padding: "5px 6px",
-    borderRadius: "7px",
-    background: "linear-gradient(135deg, rgba(34,197,94,0.16), rgba(245,158,11,0.18))",
-    border: "1px solid rgba(245,158,11,0.24)",
-    color: "#475569",
-    fontSize: "8px",
+  <img src="/opengis-turkiye.png" alt="OpenGIS Türkiye" style={{ width: "52px", height: "52px", objectFit: "contain", display: "block" }} />
+  <span className="opengis-team-label" style={{
+    alignSelf: "flex-end",
+    marginLeft: "-14px",
+    marginBottom: "1.5px",
+    color: "#e59a00",
+    fontFamily: "Arial, sans-serif",
+    fontSize: "5.5px",
     lineHeight: 1,
-    fontWeight: "900",
-    letterSpacing: "0.08em",
-    transform: "translateX(-11px)"
+    fontWeight: "700",
+    letterSpacing: "0.02em"
   }}>EKİBİ</span>
 </div>
       </div>
