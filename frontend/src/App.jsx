@@ -135,6 +135,10 @@ const [service15Visible, setService15Visible] = useState(false);
   const [guideStep, setGuideStep] = useState(-1);
   const [guideTargetRect, setGuideTargetRect] = useState(null);
   const [dataSourcesOpen, setDataSourcesOpen] = useState(false);
+  const [dataSourcesWorkbook, setDataSourcesWorkbook] = useState(null);
+  const [dataSourcesWorkbookLoading, setDataSourcesWorkbookLoading] = useState(false);
+  const [dataSourcesWorkbookError, setDataSourcesWorkbookError] = useState("");
+  const [dataSourcesSheetIndex, setDataSourcesSheetIndex] = useState(0);
   const [dataSourcesPosition, setDataSourcesPosition] = useState(() => ({
     left: typeof window === "undefined" ? 24 : Math.max(12, Math.floor((window.innerWidth - 760) / 2)),
     top: 92,
@@ -215,6 +219,35 @@ const [service15Visible, setService15Visible] = useState(false);
         return resilienceRankOrder === "asc" ? scoreDifference : -scoreDifference;
       });
   }, [neighborhoodRankFeatures, resilienceRankOrder]);
+
+  useEffect(() => {
+    if (!dataSourcesOpen || dataSourcesWorkbook) return undefined;
+
+    let active = true;
+    setDataSourcesWorkbookLoading(true);
+    setDataSourcesWorkbookError("");
+
+    fetch("/data/kaynaklar_referanslar.json")
+      .then((response) => {
+        if (!response.ok) throw new Error("Kaynak tablosu bulunamadi.");
+        return response.json();
+      })
+      .then((workbook) => {
+        if (!active) return;
+        setDataSourcesWorkbook(workbook);
+        setDataSourcesSheetIndex(0);
+      })
+      .catch(() => {
+        if (active) setDataSourcesWorkbookError("Kaynak tablosu yuklenemedi. Excel dosyasini indirebilirsiniz.");
+      })
+      .finally(() => {
+        if (active) setDataSourcesWorkbookLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [dataSourcesOpen, dataSourcesWorkbook]);
 
   useEffect(() => {
     viewportVisibilityRef.current = {
@@ -2634,33 +2667,46 @@ useEffect(() => {
       </div>
 
       {dataSourcesOpen && (
-        <section className="data-sources-window" role="dialog" aria-label="Veri kaynakları tablosu" style={{ position: "fixed", left: `${dataSourcesPosition.left}px`, top: `${dataSourcesPosition.top}px`, zIndex: 130, width: "min(760px, calc(100vw - 24px))", maxHeight: "min(560px, calc(100vh - 24px))", display: "flex", flexDirection: "column", overflow: "hidden", border: "1px solid #b9bcff", borderRadius: 10, background: "#ffffff", color: "#0f172a", boxShadow: "0 18px 46px rgba(115,118,242,0.24)" }}>
+        <section className="data-sources-window" role="dialog" aria-label="Veri kaynaklari tablosu" style={{ position: "fixed", left: `${dataSourcesPosition.left}px`, top: `${dataSourcesPosition.top}px`, zIndex: 130, width: "min(1080px, calc(100vw - 24px))", maxHeight: "min(680px, calc(100vh - 24px))", display: "flex", flexDirection: "column", overflow: "hidden", border: "1px solid #b9bcff", borderRadius: 12, background: "#ffffff", color: "#0f172a", boxShadow: "0 18px 46px rgba(115,118,242,0.24)" }}>
           <header onPointerDown={startDataSourcesDrag} style={{ flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 12px", cursor: "grab", userSelect: "none", background: "linear-gradient(135deg, #f7f7ff, #dfe0ff)", color: "#585bd8" }}>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 800 }}>Veri Kaynakları</div>
-              <div style={{ marginTop: 2, fontSize: 10, color: "#7376f2" }}>Taşımak için bu başlıktan tutun · Kaynak listesi hazırlanıyor</div>
+              <div style={{ fontSize: 15, fontWeight: 800 }}>{"Veri Kaynaklari ve Referanslar"}</div>
+              <div style={{ marginTop: 2, fontSize: 10, color: "#7376f2" }}>{"Tas﹟mak icin bu başlıktan tutun · Excel dosyasindaki hucre degerleri aynen gosterilir"}</div>
             </div>
-            <button type="button" onClick={() => setDataSourcesOpen(false)} aria-label="Veri kaynakları penceresini kapat" title="Kapat" style={{ flex: "0 0 auto", width: 28, height: 28, border: "1px solid rgba(115,118,242,0.34)", borderRadius: 7, background: "rgba(255,255,255,0.70)", color: "#5f63e8", cursor: "pointer", fontSize: 17, lineHeight: 1 }}>×</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }} onPointerDown={(event) => event.stopPropagation()}>
+              <a href="/data/Kaynaklar_Referanslar.xlsx" download style={{ padding: "7px 9px", borderRadius: 7, border: "1px solid rgba(115,118,242,0.36)", background: "rgba(255,255,255,0.74)", color: "#585bd8", textDecoration: "none", fontSize: 11, fontWeight: 800 }}>{"Excel'i indir"}</a>
+              <button type="button" onClick={() => setDataSourcesOpen(false)} aria-label="Veri kaynaklari penceresini kapat" title="Kapat" style={{ flex: "0 0 auto", width: 28, height: 28, border: "1px solid rgba(115,118,242,0.34)", borderRadius: 7, background: "rgba(255,255,255,0.70)", color: "#5f63e8", cursor: "pointer", fontSize: 17, lineHeight: 1 }}>{"×"}</button>
+            </div>
           </header>
-          <div style={{ overflow: "auto", background: "#ffffff" }}>
-            <table style={{ width: "100%", minWidth: 620, borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
-              <thead>
-                <tr>
-                  <th style={{ position: "sticky", top: 0, zIndex: 1, padding: "10px 12px", textAlign: "left", background: "#ebecff", color: "#585bd8", borderRight: "1px solid #d7d8ff", borderBottom: "2px solid #b9bcff", fontWeight: 800 }}>Veri</th>
-                  <th style={{ position: "sticky", top: 0, zIndex: 1, padding: "10px 12px", textAlign: "left", background: "#ebecff", color: "#585bd8", borderBottom: "2px solid #b9bcff", fontWeight: 800 }}>Kaynağı</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[0, 1, 2, 3, 4].map((row) => (
-                  <tr key={row} style={{ background: row % 2 ? "#fbfbff" : "#ffffff" }}>
-                    <td style={{ height: 37, padding: "0 12px", borderRight: "1px solid #e3e4ff", borderBottom: "1px solid #e3e4ff" }}>&nbsp;</td>
-                    <td style={{ height: 37, padding: "0 12px", borderBottom: "1px solid #e3e4ff" }}>&nbsp;</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          {dataSourcesWorkbook?.sheets?.length > 0 && (
+            <div style={{ flex: "0 0 auto", display: "flex", gap: 6, padding: "8px 10px", overflowX: "auto", borderBottom: "1px solid #d7d8ff", background: "#fbfbff" }}>
+              {dataSourcesWorkbook.sheets.map((sheet, index) => (
+                <button key={sheet.name} type="button" onClick={() => setDataSourcesSheetIndex(index)} style={{ flex: "0 0 auto", maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", padding: "7px 10px", borderRadius: 7, border: `1px solid ${index === dataSourcesSheetIndex ? "#7376f2" : "#d7d8ff"}`, background: index === dataSourcesSheetIndex ? "#ececff" : "#ffffff", color: index === dataSourcesSheetIndex ? "#4f46e5" : "#475569", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>{sheet.name}</button>
+              ))}
+            </div>
+          )}
+
+          <div style={{ flex: "1 1 auto", overflow: "auto", background: "#ffffff" }}>
+            {dataSourcesWorkbookLoading && <div style={{ padding: 22, color: "#585bd8", fontSize: 13, fontWeight: 700 }}>{"Kaynaklar tablosu yukleniyor..."}</div>}
+            {dataSourcesWorkbookError && <div style={{ padding: 22, color: "#b91c1c", fontSize: 13, fontWeight: 700 }}>{dataSourcesWorkbookError}</div>}
+            {!dataSourcesWorkbookLoading && !dataSourcesWorkbookError && dataSourcesWorkbook?.sheets?.[dataSourcesSheetIndex] && (
+              <table style={{ width: "100%", minWidth: 840, borderCollapse: "separate", borderSpacing: 0, fontSize: 12, lineHeight: 1.42 }}>
+                <tbody>
+                  {dataSourcesWorkbook.sheets[dataSourcesSheetIndex].rows.map((row, rowIndex) => (
+                    <tr key={`${dataSourcesSheetIndex}-${rowIndex}`} style={{ background: rowIndex % 2 ? "#fbfbff" : "#ffffff" }}>
+                      {row.map((cell, cellIndex) => {
+                        const header = rowIndex === 0;
+                        const Cell = header ? "th" : "td";
+                        return <Cell key={cellIndex} style={{ minWidth: cellIndex === 0 ? 80 : 180, padding: "9px 11px", textAlign: "left", verticalAlign: "top", whiteSpace: "pre-wrap", background: header ? "#ebecff" : undefined, color: header ? "#585bd8" : "#1e293b", borderRight: "1px solid #e3e4ff", borderBottom: header ? "2px solid #b9bcff" : "1px solid #e3e4ff", fontWeight: header ? 800 : 500 }}>{cell || " "}</Cell>;
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
-          <footer style={{ flex: "0 0 auto", padding: "7px 11px", borderTop: "1px solid #d7d8ff", background: "#f7f7ff", color: "#7376f2", fontSize: 10 }}>Bu tablo, veri ve kaynak bilgileri hazır olduğunda aynı düzen korunarak doldurulacaktır.</footer>
+          <footer style={{ flex: "0 0 auto", padding: "7px 11px", borderTop: "1px solid #d7d8ff", background: "#f7f7ff", color: "#7376f2", fontSize: 10 }}>{"Kaynak Excel dosyasi degistirilmemistir; bu pencere dosyanin salt-okunur gorunumudur."}</footer>
         </section>
       )}
 
