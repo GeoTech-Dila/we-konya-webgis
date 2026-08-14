@@ -2775,6 +2775,10 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                   <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 4 }}><strong style={{ fontSize: "18px", color: "#475569" }}>{recommendedScoreScenario.mevcut_skor}</strong><span style={{ color: "#94a3b8" }}>→</span><strong style={{ fontSize: "21px", color }}>{recommendedScoreScenario.senaryo_skor}</strong><span style={{ fontSize: "10px", color, fontWeight: 800 }}>{direction}{difference} puan</span></div>
                   <div style={{ marginTop: 4, fontSize: "9px", color: "#78350f", lineHeight: 1.45 }}>{recommendedScoreScenario.mevcut_toplanma_alani_sayisi} mevcut + {recommendedScoreScenario.oneri_alan_sayisi} öneri alan = <strong>{recommendedScoreScenario.senaryo_toplanma_alani_sayisi} alan</strong><br />Güvenli öneri alanı: {Number(recommendedScoreScenario.guvenli_alan_m2 || 0).toLocaleString("tr-TR")} m² · ihtiyatlı kapasite: {Number(recommendedScoreScenario.ihtiyatli_kapasite || 0).toLocaleString("tr-TR")} kişi</div>
                   <div style={{ marginTop: 5, fontSize: "8px", color: "#a16207", lineHeight: 1.35 }}>Bu resmî skoru değiştirmez; öneri alanların eklenmesi hâlinde oluşacak karşılaştırmalı senaryodur.</div>
+                  <div style={{ marginTop: 7, paddingTop: 6, borderTop: "1px solid #fde68a", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 7 }}>
+                    <span style={{ fontSize: "8px", color: "#92400e", lineHeight: 1.3 }}>Başka bir sonucu görmek için bu senaryoyu kapatıp düğmeyi yeniden çalıştırabilirsin.</span>
+                    <button type="button" onClick={() => setRecommendedScoreScenario(null)} style={{ flexShrink: 0, border: "1px solid #f59e0b", background: "#fff", color: "#9a3412", borderRadius: 6, padding: "4px 6px", cursor: "pointer", fontSize: "8px", fontWeight: 800 }}>Sonucu kapat</button>
+                  </div>
                 </div>;
               })()}
             </div>
