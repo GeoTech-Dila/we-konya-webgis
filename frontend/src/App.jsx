@@ -605,8 +605,8 @@ console.log(
     if (!map) return;
     [
       "district-fill", "district-outline", "district-hover",
-      "mahalle-fill", "mahalle-outline", "toplanma-points",
-      "fault-lines-line", "sinkholes-fill", "sinkholes-outline", "sinkhole-inventory-heatmap", "corine-landcover-fill", "corine-landcover-outline", "esa-worldcover-2021",
+      "mahalle-fill", "mahalle-outline", "toplanma-points", "assembly-area-polygons-fill", "assembly-area-polygons-outline",
+      "fault-lines-line", "sinkholes-fill", "sinkholes-outline", "sinkhole-inventory-heatmap", "sinkhole-inventory-points", "corine-landcover-fill", "corine-landcover-outline", "esa-worldcover-2021",
       "critical-facilities-point", "major-roads-line", "province-boundary-line",
       "parks-fill", "parks-outline", "law-enforcement-point",
       "health-points-point", "health-areas-fill", "health-areas-outline",
@@ -985,6 +985,7 @@ const service15PolyData = EMPTY_FC;
       addSrc("districts", { type: "geojson", data: ilceData });
       addSrc("mahalleler", { type: "geojson", data: mahalleData });
       addSrc("toplanma", { type: "geojson", data: toplanmaData });
+      addSrc("assembly-area-polygons", { type: "vector", tiles: [`${API_URL}/tiles/toplanma-alanlari-geometri/{z}/{x}/{y}.pbf`], minzoom: 8, maxzoom: 16 });
       addSrc("recommended-assembly-parks", { type: "geojson", data: EMPTY_FC });
       addSrc("socio-geological-risk", { type: "geojson", data: EMPTY_FC });
       addSrc("critical-service-load", { type: "geojson", data: EMPTY_FC });
@@ -1037,7 +1038,7 @@ addSrc("inaccessible-heatmap", {
 
       addSrc("fault-lines", { type: "geojson", data: EMPTY_FC });
       addSrc("sinkholes", { type: "geojson", data: EMPTY_FC });
-      addSrc("sinkhole-inventory-heatmap", { type: "geojson", data: EMPTY_FC });
+      addSrc("sinkhole-inventory-heatmap", { type: "vector", tiles: [`${API_URL}/tiles/obruk-envanter-319/{z}/{x}/{y}.pbf`], minzoom: 6, maxzoom: 16 });
       addSrc("corine-landcover", { type: "vector", tiles: [`${API_URL}/tiles/corine-2018/{z}/{x}/{y}.pbf`], minzoom: 8, maxzoom: 14 });
       addSrc("esa-worldcover-2021", { type: "raster", tiles: [`${API_URL}/tiles/esa-worldcover-2021/{z}/{x}/{y}.png`], tileSize: 256, minzoom: 5, maxzoom: 16 });
       addSrc("critical-facilities", { type: "geojson", data: EMPTY_FC });
@@ -1429,6 +1430,10 @@ addLyr({
     "line-opacity": 0.42,
   },
 });
+      // Resmî toplanma alanlarının gerçek sınırları: sadece görünür vektör karolar yüklenir.
+      addLyr({ id: "assembly-area-polygons-fill", type: "fill", source: "assembly-area-polygons", "source-layer": "toplanmaalanlari", minzoom: 8, layout: { visibility: "visible" }, paint: { "fill-color": "#22c55e", "fill-opacity": 0.14 } });
+      addLyr({ id: "assembly-area-polygons-outline", type: "line", source: "assembly-area-polygons", "source-layer": "toplanmaalanlari", minzoom: 8, layout: { visibility: "visible" }, paint: { "line-color": "#15803d", "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.7, 13, 1.7], "line-opacity": 0.88 } });
+
       // Acil toplanma alanları: daire yerine haritadaki gerçek konumu daha iyi anlatan pin işareti.
       if (!map.hasImage("assembly-area-pin")) {
         const pinCanvas = document.createElement("canvas");
@@ -1478,13 +1483,15 @@ addLyr({
       addLyr({ id: "fault-lines-line", type: "line", source: "fault-lines", layout: { visibility: "none" }, paint: { "line-color": "#dc2626", "line-opacity": 0.92, "line-width": ["interpolate", ["linear"], ["zoom"], 8, 1, 13, 3] } });
       addLyr({ id: "sinkholes-fill", type: "fill", source: "sinkholes", layout: { visibility: "none" }, paint: { "fill-color": "#a16207", "fill-opacity": 0.30 } });
       addLyr({ id: "sinkholes-outline", type: "line", source: "sinkholes", layout: { visibility: "none" }, paint: { "line-color": "#78350f", "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.8, 13, 2.2], "line-opacity": 0.95 } });
-      addLyr({ id: "sinkhole-inventory-heatmap", type: "heatmap", source: "sinkhole-inventory-heatmap", maxzoom: 14, layout: { visibility: "none" }, paint: {
+      addLyr({ id: "sinkhole-inventory-heatmap", type: "heatmap", source: "sinkhole-inventory-heatmap", "source-layer": "obrukenvanter", maxzoom: 14, layout: { visibility: "none" }, paint: {
         "heatmap-weight": 1,
         "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 9, 1.1, 12, 1.8, 14, 2.2],
         "heatmap-color": ["interpolate", ["linear"], ["heatmap-density"], 0, "rgba(127,29,29,0)", 0.18, "#fef3c7", 0.42, "#f59e0b", 0.68, "#ea580c", 1, "#991b1b"],
         "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 5, 15, 9, 25, 12, 38, 14, 48],
         "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.72, 12, 0.86, 14, 0]
       } });
+      // Yakın ölçekte ısı haritasının arkasındaki gerçek obruk noktaları da görünür.
+      addLyr({ id: "sinkhole-inventory-points", type: "circle", source: "sinkhole-inventory-heatmap", "source-layer": "obrukenvanter", minzoom: 10, layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2.5, 14, 5], "circle-color": "#92400e", "circle-stroke-color": "#fffbeb", "circle-stroke-width": 1.1, "circle-opacity": 0.9 } });
       const corineColor = ["case",
         ["in", ["get", "code_18"], ["literal", ["111", "112", "121", "122", "123", "124", "131", "132", "133"]]], "#ef4444",
         ["in", ["get", "code_18"], ["literal", ["211", "212", "213", "221", "222", "223", "231", "241", "242", "243", "244"]]], "#eab308",
@@ -1724,8 +1731,13 @@ reloadViewportSources();
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.getLayer("toplanma-points")) return;
-    map.setLayoutProperty("toplanma-points", "visibility", toplanmaVisible ? "visible" : "none");
+    const visibility = toplanmaVisible ? "visible" : "none";
+    ["toplanma-points", "assembly-area-polygons-fill", "assembly-area-polygons-outline"].forEach((layerId) => {
+      if (map.getLayer(layerId)) map.setLayoutProperty(layerId, "visibility", visibility);
+    });
     map.setPaintProperty("toplanma-points", "icon-opacity", toplanmaOpacity);
+    if (map.getLayer("assembly-area-polygons-fill")) map.setPaintProperty("assembly-area-polygons-fill", "fill-opacity", 0.14 * toplanmaOpacity);
+    if (map.getLayer("assembly-area-polygons-outline")) map.setPaintProperty("assembly-area-polygons-outline", "line-opacity", 0.88 * toplanmaOpacity);
   }, [toplanmaVisible, toplanmaOpacity]);
 
   useEffect(() => {
@@ -3171,13 +3183,13 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
             if (corineLandcoverVisible && map.getLayer("corine-landcover-outline")) map.setLayoutProperty("corine-landcover-outline", "visibility", "visible");
           }
         }}
-        onToggleSinkholeInventoryHeatmap={() => toggleDataLayer(
-          !sinkholeInventoryHeatmapVisible,
-          setSinkholeInventoryHeatmapVisible,
-          "sinkhole-inventory-heatmap",
-          ["sinkhole-inventory-heatmap"],
-          "/layers/obruk-envanter-319"
-        )}
+        onToggleSinkholeInventoryHeatmap={() => {
+          const nextVisible = !sinkholeInventoryHeatmapVisible;
+          setSinkholeInventoryHeatmapVisible(nextVisible);
+          ["sinkhole-inventory-heatmap", "sinkhole-inventory-points"].forEach((layerId) => {
+            if (mapRef.current?.getLayer(layerId)) mapRef.current.setLayoutProperty(layerId, "visibility", nextVisible ? "visible" : "none");
+          });
+        }}
         onToggleCriticalService={() => toggleDataLayer(
           !criticalServiceVisible,
           setCriticalServiceVisible,

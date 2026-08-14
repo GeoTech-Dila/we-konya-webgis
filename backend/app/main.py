@@ -747,6 +747,55 @@ def corine_2018(bbox: str | None = None):
         return conn.execute(query, params).scalar()
 
 
+@app.get("/tiles/toplanma-alanlari-geometri/{z}/{x}/{y}.pbf", response_class=Response)
+def toplanma_alani_geometri_tile(z: int, x: int, y: int):
+    """Return only the visible official assembly-area polygons as a compact MVT tile."""
+    query = text("""
+        WITH tile_bounds AS (
+            SELECT ST_TileEnvelope(:z, :x, :y) AS geom_3857,
+                   ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) AS geom_4326
+        ), mvt_rows AS (
+            SELECT a.id,
+                   a.adi,
+                   ST_AsMVTGeom(ST_Transform(a.geom, 3857), t.geom_3857, 4096, 32, true) AS geom
+            FROM public.konya_toplanma_alanlari_geometri_2026 a
+            CROSS JOIN tile_bounds t
+            WHERE a.geom && t.geom_4326
+              AND ST_Intersects(a.geom, t.geom_4326)
+        )
+        SELECT ST_AsMVT(mvt_rows, 'toplanmaalanlari', 4096, 'geom') FROM mvt_rows;
+    """)
+    with engine.connect() as conn:
+        tile = conn.execute(query, {"z": z, "x": x, "y": y}).scalar() or b""
+    return Response(content=bytes(tile), media_type="application/vnd.mapbox-vector-tile", headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/tiles/obruk-envanter-319/{z}/{x}/{y}.pbf", response_class=Response)
+def obruk_envanter_319_tile(z: int, x: int, y: int):
+    """Return only visible records from the verified 319-point sinkhole inventory."""
+    query = text("""
+        WITH tile_bounds AS (
+            SELECT ST_TileEnvelope(:z, :x, :y) AS geom_3857,
+                   ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) AS geom_4326
+        ), mvt_rows AS (
+            SELECT o.id,
+                   o.obruk_adi,
+                   o.ilce,
+                   o.derinlik,
+                   o.alan,
+                   ST_AsMVTGeom(ST_Transform(o.geom, 3857), t.geom_3857, 4096, 32, true) AS geom
+            FROM public.konya_obruk_envanter_319_2026 o
+            CROSS JOIN tile_bounds t
+            WHERE o.geom && t.geom_4326
+              AND ST_Intersects(o.geom, t.geom_4326)
+        )
+        SELECT ST_AsMVT(mvt_rows, 'obrukenvanter', 4096, 'geom') FROM mvt_rows;
+    """)
+    with engine.connect() as conn:
+        tile = conn.execute(query, {"z": z, "x": x, "y": y}).scalar() or b""
+    return Response(content=bytes(tile), media_type="application/vnd.mapbox-vector-tile", headers={"Cache-Control": "public, max-age=86400"})
+
+
 @app.get("/layers/obruk-envanter-319")
 def obruk_envanter_319():
     """Return the verified 319-point sinkhole inventory for the density heatmap."""
