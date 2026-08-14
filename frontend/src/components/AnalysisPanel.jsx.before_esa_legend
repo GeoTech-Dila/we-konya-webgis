@@ -780,24 +780,6 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
             {esaWorldcoverVisible ? "✓ ESA Arazi Örtüsünü Gizle" : "▶ ESA Arazi Örtüsünü Haritada Göster"}
           </button>
           <div style={{ fontSize: 10, color: "#6d28d9", lineHeight: 1.45, padding: "0 4px 8px" }}>ESA WorldCover 2021 · 10 m raster. Konya'nın mevcut ESA kapsamı gösterilir; kaynak dışındaki kuzey kesim şeffaf kalır.</div>
-          <div style={{ margin: "0 0 9px", padding: "10px", borderRadius: 10, background: "rgba(250,245,255,0.76)", border: "1px solid rgba(124,58,237,0.22)" }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: "#5b21b6", marginBottom: 7 }}>ESA WorldCover 2021 · Arazi örtüsü lejantı</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px 8px" }}>
-              {[
-                ["#006400", "Ağaç örtüsü"], ["#ffbb22", "Çalılık"],
-                ["#ffff4c", "Otsu alan"], ["#f096ff", "Tarım alanı"],
-                ["#fa0000", "Yapılaşmış alan"], ["#b4b4b4", "Çıplak / seyrek alan"],
-                ["#f0f0f0", "Kar / buz"], ["#0064c8", "Kalıcı su yüzeyi"],
-                ["#0096a0", "Sulak alan"], ["#00cf75", "Mangrov"],
-                ["#fae6a0", "Yosun / liken"],
-              ].map(([color, label]) => (
-                <div key={label} style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-                  <span style={{ width: 11, height: 11, flex: "0 0 11px", borderRadius: 3, background: color, border: "1px solid rgba(15,23,42,0.2)" }} />
-                  <span style={{ fontSize: 9, fontWeight: 700, color: "#4c1d95", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
           <button type="button" onClick={onToggleEsaCorineComparison} style={{ width: "100%", padding: "10px 13px", borderRadius: 12, border: "1px solid rgba(109,40,217,0.52)", background: esaCorineCompareVisible ? "linear-gradient(135deg, #6d28d9, #7c3aed)" : "rgba(255,255,255,0.68)", color: esaCorineCompareVisible ? "#ffffff" : "#6d28d9", cursor: "pointer", fontWeight: 800, fontSize: 13, marginBottom: 7, boxShadow: esaCorineCompareVisible ? "0 5px 14px rgba(109,40,217,0.24)" : "none" }}>
             {esaCorineCompareVisible ? "✓ ESA – CORINE Karşılaştırmasını Kapat" : "↔ ESA – CORINE Karşılaştır"}
           </button>
