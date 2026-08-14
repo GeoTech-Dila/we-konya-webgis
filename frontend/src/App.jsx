@@ -1429,17 +1429,49 @@ addLyr({
     "line-opacity": 0.42,
   },
 });
+      // Acil toplanma alanları: daire yerine haritadaki gerçek konumu daha iyi anlatan pin işareti.
+      if (!map.hasImage("assembly-area-pin")) {
+        const pinCanvas = document.createElement("canvas");
+        pinCanvas.width = 44;
+        pinCanvas.height = 50;
+        const pin = pinCanvas.getContext("2d");
+        pin.save();
+        pin.shadowColor = "rgba(21, 128, 61, 0.34)";
+        pin.shadowBlur = 5;
+        pin.shadowOffsetY = 2;
+        pin.beginPath();
+        pin.moveTo(22, 2);
+        pin.bezierCurveTo(12, 2, 5, 10, 5, 20);
+        pin.bezierCurveTo(5, 31, 15, 39, 22, 47);
+        pin.bezierCurveTo(29, 39, 39, 31, 39, 20);
+        pin.bezierCurveTo(39, 10, 32, 2, 22, 2);
+        pin.closePath();
+        pin.fillStyle = "#16a34a";
+        pin.fill();
+        pin.shadowColor = "transparent";
+        pin.lineWidth = 2;
+        pin.strokeStyle = "#dcfce7";
+        pin.stroke();
+        pin.beginPath();
+        pin.arc(22, 19, 6, 0, Math.PI * 2);
+        pin.fillStyle = "#f0fdf4";
+        pin.fill();
+        pin.restore();
+        map.addImage("assembly-area-pin", pin.getImageData(0, 0, 44, 50));
+      }
       addLyr({
         id: "toplanma-points",
-        type: "circle",
+        type: "symbol",
         source: "toplanma",
+        layout: {
+          "icon-image": "assembly-area-pin",
+          "icon-anchor": "bottom",
+          "icon-size": ["interpolate", ["linear"], ["zoom"], 7, 0.56, 11, 0.76, 15, 1.02],
+          "icon-allow-overlap": true,
+          "icon-ignore-placement": true,
+        },
         paint: {
-          "circle-radius": 4,
-          "circle-color": "#22c55e",
-          "circle-stroke-width": 1,
-          "circle-stroke-color": "#dcfce7",
-          "circle-opacity": 0.95,
-          "circle-blur": 0.2,
+          "icon-opacity": 0.96,
         },
       });
 
@@ -1693,7 +1725,7 @@ reloadViewportSources();
     const map = mapRef.current;
     if (!map || !map.getLayer("toplanma-points")) return;
     map.setLayoutProperty("toplanma-points", "visibility", toplanmaVisible ? "visible" : "none");
-    map.setPaintProperty("toplanma-points", "circle-opacity", toplanmaOpacity);
+    map.setPaintProperty("toplanma-points", "icon-opacity", toplanmaOpacity);
   }, [toplanmaVisible, toplanmaOpacity]);
 
   useEffect(() => {
@@ -2694,7 +2726,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
           <p style={{ margin: "0 0 14px", color: "#475569", fontSize: "13px", lineHeight: 1.55 }}>Mahalle dirençlilik sıralamasını haritada görmek ve bir mahalleye tıklayarak ayrıntısına ulaşmak için:</p>
           <ol style={{ margin: 0, paddingLeft: "20px", color: "#334155", fontSize: "13px", lineHeight: 1.8 }}>
             <li>Soldaki <strong>Katmanlar</strong> başlığını aç.</li>
-            <li><strong>Sınırlar ve Bölgeler</strong> grubunu aç.</li>
+            <li><strong>İdari Sınırlar</strong> grubunu aç.</li>
             <li><strong>Mahalle Sınırları</strong> katmanını etkinleştir.</li>
           </ol>
           <div style={{ marginTop: "14px", padding: "10px 12px", borderRadius: "10px", background: "#ecfdf5", color: "#166534", fontSize: "12px", lineHeight: 1.45 }}>Sağdaki liste mahalleleri puana göre sıralar; katmanı açtığında aynı mahalleleri harita üzerinde de inceleyebilirsin.</div>
@@ -2959,7 +2991,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         </div>
         {[
           {
-            id: "boundaries", title: "Sınırlar ve Bölgeler", items: [
+            id: "boundaries", title: "İdari Sınırlar", items: [
               { label: "İl Sınırı", color: "#0f172a", checked: provinceBoundaryVisible, type: "line", onChange: () => toggleDataLayer(!provinceBoundaryVisible, setProvinceBoundaryVisible, "province-boundary", ["province-boundary-line"], "/layers/il-siniri") },
               { label: "İlçe Sınırları", color: "#ef4444", checked: layerVisible, type: "line", opacity: districtOpacity, onOpacity: setDistrictOpacity, onChange: () => setLayerVisible((v) => !v) },
               { label: "Mahalle Sınırları", color: "#2563eb", checked: mahalleVisible, type: "line", opacity: mahalleOpacity, onOpacity: setMahalleOpacity, onChange: () => setMahalleVisible((v) => !v) },
