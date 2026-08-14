@@ -326,6 +326,34 @@ def oneri_toplanma_ozet(mahalle_id: str):
     return result
 
 
+@app.get("/analysis/oneri-toplanma-skor-senaryosu/{mahalle_id}")
+def oneri_toplanma_skor_senaryosu(mahalle_id: str):
+    """Return the precomputed, non-official score comparison for one neighborhood."""
+    query = text("""
+        SELECT json_build_object(
+            'mahalle_id', region_id,
+            'mahalle_adi', region_name,
+            'mevcut_skor', mevcut_skor,
+            'senaryo_skor', senaryo_skor,
+            'puan_farki', senaryo_skor - mevcut_skor,
+            'mevcut_toplanma_alani_sayisi', mevcut_toplanma_alani_sayisi,
+            'oneri_alan_sayisi', oneri_alan_sayisi,
+            'senaryo_toplanma_alani_sayisi', senaryo_toplanma_alani_sayisi,
+            'guvenli_alan_m2', guvenli_alan_m2,
+            'ihtiyatli_kapasite', ihtiyatli_kapasite,
+            'senaryo_kapasite_endeksi', senaryo_kapasite_endeksi,
+            'calculated_at', calculated_at
+        )
+        FROM public.mahalle_oneri_toplanma_skor_senaryosu_2026
+        WHERE region_id = :mahalle_id
+    """)
+    with engine.connect() as conn:
+        result = conn.execute(query, {'mahalle_id': mahalle_id}).scalar()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Öneri alan skor senaryosu henüz hazırlanmadı")
+    return result
+
+
 @app.get("/yollar")
 def yollar(bbox: str | None = None):
     where_sql, params = bbox_filter(bbox)

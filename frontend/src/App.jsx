@@ -167,6 +167,8 @@ const [service15Visible, setService15Visible] = useState(false);
   const [selectedAssemblyScenario, setSelectedAssemblyScenario] = useState(null);
   const [assemblyScenarioLoading, setAssemblyScenarioLoading] = useState(false);
   const [mahalleScoreLoading, setMahalleScoreLoading] = useState(false);
+  const [recommendedScoreScenario, setRecommendedScoreScenario] = useState(null);
+  const [recommendedScoreScenarioLoading, setRecommendedScoreScenarioLoading] = useState(false);
   const [neighborhoodRankFeatures, setNeighborhoodRankFeatures] = useState([]);
   const [resilienceRankOrder, setResilienceRankOrder] = useState("desc");
   const [resilienceDistrictOptions, setResilienceDistrictOptions] = useState([]);
@@ -311,6 +313,21 @@ const [service15Visible, setService15Visible] = useState(false);
     }
   };
 
+
+  const loadRecommendedScoreScenario = async () => {
+    if (!selectedRegionSummary?.id || selectedRegionSummary?.region_level !== "Mahalle" || recommendedScoreScenarioLoading) return;
+    setRecommendedScoreScenarioLoading(true);
+    setRecommendedScoreScenario(null);
+    try {
+      const response = await fetch(`${API_URL}/analysis/oneri-toplanma-skor-senaryosu/${encodeURIComponent(selectedRegionSummary.id)}`);
+      if (!response.ok) throw new Error("Senaryo sonucu bulunamadı");
+      setRecommendedScoreScenario(await response.json());
+    } catch {
+      window.alert("Bu mahalle için öneri alan senaryosu henüz hazırlanmadı.");
+    } finally {
+      setRecommendedScoreScenarioLoading(false);
+    }
+  };
 
   const loadAssemblyScenario = async (mahalleId) => {
     if (!mahalleId) return;
@@ -2674,7 +2691,7 @@ top: 110,
 
 left: 280,
 
-height: "280px",
+minHeight: "280px",
           background:
   "linear-gradient(135deg, rgba(199,210,254,0.22), rgba(196,181,253,0.20))", backdropFilter: "blur(22px)",
 border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
@@ -2736,6 +2753,32 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
               </div>
             ))}
           </div>
+          {selectedRegionSummary.region_level === "Mahalle" && (
+            <div style={{ marginTop: "8px" }}>
+              {!recommendedScoreScenario && (
+                <button
+                  type="button"
+                  onClick={loadRecommendedScoreScenario}
+                  disabled={recommendedScoreScenarioLoading}
+                  style={{ width: "100%", border: "1px solid #d97706", borderRadius: "8px", padding: "7px 9px", cursor: recommendedScoreScenarioLoading ? "wait" : "pointer", background: "linear-gradient(135deg, #fff7ed, #fffbeb)", color: "#9a3412", fontWeight: 800, fontSize: "11px" }}
+                >{recommendedScoreScenarioLoading ? "Senaryo hazırlanıyor…" : "Öneri alan eklenince sonuç"}</button>
+              )}
+              {recommendedScoreScenario && (() => {
+                const difference = Number(recommendedScoreScenario.puan_farki || 0);
+                const direction = difference > 0 ? "+" : "";
+                const color = difference > 0 ? "#15803d" : difference < 0 ? "#b91c1c" : "#475569";
+                return <div style={{ border: "1px solid #fed7aa", borderRadius: "9px", padding: "8px", background: "#fffaf0" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
+                    <div style={{ fontSize: "10px", fontWeight: 900, color: "#9a3412" }}>ÖNERİ ALAN SENARYOSU</div>
+                    <button type="button" onClick={() => setRecommendedScoreScenario(null)} style={{ border: "none", background: "transparent", color: "#92400e", cursor: "pointer", fontSize: "14px", lineHeight: 1 }}>×</button>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 4 }}><strong style={{ fontSize: "18px", color: "#475569" }}>{recommendedScoreScenario.mevcut_skor}</strong><span style={{ color: "#94a3b8" }}>→</span><strong style={{ fontSize: "21px", color }}>{recommendedScoreScenario.senaryo_skor}</strong><span style={{ fontSize: "10px", color, fontWeight: 800 }}>{direction}{difference} puan</span></div>
+                  <div style={{ marginTop: 4, fontSize: "9px", color: "#78350f", lineHeight: 1.45 }}>{recommendedScoreScenario.mevcut_toplanma_alani_sayisi} mevcut + {recommendedScoreScenario.oneri_alan_sayisi} öneri alan = <strong>{recommendedScoreScenario.senaryo_toplanma_alani_sayisi} alan</strong><br />Güvenli öneri alanı: {Number(recommendedScoreScenario.guvenli_alan_m2 || 0).toLocaleString("tr-TR")} m² · ihtiyatlı kapasite: {Number(recommendedScoreScenario.ihtiyatli_kapasite || 0).toLocaleString("tr-TR")} kişi</div>
+                  <div style={{ marginTop: 5, fontSize: "8px", color: "#a16207", lineHeight: 1.35 }}>Bu resmî skoru değiştirmez; öneri alanların eklenmesi hâlinde oluşacak karşılaştırmalı senaryodur.</div>
+                </div>;
+              })()}
+            </div>
+          )}
         </div>
       )}
 
