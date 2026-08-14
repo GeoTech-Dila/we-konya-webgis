@@ -42,7 +42,7 @@ const USER_GUIDE_STEPS = [
   { selector: ".analysis-panel", analysisCardId: "recommended-assembly", title: "Öneri Toplanma Alanları", text: "Resmî alan değildir. Güvenli park parçalarını, fay-obruk etkisini ve mahalle nüfusunu AFAD odaklı bir ön eleme senaryosunda birleştirir." },
   { selector: ".analysis-panel", analysisCardId: "sinkhole-building", title: "Obruk Yoğunluğu ve Arazi Kullanımı", text: "319 obruk kaydının yoğunluğunu ve ESA WorldCover arazi kullanım dağılımını gösterir. Aynı karttan CORINE katmanını ve Öznitelik Tablosunu açabilirsin." },
   { selector: ".side-events-panel", title: "Acil Olaylar", text: "Olayların toplamını ve kategori dağılımını görür; Detay Gör ile sayfalı listeye geçersin." },
-  { selector: ".resilience-score-panel", title: "Dirençlilik Skoru", text: "Renk haritasını buradan açabilirsin. Sağ panelde ilçe seçerek mahalle sıralamasını incelersin." },
+  { selector: ".resilience-legend-panel", title: "Dirençlilik Skoru", text: "Renk haritasını buradan açabilirsin. Sağ panelde ilçe seçerek mahalle sıralamasını incelersin." },
   { selector: ".neighborhood-search", title: "Mahalle Arama", text: "Mahalle adını büyük-küçük harf fark etmeden yaz; harita seni doğrudan o bölgeye götürür." },
   { selector: ".maplibregl-ctrl-group", title: "Yakınlaştırma ve Kuzey", text: "+ ve − düğmeleriyle haritayı yakınlaştırıp uzaklaştırabilirsin. Pusula simgesine dokunarak haritayı tekrar kuzey yönüne çevirirsin." },
   { selector: ".map-home-button", title: "Başlangıç Görünümü", text: "Ev simgesi haritayı KOR-İZ’in ilk açılış görünümüne geri döndürür." },
@@ -157,6 +157,7 @@ const [service15Visible, setService15Visible] = useState(false);
   const [resilienceRankOrder, setResilienceRankOrder] = useState("desc");
   const [resilienceDistrictOptions, setResilienceDistrictOptions] = useState([]);
   const [resilienceDistrictId, setResilienceDistrictId] = useState("");
+  const [resilienceDetailsOpen, setResilienceDetailsOpen] = useState(false);
 
   // --- REFS ---
   const mahalleDataRef = useRef(null);
@@ -2411,7 +2412,8 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         <div onClick={() => { if (window.innerWidth <= 768) setEventsPanelOpen((open) => !open); }}
           style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "16px", fontWeight: "700" }}>
-            <span>{activeSideTab === "events" ? "Acil Olaylar Sınıflandırması" : "Dirençlilik Sıralaması"}</span>
+            {activeSideTab === "resilience" && resilienceDetailsOpen && <button onClick={(e) => { e.stopPropagation(); setResilienceDetailsOpen(false); }} title="İlçe haritasına dön" style={{ border: "none", background: "transparent", color: "#64748b", cursor: "pointer", fontSize: "18px", padding: "0 2px 0 0", lineHeight: 1 }}>←</button>}
+            <span>{activeSideTab === "events" ? "Acil Olaylar Sınıflandırması" : (resilienceDetailsOpen ? "Mahalle Bazlı Dirençlilik Sıralaması" : "İlçe Bazlı Dirençlilik Skoru Haritası")}</span>
             {activeSideTab === "resilience" && <button onClick={(e) => { e.stopPropagation(); setResilienceRankingHelpOpen(true); }} title="Mahalle sıralamasını nasıl görüntüleyeceğini göster" style={{ border: "none", background: "transparent", color: "#64748b", cursor: "pointer", fontSize: "14px", padding: 0, lineHeight: 1 }}>ⓘ</button>}
           </div>
 {activeSideTab === "events" && eventsPanelOpen && <button className="clear-emergency-overlay-button" onClick={(e) => { e.stopPropagation(); clearEmergencyOverlay(); }}
@@ -2427,7 +2429,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px", padding: "8px", background: "rgba(0,0,0,0.04)" }}>
           {["events", "resilience"].map((tab) => (
-            <button key={tab} onClick={() => setActiveSideTab(tab)}
+            <button key={tab} onClick={() => { setActiveSideTab(tab); if (tab === "resilience") setResilienceDetailsOpen(false); }}
               style={{
                 padding: "8px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "700", fontSize: "13px",
                 background: activeSideTab === tab ? "white" : "transparent",
@@ -2544,11 +2546,10 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                 </div>
               )
             ) : (
-              <>
+              resilienceDetailsOpen ? <>
                 <div style={{ padding: "8px 12px", display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: "7px 10px" }}>
                   <div>
-                    <div style={{ fontSize: "12px", color: "#0f766e", fontWeight: "800" }}>{resilienceDistrictId ? `${rankedNeighborhoods.length} mahalle` : "İlçe seçin"}</div>
-                    <div style={{ fontSize: "11px", color: "#64748b" }}>{resilienceDistrictId ? (resilienceRankOrder === "desc" ? "En yüksek dirençlilik skoruna göre" : "En düşük dirençlilik skoruna göre") : "Mahalle sıralamasını hızlı getirmek için"}</div>
+                    <div style={{ fontSize: "12px", color: "#0f766e", fontWeight: "800" }}>{resilienceDistrictId ? `${rankedNeighborhoods.length} mahalle` : "Mahalle Bazlı dirençlilik skorunu görmek için ilçe seçin"}</div>
                   </div>
                   <select value={resilienceRankOrder} onChange={(e) => setResilienceRankOrder(e.target.value)} disabled={!resilienceDistrictId} aria-label="Dirençlilik sıralama yönü"
                     style={{ flexShrink: 0, fontSize: "10px", fontWeight: "700", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "6px", background: "rgba(255,255,255,0.85)", cursor: resilienceDistrictId ? "pointer" : "not-allowed", opacity: resilienceDistrictId ? 1 : 0.48 }}>
@@ -2577,7 +2578,21 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                     );
                   })}
                 </div>
-              </>
+              </> : <div style={{ flex: 1, overflowY: "auto", padding: "14px 12px 12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div className="resilience-legend-panel" style={{ padding: "13px", borderRadius: "12px", background: "linear-gradient(135deg, rgba(239,246,255,0.92), rgba(255,255,255,0.80))", border: "1px solid rgba(59,130,246,0.16)" }}>
+                  <button onClick={() => setResilienceInfoOpen(true)} title="Dirençlilik skoru açıklamasını göster" style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%", padding: 0, border: "none", background: "transparent", color: "#0f172a", fontSize: "13px", fontWeight: "800", textAlign: "left", cursor: "pointer" }}>
+                    İlçe Bazlı Dirençlilik Skoru Haritası <span style={{ color: "#64748b", fontSize: "14px" }}>ⓘ</span>
+                  </button>
+                  <p style={{ margin: "8px 0 0", color: "#64748b", fontSize: "11px", lineHeight: 1.5 }}>Konya ilçelerinin afetlere karşı göreli dirençlilik skorlarını renk sınıflarıyla gösterir.</p>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "10px", gap: "8px" }}>
+                    <span style={{ color: "#475569", fontSize: "11px", fontWeight: "700" }}>İlçe renk haritası</span>
+                    <button onClick={() => setResilienceVisible((value) => !value)} aria-label="İlçe renk haritasını aç veya kapat" style={{ border: "none", background: "transparent", padding: 0, color: "#0f172a", fontSize: "17px", lineHeight: 1, cursor: "pointer" }}>{resilienceVisible ? "⦿" : "⦸"}</button>
+                  </div>
+                  <div style={{ height: "9px", borderRadius: "999px", marginTop: "7px", background: "linear-gradient(to right, #dc2626, #f59e0b, #22c55e, #0f766e)" }} />
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", color: "#64748b", fontSize: "9px", fontWeight: "700" }}><span>0 Kritik</span><span>55 Orta</span><span>75 İyi</span><span>100</span></div>
+                </div>
+                <button onClick={() => setResilienceDetailsOpen(true)} style={{ marginTop: "auto", border: "none", borderRadius: "9px", padding: "11px", cursor: "pointer", background: "linear-gradient(135deg, #0f766e, #15803d)", color: "white", fontSize: "12px", fontWeight: "800", boxShadow: "0 5px 14px rgba(15,118,110,0.22)" }}>Mahalle Bazlı Detay Gör →</button>
+              </div>
             )}
           </div>
         )}
@@ -2706,45 +2721,6 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         </div>
       </div>}
 
-{/* Dirençlilik Skoru Paneli */}
-      <div className="resilience-score-panel" style={{
-        position: "absolute",
-        top: 450,
-        left: 22,
-        width: "230px",
-        padding: "12px",
-        borderRadius: "16px",
-        background: "rgba(255,255,255,0.12)",
-        backdropFilter: "blur(18px)",
-        border: "1px solid rgba(255,255,255,0.18)",
-        boxShadow: "0 10px 40px rgba(0,0,0,0.18)",
-        zIndex: 10,
-      }}>
-        <button onClick={() => setResilienceInfoOpen(true)}
-          title="Dirençlilik skorunun nasıl hesaplandığını göster"
-          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "6px", background: "transparent", border: "none", padding: 0, marginBottom: "10px", color: "inherit", cursor: "pointer", fontSize: "12px", fontWeight: "600", textAlign: "left" }}>
-          <span>Dirençlilik Skoru</span>
-          <span style={{ color: "#64748b", fontSize: "13px" }}>ⓘ</span>
-        </button>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
-          <span style={{ fontSize: "12px", fontWeight: "600" }}>İlçe Renk Haritası</span>
-          <button
-            onClick={() => setResilienceVisible(v => !v)}
-            style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "17px", padding: 0, lineHeight: 1 }}
-          >
-            {resilienceVisible ? "⦿" : "⦸"}
-          </button>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <div style={{ height: "10px", borderRadius: "999px", background: "linear-gradient(to right, #dc2626, #f59e0b, #22c55e, #0f766e)" }} />
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#64748b", fontWeight: "600" }}>
-            <span>0 Kritik</span>
-            <span>55 Orta</span>
-            <span>75 İyi</span>
-            <span>100</span>
-          </div>
-        </div>
-      </div>
 
       <AnalysisPanel
         analysisOpen={analysisOpen}
