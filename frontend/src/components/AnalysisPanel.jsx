@@ -482,7 +482,9 @@ height: `${panelHeight}px`,
               onToggleCriticalService={onToggleCriticalService}
               sinkholeInventoryHeatmapVisible={sinkholeInventoryHeatmapVisible}
               onToggleSinkholeInventoryHeatmap={onToggleSinkholeInventoryHeatmap}
-              corineLandcoverVisible={corineLandcoverVisible}
+              
+               sinkholeLanduseTableOpen={sinkholeLanduseTableOpen}
+               setSinkholeLanduseTableOpen={setSinkholeLanduseTableOpen}corineLandcoverVisible={corineLandcoverVisible}
               onToggleCorineLandcover={onToggleCorineLandcover}
               karapinarLogisticsVisible={karapinarLogisticsVisible}
               karapinarLogisticsLayers={karapinarLogisticsLayers}
