@@ -2434,7 +2434,6 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         <div onClick={() => { if (window.innerWidth <= 768) setEventsPanelOpen((open) => !open); }}
           style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "16px", fontWeight: "700" }}>
-            {activeSideTab === "resilience" && resilienceDetailsOpen && <button onClick={(e) => { e.stopPropagation(); setResilienceDetailsOpen(false); }} title="İlçe haritasına dön" style={{ border: "none", background: "transparent", color: "#64748b", cursor: "pointer", fontSize: "18px", padding: "0 2px 0 0", lineHeight: 1 }}>←</button>}
             <span>{activeSideTab === "events" ? "Acil Olaylar Sınıflandırması" : (resilienceDetailsOpen ? "Mahalle Bazlı Dirençlilik Sıralaması" : "İlçe Bazlı Dirençlilik Skoru Haritası")}</span>
             {activeSideTab === "resilience" && <button onClick={(e) => { e.stopPropagation(); setResilienceRankingHelpOpen(true); }} title="Mahalle sıralamasını nasıl görüntüleyeceğini göster" style={{ border: "none", background: "transparent", color: "#64748b", cursor: "pointer", fontSize: "14px", padding: 0, lineHeight: 1 }}>ⓘ</button>}
           </div>
@@ -2542,6 +2541,9 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                   <button onClick={() => setEmergencyPage((p) => p + 1)} disabled={emergencyPage * 10 >= emergencyPageTotal || emergencyPageLoading}
                     style={{ border: "1px solid rgba(148,163,184,0.45)", background: "rgba(255,255,255,0.62)", borderRadius: "8px", padding: "6px 9px", fontSize: "11px", fontWeight: "700", cursor: emergencyPage * 10 >= emergencyPageTotal ? "not-allowed" : "pointer", opacity: emergencyPage * 10 >= emergencyPageTotal ? 0.42 : 1 }}>Sonraki 10</button>
                 </div>
+                <div style={{ padding: "0 12px 12px", borderTop: "1px solid rgba(239,68,68,0.16)" }}>
+                  <button onClick={() => { setEmergencyPage(1); setEmergencyCategory("Tümü"); setEmergencyDetailsOpen(false); }} style={{ width: "100%", marginTop: "10px", border: "1px solid rgba(220,38,38,0.32)", borderRadius: "9px", padding: "10px", cursor: "pointer", background: "rgba(254,242,242,0.94)", color: "#dc2626", fontSize: "12px", fontWeight: "800" }}>Genel Özete Dön</button>
+                </div>
               </> : (
                 <div className="emergency-summary-guide" style={{ flex: 1, overflowY: "auto", padding: "14px 12px 12px", display: "flex", flexDirection: "column", gap: "10px" }}>
                   <div style={{ padding: "18px 12px", textAlign: "center", borderRadius: "12px", background: "linear-gradient(135deg, rgba(254,242,242,0.90), rgba(255,255,255,0.62))", border: "1px solid rgba(239,68,68,0.16)" }}>
@@ -2571,7 +2573,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
               resilienceDetailsOpen ? <>
                 <div className="resilience-district-detail" style={{ padding: "8px 12px", display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: "7px 10px" }}>
                   <div>
-                    <div style={{ fontSize: "12px", color: "#0f766e", fontWeight: "800" }}>{resilienceDistrictId ? `${rankedNeighborhoods.length} mahalle` : "Mahalle Bazlı dirençlilik skorunu görmek için ilçe seçin"}</div>
+                    <div style={{ fontSize: "12px", color: "#dc2626", fontWeight: "800" }}>{resilienceDistrictId ? `${rankedNeighborhoods.length} mahalle` : "Mahalle Bazlı dirençlilik skorunu görmek için ilçe seçin"}</div>
                   </div>
                   <select value={resilienceRankOrder} onChange={(e) => setResilienceRankOrder(e.target.value)} disabled={!resilienceDistrictId} aria-label="Dirençlilik sıralama yönü"
                     style={{ flexShrink: 0, fontSize: "10px", fontWeight: "700", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "6px", background: "rgba(255,255,255,0.85)", cursor: resilienceDistrictId ? "pointer" : "not-allowed", opacity: resilienceDistrictId ? 1 : 0.48 }}>
@@ -2600,9 +2602,12 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                     );
                   })}
                 </div>
+                <div style={{ padding: "0 12px 12px", borderTop: "1px solid rgba(115,118,242,0.18)" }}>
+                  <button onClick={() => setResilienceDetailsOpen(false)} style={{ width: "100%", marginTop: "10px", border: "1px solid rgba(115,118,242,0.42)", borderRadius: "9px", padding: "10px", cursor: "pointer", background: "rgba(245,245,255,0.90)", color: "#5f63e8", fontSize: "12px", fontWeight: "800" }}>İlçe Bazlı Veriye Dön</button>
+                </div>
               </> : <div style={{ flex: 1, overflowY: "auto", padding: "14px 12px 12px", display: "flex", flexDirection: "column", gap: "10px" }}>
                 <div className="resilience-legend-panel" style={{ padding: "13px", borderRadius: "12px", background: "linear-gradient(135deg, rgba(239,246,255,0.92), rgba(255,255,255,0.80))", border: "1px solid rgba(59,130,246,0.16)" }}>
-                  <button onClick={() => setResilienceInfoOpen(true)} title="Dirençlilik skoru açıklamasını göster" style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%", padding: 0, border: "none", background: "transparent", color: "#0f172a", fontSize: "13px", fontWeight: "800", textAlign: "left", cursor: "pointer" }}>
+                  <button onClick={() => setResilienceInfoOpen(true)} title="Dirençlilik skoru açıklamasını göster" style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%", padding: 0, border: "none", background: "transparent", color: "#64748b", fontFamily: "Georgia, Times New Roman, serif", fontSize: "13px", fontWeight: "700", letterSpacing: "0.01em", textAlign: "left", cursor: "pointer" }}>
                     İlçe Bazlı Dirençlilik Skoru Haritası <span style={{ color: "#64748b", fontSize: "14px" }}>ⓘ</span>
                   </button>
                   <p style={{ margin: "8px 0 0", color: "#64748b", fontSize: "11px", lineHeight: 1.5 }}>Konya ilçelerinin afetlere karşı göreli dirençlilik skorlarını renk sınıflarıyla gösterir.</p>
@@ -2613,7 +2618,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                   <div style={{ height: "9px", borderRadius: "999px", marginTop: "7px", background: "linear-gradient(to right, #dc2626, #f59e0b, #22c55e, #0f766e)" }} />
                   <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", color: "#64748b", fontSize: "9px", fontWeight: "700" }}><span>0 Kritik</span><span>55 Orta</span><span>75 İyi</span><span>100</span></div>
                 </div>
-                <button onClick={() => setResilienceDetailsOpen(true)} style={{ marginTop: "auto", border: "none", borderRadius: "9px", padding: "11px", cursor: "pointer", background: "linear-gradient(135deg, #0f766e, #15803d)", color: "white", fontSize: "12px", fontWeight: "800", boxShadow: "0 5px 14px rgba(15,118,110,0.22)" }}>Mahalle Bazlı Detay Gör →</button>
+                <button onClick={() => setResilienceDetailsOpen(true)} style={{ marginTop: "auto", border: "none", borderRadius: "9px", padding: "11px", cursor: "pointer", background: "linear-gradient(135deg, #7376f2, #5f63e8)", color: "white", fontSize: "12px", fontWeight: "800", boxShadow: "0 5px 14px rgba(115,118,242,0.28)" }}>Mahalle Bazlı Detay Gör →</button>
               </div>
             )}
           </div>
