@@ -800,21 +800,29 @@ console.log(
     esaCompareMapRef.current = compareMap;
 
     let queued = false;
+    // İki harita aynı MapLibre kamera değerlerini kullanır. Böylece sürükleme,
+    // yakınlaştırma, döndürme ve ekran boyutu değişimi aynı anda yansır.
     const syncCamera = () => {
       if (queued || !compareMap.loaded()) return;
       queued = true;
       requestAnimationFrame(() => {
         queued = false;
+        const center = primary.getCenter();
+        compareMap.resize();
         compareMap.jumpTo({
-          center: primary.getCenter(),
+          center: [center.lng, center.lat],
           zoom: primary.getZoom(),
           bearing: primary.getBearing(),
           pitch: primary.getPitch(),
         });
       });
     };
-    const resizeComparison = () => compareMap.resize();
+    const resizeComparison = () => {
+      compareMap.resize();
+      syncCamera();
+    };
     primary.on("move", syncCamera);
+    primary.on("moveend", syncCamera);
     primary.on("resize", resizeComparison);
     compareMap.on("load", () => {
       const comparisonBaseSource = baseMapStyle === "streets"
@@ -830,18 +838,21 @@ console.log(
         type: "raster",
         tiles: [`${API_URL}/tiles/esa-worldcover-2021/{z}/{x}/{y}.png`],
         tileSize: 256,
-        minzoom: 5,
+        // CORINE vektör karoları 8. seviyeden itibaren geldiği için iki taraf
+        // karşılaştırmada aynı ölçek eşiğinde görünür.
+        minzoom: 8,
         maxzoom: 16,
       });
       compareMap.addLayer({
-        id: "esa-worldcover-2021", type: "raster", source: "esa-worldcover-2021",
-        paint: { "raster-opacity": 0.92, "raster-resampling": "nearest", "raster-fade-duration": 0 },
+        id: "esa-worldcover-2021", type: "raster", source: "esa-worldcover-2021", minzoom: 8,
+        paint: { "raster-opacity": 0.84, "raster-resampling": "nearest", "raster-fade-duration": 0 },
       });
       syncCamera();
     });
 
     return () => {
       primary.off("move", syncCamera);
+      primary.off("moveend", syncCamera);
       primary.off("resize", resizeComparison);
       esaCompareMapRef.current = null;
       compareMap.remove();
@@ -3105,15 +3116,27 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         }}
         onToggleEsaCorineComparison={() => {
           const nextVisible = !esaCorineCompareVisible;
+          const map = mapRef.current;
           setEsaCorineCompareVisible(nextVisible);
           if (nextVisible) {
-            // Sağ tarafta yalnız CORINE görünür; ESA ayrı, sol taraftaki karşılaştırma haritasına çizilir.
+            // Karşılaştırma iki veri için de ortak olan 8. zoomdan başlar ve
+            // eğimsiz görünümde tutulur; böylece sınırlar optik olarak kaymaz.
+            if (map) {
+              map.easeTo({ zoom: Math.max(map.getZoom(), 8), bearing: 0, pitch: 0, duration: 360 });
+            }
             setEsaWorldcoverVisible(false);
-            if (mapRef.current?.getLayer("esa-worldcover-2021")) mapRef.current.setLayoutProperty("esa-worldcover-2021", "visibility", "none");
+            if (map?.getLayer("esa-worldcover-2021")) map.setLayoutProperty("esa-worldcover-2021", "visibility", "none");
             setCorineLandcoverVisible(true);
-            ["corine-landcover-fill", "corine-landcover-outline"].forEach((layerId) => {
-              if (mapRef.current?.getLayer(layerId)) mapRef.current.setLayoutProperty(layerId, "visibility", "visible");
-            });
+            if (map?.getLayer("corine-landcover-fill")) {
+              map.setLayoutProperty("corine-landcover-fill", "visibility", "visible");
+              map.setPaintProperty("corine-landcover-fill", "fill-opacity", 0.84);
+            }
+            // Kıyas sırasında CORINE sınır çizgisi kapatılır: ESA rasterı ile
+            // iki tarafın görsel yoğunluğu eşit olur.
+            if (map?.getLayer("corine-landcover-outline")) map.setLayoutProperty("corine-landcover-outline", "visibility", "none");
+          } else if (map) {
+            if (map.getLayer("corine-landcover-fill")) map.setPaintProperty("corine-landcover-fill", "fill-opacity", 0.38);
+            if (corineLandcoverVisible && map.getLayer("corine-landcover-outline")) map.setLayoutProperty("corine-landcover-outline", "visibility", "visible");
           }
         }}
         onToggleSinkholeInventoryHeatmap={() => toggleDataLayer(
