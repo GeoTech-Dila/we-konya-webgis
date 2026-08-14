@@ -606,3 +606,106 @@ body,
 
 /* Map status bar: 2px more down */
 .map-status-bar { transform: translateY(36px); }
+
+/* Telefon görünümünde ev simgesi sağ panelin üzerinde kalır. */
+@media (max-width: 768px) {
+  .map-home-button {
+    z-index: 26 !important;
+  }
+}
+
+/* OpenGIS logosunun yanındaki veri kaynakları düğmesi. */
+.data-sources-button {
+  position: absolute;
+  top: 20px;
+  right: 18px;
+  z-index: 11;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(115,118,242,0.34);
+  border-radius: 8px;
+  padding: 6px 9px;
+  background: rgba(255,255,255,0.70);
+  color: #5f63e8;
+  box-shadow: 0 5px 14px rgba(79,70,229,0.12);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.data-sources-button:hover { background: #f7f7ff; }
+
+@media (max-width: 768px) {
+  .data-sources-button {
+    top: 20px;
+    right: 102px;
+    padding: 5px 7px;
+    font-size: 10px;
+  }
+}
+
+/* Masaüstünde Veri Kaynakları düğmesi rehberin solundaki alt-sağ boşlukta durur. */
+@media (min-width: 769px) {
+  .data-sources-button {
+    position: fixed;
+    top: auto;
+    right: 156px;
+    bottom: 12px;
+    z-index: 71;
+  }
+}
+
+/* Header içi eski konum kurallarını geçersiz kılar. */
+@media (min-width: 769px) {
+  .app-header .data-sources-button {
+    position: fixed !important;
+    top: auto !important;
+    right: 156px !important;
+    bottom: 12px !important;
+    z-index: 71 !important;
+  }
+}
+
+/* Rehber ve Veri Kaynakları tek bir alt-sağ kontrol grubu olarak görünür. */
+.quick-actions {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 70;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.70);
+  border-radius: 999px;
+  background: rgba(15,23,42,0.82);
+  box-shadow: 0 8px 20px rgba(15,23,42,0.18);
+}
+.quick-actions .data-sources-button,
+.quick-actions .quick-actions-guide {
+  position: static !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #ffffff;
+  padding: 8px 11px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.quick-actions .data-sources-button { color: #dfe2ff; }
+.quick-actions .data-sources-button:hover,
+.quick-actions .quick-actions-guide:hover { background: rgba(255,255,255,0.12); }
+.quick-actions-divider { width: 1px; height: 23px; background: rgba(255,255,255,0.32); }
+
+@media (max-width: 768px) {
+  .quick-actions { right: 10px; bottom: 14px; }
+  .quick-actions .data-sources-button,
+  .quick-actions .quick-actions-guide { padding: 7px 9px; font-size: 10px; }
+}
+

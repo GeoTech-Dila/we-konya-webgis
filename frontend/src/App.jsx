@@ -32,7 +32,7 @@ const emergencyCategoryColors = {
 };
 
 const USER_GUIDE_STEPS = [
-  { selector: ".layers-panel", title: "Katmanlar", text: "İlçe, mahalle, fay, obruk ve hizmet katmanlarını buradan açıp kapatabilirsin." },
+  { selector: ".layers-panel", mobileSelector: ".layers-panel-guide-trigger", title: "Katmanlar", text: "İlçe, mahalle, fay, obruk ve hizmet katmanlarını buradan açıp kapatabilirsin." },
   { selector: ".analysis-panel", title: "Analiz Katmanları", text: "Alt paneli yukarı açarak analiz kartlarına ulaşabilirsin. Rehber, anlatılan kartı senin için otomatik seçer." },
   { selector: ".analysis-panel", analysisPanelDemo: true, title: "Analiz Panelini Açma", text: "Alt kenardaki Analiz Katmanları başlığına bastığında panel yukarı doğru açılır. Rehber şimdi bu hareketi kısa bir turla gösteriyor; ardından analiz kartlarını tek tek tanıtacak." },
   { selector: ".analysis-panel", analysisCardId: "service-area", title: "Toplanma Alanı Erişilebilirliği", text: "5, 10 ve 15 dakikalık yürüme erişimini gösterir. Erişim süresi uzadıkça tahliye ve müdahale planlamasında öncelik artar." },
@@ -128,6 +128,11 @@ const [service15Visible, setService15Visible] = useState(false);
   const [guideOpen, setGuideOpen] = useState(() => localStorage.getItem("koriz-user-guide-seen") !== "1");
   const [guideStep, setGuideStep] = useState(-1);
   const [guideTargetRect, setGuideTargetRect] = useState(null);
+  const [dataSourcesOpen, setDataSourcesOpen] = useState(false);
+  const [dataSourcesPosition, setDataSourcesPosition] = useState(() => ({
+    left: typeof window === "undefined" ? 24 : Math.max(12, Math.floor((window.innerWidth - 760) / 2)),
+    top: 92,
+  }));
 
 
   // --- UI STATE ---
@@ -166,6 +171,7 @@ const [service15Visible, setService15Visible] = useState(false);
   const mahalleDataRef = useRef(null);
   const mahalleRequestRef = useRef(null);
   const mapRef = useRef(null);
+  const dataSourcesDragRef = useRef(null);
 
   const loadedLayersRef = useRef({});
   const regionSummaryRef = useRef({});
@@ -664,11 +670,17 @@ console.log(
       return;
     }
     const updateTarget = () => {
-      const item = document.querySelector(USER_GUIDE_STEPS[guideStep]?.selector);
+      const step = USER_GUIDE_STEPS[guideStep];
+      const selector = window.innerWidth <= 768 && step?.mobileSelector
+        ? step.mobileSelector
+        : step?.selector;
+      const item = document.querySelector(selector);
       if (!item) return setGuideTargetRect(null);
       const rect = item.getBoundingClientRect();
       setGuideTargetRect({ left: Math.max(4, rect.left - 6), top: Math.max(4, rect.top - 6), width: rect.width + 12, height: rect.height + 12 });
     };
+    // Çerçeve panelin açılma/kapanma hareketini kısa süre takip eder;
+    // böylece rehberdeki vurgu ve panel aynı ritimde kalır.
     let refreshFrame = null;
     const refreshTarget = () => {
       const startedAt = performance.now();
@@ -2000,6 +2012,40 @@ useEffect(() => {
     setMahalleVisible(true);
   };
 
+  useEffect(() => () => {
+    const drag = dataSourcesDragRef.current;
+    if (!drag) return;
+    window.removeEventListener("pointermove", drag.onMove);
+    window.removeEventListener("pointerup", drag.onEnd);
+  }, []);
+
+  const startDataSourcesDrag = (event) => {
+    if (event.button !== 0 || event.target.closest("button, input")) return;
+    const panel = document.querySelector(".data-sources-window");
+    if (!panel) return;
+    event.preventDefault();
+    const startLeft = dataSourcesPosition.left;
+    const startTop = dataSourcesPosition.top;
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const onMove = (moveEvent) => {
+      const maxLeft = Math.max(12, window.innerWidth - panel.offsetWidth - 12);
+      const maxTop = Math.max(12, window.innerHeight - panel.offsetHeight - 12);
+      setDataSourcesPosition({
+        left: Math.min(maxLeft, Math.max(12, startLeft + moveEvent.clientX - startX)),
+        top: Math.min(maxTop, Math.max(12, startTop + moveEvent.clientY - startY)),
+      });
+    };
+    const onEnd = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onEnd);
+      dataSourcesDragRef.current = null;
+    };
+    dataSourcesDragRef.current = { onMove, onEnd };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onEnd);
+  };
+
   const applyManualScale = (event) => {
     event.preventDefault();
     const map = mapRef.current;
@@ -2022,6 +2068,10 @@ useEffect(() => {
     const targetUpperArea = Boolean(guideTargetRect && guideTargetRect.top < window.innerHeight * 0.48);
 
     if (mobile && guideStep >= 0) {
+      // Analiz kartları alttan açıldığı için açıklama telefonda her zaman üstte kalır.
+      if (analysisStep) {
+        return { top: "74px", bottom: "auto", width: "min(340px, calc(100vw - 24px))", maxHeight: "min(270px, calc(100vh - 96px))", padding: "13px" };
+      }
       return targetUpperArea
         ? { top: "auto", bottom: "18px", width: "min(340px, calc(100vw - 24px))", maxHeight: "min(270px, calc(100vh - 86px))", padding: "13px" }
         : { top: "74px", bottom: "auto", width: "min(340px, calc(100vw - 24px))", maxHeight: "min(270px, calc(100vh - 96px))", padding: "13px" };
@@ -2315,7 +2365,7 @@ useEffect(() => {
         </div>
         <div className="team-badge" title="OpenGIS Türkiye Ekibi" style={{
   position: "absolute",
-  right: "80px",
+  right: "126px",
   top: "10px",
   width: "104px",
   height: "52px",
@@ -2339,6 +2389,37 @@ useEffect(() => {
   }}>EKİBİ</span>
 </div>
       </div>
+
+      {dataSourcesOpen && (
+        <section className="data-sources-window" role="dialog" aria-label="Veri kaynakları tablosu" style={{ position: "fixed", left: `${dataSourcesPosition.left}px`, top: `${dataSourcesPosition.top}px`, zIndex: 130, width: "min(760px, calc(100vw - 24px))", maxHeight: "min(560px, calc(100vh - 24px))", display: "flex", flexDirection: "column", overflow: "hidden", border: "1px solid #b9bcff", borderRadius: 10, background: "#ffffff", color: "#0f172a", boxShadow: "0 18px 46px rgba(115,118,242,0.24)" }}>
+          <header onPointerDown={startDataSourcesDrag} style={{ flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 12px", cursor: "grab", userSelect: "none", background: "linear-gradient(135deg, #f7f7ff, #dfe0ff)", color: "#585bd8" }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 800 }}>Veri Kaynakları</div>
+              <div style={{ marginTop: 2, fontSize: 10, color: "#7376f2" }}>Taşımak için bu başlıktan tutun · Kaynak listesi hazırlanıyor</div>
+            </div>
+            <button type="button" onClick={() => setDataSourcesOpen(false)} aria-label="Veri kaynakları penceresini kapat" title="Kapat" style={{ flex: "0 0 auto", width: 28, height: 28, border: "1px solid rgba(115,118,242,0.34)", borderRadius: 7, background: "rgba(255,255,255,0.70)", color: "#5f63e8", cursor: "pointer", fontSize: 17, lineHeight: 1 }}>×</button>
+          </header>
+          <div style={{ overflow: "auto", background: "#ffffff" }}>
+            <table style={{ width: "100%", minWidth: 620, borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
+              <thead>
+                <tr>
+                  <th style={{ position: "sticky", top: 0, zIndex: 1, padding: "10px 12px", textAlign: "left", background: "#ebecff", color: "#585bd8", borderRight: "1px solid #d7d8ff", borderBottom: "2px solid #b9bcff", fontWeight: 800 }}>Veri</th>
+                  <th style={{ position: "sticky", top: 0, zIndex: 1, padding: "10px 12px", textAlign: "left", background: "#ebecff", color: "#585bd8", borderBottom: "2px solid #b9bcff", fontWeight: 800 }}>Kaynağı</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[0, 1, 2, 3, 4].map((row) => (
+                  <tr key={row} style={{ background: row % 2 ? "#fbfbff" : "#ffffff" }}>
+                    <td style={{ height: 37, padding: "0 12px", borderRight: "1px solid #e3e4ff", borderBottom: "1px solid #e3e4ff" }}>&nbsp;</td>
+                    <td style={{ height: 37, padding: "0 12px", borderBottom: "1px solid #e3e4ff" }}>&nbsp;</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <footer style={{ flex: "0 0 auto", padding: "7px 11px", borderTop: "1px solid #d7d8ff", background: "#f7f7ff", color: "#7376f2", fontSize: 10 }}>Bu tablo, veri ve kaynak bilgileri hazır olduğunda aynı düzen korunarak doldurulacaktır.</footer>
+        </section>
+      )}
 
       {selectedMahalle && (
         <div className="region-summary-card" style={{
@@ -2669,7 +2750,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         border: "1px solid rgba(255,255,255,0.18)", boxShadow: "0 10px 40px rgba(0,0,0,0.18)",
         zIndex: 10, scrollbarWidth: "thin"
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+        <div className="layers-panel-guide-trigger" style={{ display: "flex", alignItems: "center", gap: "7px" }}>
           <button onClick={() => setLayersPanelOpen((open) => !open)}
             style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", background: "transparent", color: "inherit", border: "none", cursor: "pointer", padding: 0, fontSize: "14px", fontWeight: "700" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -2882,13 +2963,18 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         activeAnalysisLayer={activeAnalysisLayer}
         setActiveAnalysisLayer={setActiveAnalysisLayer}
       />
-      <button onClick={() => { setGuideStep(-1); setGuideOpen(true); }} title="Kullanıcı rehberini aç"
-        style={{ position: "absolute", right: "18px", bottom: "18px", zIndex: 70, border: "1px solid rgba(255,255,255,0.70)", borderRadius: "999px", background: "rgba(15,23,42,0.82)", color: "white", padding: "8px 11px", cursor: "pointer", fontSize: "11px", fontWeight: "800" }}>
-        ? Rehber
-      </button>
+      <div className="quick-actions" aria-label="Hızlı araçlar">
+        <button className="data-sources-button" type="button" onClick={() => setDataSourcesOpen(true)} title="Veri kaynakları tablosunu aç">
+          ▤ <span>Veri Kaynakları</span>
+        </button>
+        <span className="quick-actions-divider" aria-hidden="true" />
+        <button className="quick-actions-guide" onClick={() => { setGuideStep(-1); setGuideOpen(true); }} title="Kullanıcı rehberini aç">
+          ? Rehber
+        </button>
+      </div>
       {guideOpen && <>
         {guideStep < 0 ? <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(15,23,42,0.56)", backdropFilter: "blur(3px)" }} /> : guideTargetRect && <div style={{ position: "fixed", left: guideTargetRect.left, top: guideTargetRect.top, width: guideTargetRect.width, height: guideTargetRect.height, zIndex: 1000, borderRadius: "16px", border: "2px solid #f59e0b", boxShadow: "0 0 0 9999px rgba(15,23,42,0.58), 0 0 28px rgba(245,158,11,0.62)", pointerEvents: "none" }} />}
-        <div role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 1001, left: "50%", top: guideDialogPlacement.top, bottom: guideDialogPlacement.bottom, transform: "translateX(-50%)", width: guideDialogPlacement.width, maxHeight: guideDialogPlacement.maxHeight, overflowY: "auto", padding: guideDialogPlacement.padding, borderRadius: "16px", background: "rgba(255,255,255,0.97)", color: "#0f172a", boxShadow: "0 16px 42px rgba(15,23,42,0.32)" }}>
+        <div key={`guide-dialog-${guideStep}`} role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 1001, left: "50%", top: guideDialogPlacement.top, bottom: guideDialogPlacement.bottom, transform: "translateX(-50%)", width: guideDialogPlacement.width, maxHeight: guideDialogPlacement.maxHeight, overflowY: "auto", padding: guideDialogPlacement.padding, borderRadius: "16px", background: "rgba(255,255,255,0.97)", color: "#0f172a", boxShadow: "0 16px 42px rgba(15,23,42,0.32)" }}>
           {guideStep < 0 ? <>
             <div style={{ color: "#dc2626", fontSize: "11px", fontWeight: "900", letterSpacing: "0.08em" }}>KOR-İZ KULLANICI REHBERİ</div>
             <div style={{ fontSize: "21px", fontWeight: "800", marginTop: "6px" }}>Haritayı 1 dakikada keşfedin</div>
