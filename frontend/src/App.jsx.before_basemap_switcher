@@ -69,7 +69,6 @@ function App() {
   const [esaWorldcoverVisible, setEsaWorldcoverVisible] = useState(false);
   const [esaCorineCompareVisible, setEsaCorineCompareVisible] = useState(false);
   const [esaComparePosition, setEsaComparePosition] = useState(50);
-  const [baseMapStyle, setBaseMapStyle] = useState("light");
   const [karapinarLogisticsVisible, setKarapinarLogisticsVisible] = useState(false);
   const [karapinarHospitalFastVisible, setKarapinarHospitalFastVisible] = useState(false);
   const [karapinarHospitalSafeVisible, setKarapinarHospitalSafeVisible] = useState(false);
@@ -817,15 +816,6 @@ console.log(
     primary.on("move", syncCamera);
     primary.on("resize", resizeComparison);
     compareMap.on("load", () => {
-      const comparisonBaseSource = baseMapStyle === "streets"
-        ? { type: "raster", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 19, attribution: "© OpenStreetMap contributors" }
-        : baseMapStyle === "satellite"
-          ? { type: "raster", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], tileSize: 256, maxzoom: 19, attribution: "Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community" }
-          : null;
-      if (comparisonBaseSource) {
-        compareMap.addSource("comparison-selected-basemap", comparisonBaseSource);
-        compareMap.addLayer({ id: "comparison-selected-basemap-layer", type: "raster", source: "comparison-selected-basemap" });
-      }
       compareMap.addSource("esa-worldcover-2021", {
         type: "raster",
         tiles: [`${API_URL}/tiles/esa-worldcover-2021/{z}/{x}/{y}.png`],
@@ -846,21 +836,7 @@ console.log(
       esaCompareMapRef.current = null;
       compareMap.remove();
     };
-  }, [esaCorineCompareVisible, mapReady, baseMapStyle]);
-
-  // Altlık değişiminde analiz ve kullanıcı katmanları yerinde kalır; yalnız taban rasterı değişir.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!mapReady || !map) return;
-    const active = {
-      light: "carto-light-layer",
-      streets: "osm-streets-layer",
-      satellite: "esri-world-imagery-layer",
-    }[baseMapStyle];
-    ["carto-light-layer", "osm-streets-layer", "esri-world-imagery-layer"].forEach((layerId) => {
-      if (map.getLayer(layerId)) map.setLayoutProperty(layerId, "visibility", layerId === active ? "visible" : "none");
-    });
-  }, [baseMapStyle, mapReady]);
+  }, [esaCorineCompareVisible, mapReady]);
 
   // --- ANA MAP EFFECT ---
   useEffect(() => {
@@ -877,28 +853,9 @@ console.log(
               "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
             ],
             tileSize: 256,
-            attribution: "© OpenStreetMap contributors © CARTO",
-          },
-          "osm-streets": {
-            type: "raster",
-            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-            tileSize: 256,
-            maxzoom: 19,
-            attribution: "© OpenStreetMap contributors",
-          },
-          "esri-world-imagery": {
-            type: "raster",
-            tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-            tileSize: 256,
-            maxzoom: 19,
-            attribution: "Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
           },
         },
-        layers: [
-          { id: "carto-light-layer", type: "raster", source: "carto-light", layout: { visibility: "visible" } },
-          { id: "osm-streets-layer", type: "raster", source: "osm-streets", layout: { visibility: "none" } },
-          { id: "esri-world-imagery-layer", type: "raster", source: "esri-world-imagery", layout: { visibility: "none" } },
-        ],
+        layers: [{ id: "carto-light-layer", type: "raster", source: "carto-light" }],
       },
       // Açılış görünümü: Konya ilini eğimli, perspektif bir genel bakışla gösterir.
       center: [32.55, 37.87],
@@ -2919,33 +2876,6 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
           </button>}
         </div>
         {layersPanelOpen && <>
-        <div style={{ margin: "10px 0 13px", padding: "9px", borderRadius: "15px", background: "linear-gradient(135deg, rgba(255,255,255,0.92), rgba(241,245,249,0.72))", border: "1px solid rgba(148,163,184,0.24)", boxShadow: "0 8px 20px rgba(71,85,105,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 2px 8px" }}>
-            <div>
-              <div style={{ fontSize: "10px", fontWeight: 900, letterSpacing: "0.08em", textTransform: "uppercase", color: "#64748b" }}>Harita altlığı</div>
-              <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: 2 }}>Görünümü değiştir</div>
-            </div>
-            <span style={{ width: 25, height: 25, display: "grid", placeItems: "center", borderRadius: 8, color: "#6366f1", background: "rgba(238,242,255,0.92)", fontSize: 14 }}>◫</span>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 7 }}>
-            {[
-              ["light", "Açık", "Yalın", "linear-gradient(145deg, #f8fafc 0 42%, #e2e8f0 43% 52%, #ffffff 53% 100%)"],
-              ["streets", "Sokak", "Yollar", "linear-gradient(145deg, #b9dbf8 0 35%, #f8fafc 36% 49%, #dbeafe 50% 61%, #f8fafc 62% 100%)"],
-              ["satellite", "Uydu", "Görüntü", "linear-gradient(145deg, #244014 0 28%, #778b36 29% 48%, #b59b55 49% 66%, #3f5e2b 67% 100%)"],
-            ].map(([id, label, note, preview]) => {
-              const selected = baseMapStyle === id;
-              return <button key={id} type="button" onClick={() => setBaseMapStyle(id)} aria-pressed={selected} style={{ minWidth: 0, padding: 0, overflow: "hidden", textAlign: "left", cursor: "pointer", borderRadius: 11, border: selected ? "1.5px solid #6366f1" : "1px solid rgba(148,163,184,0.26)", background: selected ? "#ffffff" : "rgba(255,255,255,0.58)", boxShadow: selected ? "0 5px 14px rgba(99,102,241,0.20)" : "none", transform: selected ? "translateY(-1px)" : "none", transition: "all .18s ease" }}>
-                <span style={{ display: "block", height: 28, margin: 4, borderRadius: 7, background: preview, position: "relative", overflow: "hidden" }}>
-                  {selected && <span style={{ position: "absolute", top: 3, right: 3, width: 14, height: 14, borderRadius: 99, display: "grid", placeItems: "center", background: "#6366f1", color: "white", fontSize: 9, fontWeight: 900 }}>✓</span>}
-                </span>
-                <span style={{ display: "block", padding: "0 7px 7px", color: "#334155" }}>
-                  <span style={{ display: "block", fontSize: 10, fontWeight: 900, lineHeight: 1.1 }}>{label}</span>
-                  <span style={{ display: "block", marginTop: 2, color: "#94a3b8", fontSize: 8, fontWeight: 700 }}>{note}</span>
-                </span>
-              </button>;
-            })}
-          </div>
-        </div>
         {[
           {
             id: "boundaries", title: "Sınırlar ve Bölgeler", items: [
