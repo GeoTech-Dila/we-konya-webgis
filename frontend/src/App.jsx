@@ -913,11 +913,11 @@ console.log(
           { id: "esri-world-imagery-layer", type: "raster", source: "esri-world-imagery", layout: { visibility: "none" } },
         ],
       },
-      // Açılış görünümü: Konya ilini eğimli, perspektif bir genel bakışla gösterir.
+      // Açılış görünümü: Perspektif korunur; harita kuzey yukarı olacak şekilde başlar.
       center: [32.55, 37.87],
       zoom: 7.05,
       pitch: 55,
-      bearing: -18,
+      bearing: 0,
     });
 
     mapRef.current = map;
@@ -2317,7 +2317,7 @@ useEffect(() => {
         </div>
       </>}
       <button className="map-home-button" title="Başlangıç görünümüne dön" aria-label="Başlangıç görünümüne dön"
-        onClick={() => mapRef.current?.flyTo({ center: [32.55, 37.87], zoom: 7.05, pitch: 55, bearing: -18, duration: 1200 })}>
+        onClick={() => mapRef.current?.flyTo({ center: [32.55, 37.87], zoom: 7.05, pitch: 55, bearing: 0, duration: 1200 })}>
         ⌂
       </button>
       <div className="map-status-bar" aria-label="Harita koordinat ve ölçek bilgisi">
