@@ -512,12 +512,14 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
             Harita Karapınar pilot alanına yönelir. Rotalar, AFAD lojistik üssünden hastane, itfaiye ve toplanma alanlarına erişimi gösterir.
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginBottom: 8 }}>
-            {[ 
-              ["hospital", "Hastane rotaları", "#2563eb"], ["fire", "İtfaiye rotaları", "#ea580c"], ["assembly", "Toplanma alanı rotaları", "#7c3aed"],
-              ["iso3", "3 dk erişim", "#16a34a"], ["iso5", "5 dk erişim", "#f59e0b"], ["iso10", "10 dk erişim", "#2563eb"],
-            ].map(([key, label, color]) => (
+            {[
+              ["hospitalFast", "Hastane | en hizli", "#2563eb", false], ["hospitalSafe", "Hastane | guvenli", "#2563eb", true],
+              ["fireFast", "Itfaiye | en hizli", "#ea580c", false], ["fireSafe", "Itfaiye | guvenli", "#ea580c", true],
+              ["assemblyFast", "Toplanma | en hizli", "#7c3aed", false], ["assemblySafe", "Toplanma | guvenli", "#7c3aed", true],
+              ["iso3", "3 dk erisim", "#16a34a", false], ["iso5", "5 dk erisim", "#f59e0b", false], ["iso10", "10 dk erisim", "#2563eb", false],
+            ].map(([key, label, color, dashed]) => (
               <button key={key} type="button" onClick={() => onToggleKarapinarLogisticsGroup(key)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, padding: "7px 8px", borderRadius: 9, border: `1px solid ${karapinarLogisticsLayers?.[key] ? color : "#cbd5e1"}`, background: karapinarLogisticsLayers?.[key] ? "rgba(255,255,255,0.9)" : "rgba(248,250,252,0.72)", color: "#334155", cursor: "pointer", fontSize: 10, fontWeight: 700, textAlign: "left" }}>
-                <span><span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: color, marginRight: 5 }} />{label}</span><span style={{ color: karapinarLogisticsLayers?.[key] ? "#15803d" : "#94a3b8" }}>{karapinarLogisticsLayers?.[key] ? "●" : "○"}</span>
+                <span><span style={{ display: "inline-block", width: 12, borderTop: `3px ${dashed ? "dashed" : "solid"} ${color}`, marginRight: 5, verticalAlign: "middle" }} />{label}</span><span style={{ color: karapinarLogisticsLayers?.[key] ? "#15803d" : "#94a3b8" }}>{karapinarLogisticsLayers?.[key] ? "ON" : "OFF"}</span>
               </button>
             ))}
           </div>

@@ -58,9 +58,12 @@ function App() {
   const [sinkholeInventoryHeatmapVisible, setSinkholeInventoryHeatmapVisible] = useState(false);
   const [corineLandcoverVisible, setCorineLandcoverVisible] = useState(false);
   const [karapinarLogisticsVisible, setKarapinarLogisticsVisible] = useState(false);
-  const [karapinarHospitalVisible, setKarapinarHospitalVisible] = useState(false);
-  const [karapinarFireVisible, setKarapinarFireVisible] = useState(false);
-  const [karapinarAssemblyVisible, setKarapinarAssemblyVisible] = useState(false);
+  const [karapinarHospitalFastVisible, setKarapinarHospitalFastVisible] = useState(false);
+  const [karapinarHospitalSafeVisible, setKarapinarHospitalSafeVisible] = useState(false);
+  const [karapinarFireFastVisible, setKarapinarFireFastVisible] = useState(false);
+  const [karapinarFireSafeVisible, setKarapinarFireSafeVisible] = useState(false);
+  const [karapinarAssemblyFastVisible, setKarapinarAssemblyFastVisible] = useState(false);
+  const [karapinarAssemblySafeVisible, setKarapinarAssemblySafeVisible] = useState(false);
   const [karapinarIso3Visible, setKarapinarIso3Visible] = useState(false);
   const [karapinarIso5Visible, setKarapinarIso5Visible] = useState(false);
   const [karapinarIso10Visible, setKarapinarIso10Visible] = useState(false);
@@ -490,9 +493,12 @@ console.log(
   };
 
   const karapinarLogisticsGroups = {
-    hospital: ["karapinar-logistics-hospital-fast-line", "karapinar-logistics-hospital-safe-line"],
-    fire: ["karapinar-logistics-fire-fast-line", "karapinar-logistics-fire-safe-line"],
-    assembly: ["karapinar-logistics-assembly-fast-line", "karapinar-logistics-assembly-safe-line"],
+    hospitalFast: ["karapinar-logistics-hospital-fast-line"],
+    hospitalSafe: ["karapinar-logistics-hospital-safe-line"],
+    fireFast: ["karapinar-logistics-fire-fast-line"],
+    fireSafe: ["karapinar-logistics-fire-safe-line"],
+    assemblyFast: ["karapinar-logistics-assembly-fast-line"],
+    assemblySafe: ["karapinar-logistics-assembly-safe-line"],
     iso3: ["karapinar-logistics-iso-3-line"],
     iso5: ["karapinar-logistics-iso-5-line"],
     iso10: ["karapinar-logistics-iso-10-fill", "karapinar-logistics-iso-10-line"],
@@ -505,7 +511,9 @@ console.log(
   const toggleKarapinarLogistics = async () => {
     const nextVisible = !karapinarLogisticsVisible;
     setKarapinarLogisticsVisible(nextVisible);
-    setKarapinarHospitalVisible(nextVisible); setKarapinarFireVisible(nextVisible); setKarapinarAssemblyVisible(nextVisible);
+    setKarapinarHospitalFastVisible(nextVisible); setKarapinarHospitalSafeVisible(nextVisible);
+    setKarapinarFireFastVisible(nextVisible); setKarapinarFireSafeVisible(nextVisible);
+    setKarapinarAssemblyFastVisible(nextVisible); setKarapinarAssemblySafeVisible(nextVisible);
     setKarapinarIso3Visible(nextVisible); setKarapinarIso5Visible(nextVisible); setKarapinarIso10Visible(nextVisible);
     if (nextVisible) {
       await loadKarapinarLogisticsLayer();
@@ -2727,11 +2735,13 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         sinkholeInventoryHeatmapVisible={sinkholeInventoryHeatmapVisible}
         corineLandcoverVisible={corineLandcoverVisible}
         karapinarLogisticsVisible={karapinarLogisticsVisible}
-        karapinarLogisticsLayers={{ hospital: karapinarHospitalVisible, fire: karapinarFireVisible, assembly: karapinarAssemblyVisible, iso3: karapinarIso3Visible, iso5: karapinarIso5Visible, iso10: karapinarIso10Visible }}
+        karapinarLogisticsLayers={{ hospitalFast: karapinarHospitalFastVisible, hospitalSafe: karapinarHospitalSafeVisible, fireFast: karapinarFireFastVisible, fireSafe: karapinarFireSafeVisible, assemblyFast: karapinarAssemblyFastVisible, assemblySafe: karapinarAssemblySafeVisible, iso3: karapinarIso3Visible, iso5: karapinarIso5Visible, iso10: karapinarIso10Visible }}
         onToggleKarapinarLogistics={toggleKarapinarLogistics}
         onToggleKarapinarLogisticsGroup={(group) => {
           const handlers = {
-            hospital: [karapinarHospitalVisible, setKarapinarHospitalVisible], fire: [karapinarFireVisible, setKarapinarFireVisible], assembly: [karapinarAssemblyVisible, setKarapinarAssemblyVisible],
+            hospitalFast: [karapinarHospitalFastVisible, setKarapinarHospitalFastVisible], hospitalSafe: [karapinarHospitalSafeVisible, setKarapinarHospitalSafeVisible],
+            fireFast: [karapinarFireFastVisible, setKarapinarFireFastVisible], fireSafe: [karapinarFireSafeVisible, setKarapinarFireSafeVisible],
+            assemblyFast: [karapinarAssemblyFastVisible, setKarapinarAssemblyFastVisible], assemblySafe: [karapinarAssemblySafeVisible, setKarapinarAssemblySafeVisible],
             iso3: [karapinarIso3Visible, setKarapinarIso3Visible], iso5: [karapinarIso5Visible, setKarapinarIso5Visible], iso10: [karapinarIso10Visible, setKarapinarIso10Visible],
           };
           toggleKarapinarLogisticsGroup(group, handlers[group][0], handlers[group][1]);
