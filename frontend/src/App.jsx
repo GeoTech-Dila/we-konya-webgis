@@ -1167,6 +1167,8 @@ addLyr({
   source: "service-area-15-polygons",
   "source-layer": "service15polygons",
 
+  layout: { visibility: "none" },
+
   paint: {
     "fill-color": "#ef4444",
     "fill-opacity": 0.08,
@@ -1179,6 +1181,8 @@ addLyr({
 
   source: "service-area-10-polygons",
   "source-layer": "service10polygons",
+
+  layout: { visibility: "none" },
 
   paint: {
     "fill-color": "#f59e0b",
@@ -1193,6 +1197,8 @@ addLyr({
   source: "service-area-5-polygons",
   "source-layer": "service5polygons",
 
+  layout: { visibility: "none" },
+
   paint: {
     "fill-color": "#22c55e",
     "fill-opacity": 0.18,
@@ -1205,7 +1211,7 @@ addLyr({
   "source-layer": "service15lines",
 
   layout: {
-    visibility: "visible",
+    visibility: "none",
   },
 
   paint: {
@@ -1221,7 +1227,7 @@ addLyr({
   "source-layer": "service10lines",
 
   layout: {
-    visibility: "visible",
+    visibility: "none",
   },
 
   paint: {
@@ -1237,7 +1243,7 @@ addLyr({
   "source-layer": "service5lines",
 
   layout: {
-    visibility: "visible",
+    visibility: "none",
   },
 
   paint: {
