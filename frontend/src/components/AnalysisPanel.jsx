@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const analysisCards = [
   {
@@ -165,6 +165,38 @@ function AnalysisPanel({
   ));
   const resizeStart = useRef(null);
 
+  useEffect(() => {
+    const showGuideCard = (event) => {
+      const id = event.detail?.id;
+      if (!analysisCards.some((card) => card.id === id)) return;
+      setActiveCardId(id);
+      setPanelHeight(window.innerWidth <= 768 ? Math.floor(window.innerHeight * 0.68) : 430);
+      window.setTimeout(() => window.dispatchEvent(new CustomEvent("koriz-guide-target-refresh")), 390);
+    };
+    const showGuidePanelDemo = () => {
+      const mobile = window.innerWidth <= 768;
+      const compactHeight = mobile ? 340 : 250;
+      const expandedHeight = mobile ? Math.floor(window.innerHeight * 0.60) : 365;
+      setPanelHeight(compactHeight);
+      window.dispatchEvent(new CustomEvent("koriz-guide-target-refresh"));
+      window.setTimeout(() => {
+        setPanelHeight(expandedHeight);
+        window.dispatchEvent(new CustomEvent("koriz-guide-target-refresh"));
+      }, 210);
+      window.setTimeout(() => {
+        setPanelHeight(compactHeight);
+        window.dispatchEvent(new CustomEvent("koriz-guide-target-refresh"));
+      }, 760);
+      window.setTimeout(() => window.dispatchEvent(new CustomEvent("koriz-guide-target-refresh")), 1140);
+    };
+    window.addEventListener("koriz-guide-analysis-card", showGuideCard);
+    window.addEventListener("koriz-guide-analysis-panel-demo", showGuidePanelDemo);
+    return () => {
+      window.removeEventListener("koriz-guide-analysis-card", showGuideCard);
+      window.removeEventListener("koriz-guide-analysis-panel-demo", showGuidePanelDemo);
+    };
+  }, []);
+
   const startResize = (event) => {
     if (!analysisOpen) return;
     event.preventDefault();
@@ -218,7 +250,7 @@ height: `${panelHeight}px`,
         background: "rgba(255,255,255,0.16)",
         backdropFilter: "blur(18px)",
         boxShadow: "0 18px 50px rgba(15,23,42,0.28)",
-        transition: "bottom 0.35s ease",
+        transition: "bottom 0.35s ease, height 0.35s ease",
       }}
       aria-label="Analiz paneli"
     >

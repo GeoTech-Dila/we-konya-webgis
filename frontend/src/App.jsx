@@ -33,7 +33,14 @@ const emergencyCategoryColors = {
 
 const USER_GUIDE_STEPS = [
   { selector: ".layers-panel", title: "Katmanlar", text: "İlçe, mahalle, fay, obruk ve hizmet katmanlarını buradan açıp kapatabilirsin." },
-  { selector: ".analysis-panel", title: "Analiz Katmanları", text: "Erişilebilirlik ve öneri toplanma alanı gibi analizleri alt panelden inceleyebilirsin." },
+  { selector: ".analysis-panel", title: "Analiz Katmanları", text: "Alt paneli yukarı açarak analiz kartlarına ulaşabilirsin. Rehber, anlatılan kartı senin için otomatik seçer." },
+  { selector: ".analysis-panel", analysisPanelDemo: true, title: "Analiz Panelini Açma", text: "Alt kenardaki Analiz Katmanları başlığına bastığında panel yukarı doğru açılır. Rehber şimdi bu hareketi kısa bir turla gösteriyor; ardından analiz kartlarını tek tek tanıtacak." },
+  { selector: ".analysis-panel", analysisCardId: "service-area", title: "Toplanma Alanı Erişilebilirliği", text: "5, 10 ve 15 dakikalık yürüme erişimini gösterir. Erişim süresi uzadıkça tahliye ve müdahale planlamasında öncelik artar." },
+  { selector: ".analysis-panel", analysisCardId: "logistics", title: "Karapınar Afet Lojistik Analizi", text: "AFAD lojistik üssünden hastane, itfaiye ve toplanma alanlarına en hızlı ve daha güvenli alternatif rotaları karşılaştırır." },
+  { selector: ".analysis-panel", analysisCardId: "vulnerability", title: "Sosyo-Ekonomik Kırılganlık ve Jeolojik Tehlike", text: "İlçeleri sosyo-ekonomik yapı, fay uzunluğu ve obruk envanterini birlikte değerlendirerek dört risk derecesinde sınıflar." },
+  { selector: ".analysis-panel", analysisCardId: "facility-access", title: "Kritik Tesis Hizmet Yükü", text: "İtfaiye, ASHİ/112 ve hastanelerin nüfus ve yapı stoğu karşısındaki hizmet yükünü gösterir. Yüksek puan, altyapının güçlendirilmesi gereken ilçeleri işaret eder." },
+  { selector: ".analysis-panel", analysisCardId: "recommended-assembly", title: "Öneri Toplanma Alanları", text: "Resmî alan değildir. Güvenli park parçalarını, fay-obruk etkisini ve mahalle nüfusunu AFAD odaklı bir ön eleme senaryosunda birleştirir." },
+  { selector: ".analysis-panel", analysisCardId: "sinkhole-building", title: "Obruk Yoğunluğu ve Arazi Kullanımı", text: "319 obruk kaydının yoğunluğunu ve ESA WorldCover arazi kullanım dağılımını gösterir. Aynı karttan CORINE katmanını ve Öznitelik Tablosunu açabilirsin." },
   { selector: ".side-events-panel", title: "Acil Olaylar", text: "Olayların toplamını ve kategori dağılımını görür; Detay Gör ile sayfalı listeye geçersin." },
   { selector: ".resilience-score-panel", title: "Dirençlilik Skoru", text: "Renk haritasını buradan açabilirsin. Sağ panelde ilçe seçerek mahalle sıralamasını incelersin." },
   { selector: ".neighborhood-search", title: "Mahalle Arama", text: "Mahalle adını büyük-küçük harf fark etmeden yaz; harita seni doğrudan o bölgeye götürür." },
@@ -658,9 +665,45 @@ console.log(
       const rect = item.getBoundingClientRect();
       setGuideTargetRect({ left: Math.max(4, rect.left - 6), top: Math.max(4, rect.top - 6), width: rect.width + 12, height: rect.height + 12 });
     };
+    const refreshTarget = () => requestAnimationFrame(updateTarget);
     requestAnimationFrame(updateTarget);
     window.addEventListener("resize", updateTarget);
-    return () => window.removeEventListener("resize", updateTarget);
+    window.addEventListener("koriz-guide-target-refresh", refreshTarget);
+    return () => {
+      window.removeEventListener("resize", updateTarget);
+      window.removeEventListener("koriz-guide-target-refresh", refreshTarget);
+    };
+  }, [guideOpen, guideStep]);
+
+  // Rehber analiz panelinin acilis hareketini gosterir; analiz disindaki her adimda panel kapali kalir.
+  useEffect(() => {
+    const step = USER_GUIDE_STEPS[guideStep];
+    if (!guideOpen) {
+      setAnalysisOpen(false);
+      return undefined;
+    }
+
+    if (step?.analysisPanelDemo) {
+      setAnalysisOpen(false);
+      const openTimer = window.setTimeout(() => {
+        setAnalysisOpen(true);
+        window.dispatchEvent(new CustomEvent("koriz-guide-analysis-panel-demo"));
+      }, 230);
+      const closeTimer = window.setTimeout(() => setAnalysisOpen(false), 1250);
+      return () => {
+        window.clearTimeout(openTimer);
+        window.clearTimeout(closeTimer);
+      };
+    }
+
+    if (step?.analysisCardId) {
+      setAnalysisOpen(true);
+      window.dispatchEvent(new CustomEvent("koriz-guide-analysis-card", { detail: { id: step.analysisCardId } }));
+      return undefined;
+    }
+
+    setAnalysisOpen(false);
+    return undefined;
   }, [guideOpen, guideStep]);
 
   // --- ANA MAP EFFECT ---
