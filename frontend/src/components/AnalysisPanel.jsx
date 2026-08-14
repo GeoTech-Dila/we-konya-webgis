@@ -190,6 +190,7 @@ function AnalysisPanel({
   const [socioInfoOpen, setSocioInfoOpen] = useState(false);
   const [criticalFacilityInfoOpen, setCriticalFacilityInfoOpen] = useState(false);
   const [logisticsInfoOpen, setLogisticsInfoOpen] = useState(false);
+  const [sinkholeLanduseTableOpen, setSinkholeLanduseTableOpen] = useState(false);
 
   return (
     <>
@@ -680,8 +681,24 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
           <div style={{ borderRadius: 12, padding: "11px", background: "linear-gradient(135deg, #fffaf0, #ffffff)", border: "1px solid #fed7aa", color: "#431407" }}>
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
               <div><div style={{ fontSize: 11, fontWeight: 800 }}>ESA WorldCover 2021 obruk arazi kullanımı</div><div style={{ fontSize: 9, color: "#9a3412", marginTop: 2 }}>10 m çözünürlük · Konya il geneli</div></div>
+              <button type="button" onClick={() => setSinkholeLanduseTableOpen((open) => !open)} style={{ marginLeft: "auto", padding: "5px 8px", borderRadius: 8, border: "1px solid #fdba74", background: sinkholeLanduseTableOpen ? "#fff7ed" : "#ffffff", color: "#9a3412", cursor: "pointer", fontSize: 9, fontWeight: 800, whiteSpace: "nowrap" }}>
+                {sinkholeLanduseTableOpen ? "Tabloyu Kapat" : "Öznitelik Tablosunu Aç"}
+              </button>
               <div style={{ borderRadius: 999, padding: "4px 7px", background: "#fff7ed", color: "#c2410c", fontSize: 10, fontWeight: 900 }}>319 OBRUK</div>
             </div>
+            {sinkholeLanduseTableOpen && (
+              <div style={{ margin: "0 0 10px", border: "1px solid #fed7aa", borderRadius: 9, overflow: "hidden", background: "#ffffff" }}>
+                <div style={{ padding: "7px 8px", background: "#fff7ed", color: "#9a3412", fontSize: 10, fontWeight: 800 }}>Öznitelik Tablosu · ESA WorldCover 2021</div>
+                <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 44px 42px", gap: 6, padding: "6px 8px", color: "#7c2d12", fontSize: 9, fontWeight: 900 }}><span>Arazi kullanımı</span><span style={{ textAlign: "right" }}>Sayı</span><span style={{ textAlign: "right" }}>%</span></div>
+                {[
+                  ["Mera, otlak ve doğal bitki", "168", "52,7"],
+                  ["Tarım alanları", "146", "45,8"],
+                  ["Su kütleleri / göllenmiş alan", "4", "1,3"],
+                  ["Yerleşim / yapılaşmış alan", "1", "0,3"],
+                ].map(([label, count, percent]) => <div key={label} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 44px 42px", gap: 6, padding: "6px 8px", borderTop: "1px solid #ffedd5", color: "#431407", fontSize: 9 }}><span>{label}</span><span style={{ textAlign: "right", fontWeight: 800 }}>{count}</span><span style={{ textAlign: "right" }}>{percent}</span></div>)}
+                <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 44px 42px", gap: 6, padding: "7px 8px", borderTop: "1px solid #fed7aa", background: "#fffaf0", color: "#7c2d12", fontSize: 9, fontWeight: 900 }}><span>TOPLAM</span><span style={{ textAlign: "right" }}>319</span><span style={{ textAlign: "right" }}>100</span></div>
+              </div>
+            )}
             <div style={{ display: "grid", gap: 7 }}>
               {[
                 ["Mera, otlak ve doğal bitki", 168, "52,7", "#65a30d"],
