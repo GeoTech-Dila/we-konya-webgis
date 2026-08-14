@@ -158,6 +158,8 @@ function AnalysisPanel({
   onToggleSinkholeInventoryHeatmap,
   corineLandcoverVisible,
   onToggleCorineLandcover,
+  esaWorldcoverVisible,
+  onToggleEsaWorldcover,
   karapinarLogisticsVisible,
   karapinarLogisticsLayers,
   onToggleKarapinarLogistics,
@@ -593,6 +595,8 @@ height: `${panelHeight}px`,
               setSinkholeLanduseTableOpen={setSinkholeLanduseTableOpen}
               corineLandcoverVisible={corineLandcoverVisible}
               onToggleCorineLandcover={onToggleCorineLandcover}
+              esaWorldcoverVisible={esaWorldcoverVisible}
+              onToggleEsaWorldcover={onToggleEsaWorldcover}
               karapinarLogisticsVisible={karapinarLogisticsVisible}
               karapinarLogisticsLayers={karapinarLogisticsLayers}
               onToggleKarapinarLogistics={onToggleKarapinarLogistics}
@@ -606,7 +610,7 @@ height: `${panelHeight}px`,
   );
 }
 
-function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological, criticalServiceVisible, onToggleCriticalService, sinkholeInventoryHeatmapVisible, onToggleSinkholeInventoryHeatmap, sinkholeLanduseTableOpen, setSinkholeLanduseTableOpen, corineLandcoverVisible, onToggleCorineLandcover, karapinarLogisticsVisible, karapinarLogisticsLayers, onToggleKarapinarLogistics, onToggleKarapinarLogisticsGroup }) {
+function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological, criticalServiceVisible, onToggleCriticalService, sinkholeInventoryHeatmapVisible, onToggleSinkholeInventoryHeatmap, sinkholeLanduseTableOpen, setSinkholeLanduseTableOpen, corineLandcoverVisible, onToggleCorineLandcover, esaWorldcoverVisible, onToggleEsaWorldcover, karapinarLogisticsVisible, karapinarLogisticsLayers, onToggleKarapinarLogistics, onToggleKarapinarLogisticsGroup }) {
   return (
     <div
       style={{
@@ -768,6 +772,10 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
             {corineLandcoverVisible ? "✓ CORINE Arazi Örtüsünü Gizle" : "▶ CORINE Arazi Örtüsünü Haritada Göster"}
           </button>
           <div style={{ fontSize: 10, color: "#166534", lineHeight: 1.4, padding: "0 4px 8px" }}>6.344 CORINE 2018 poligonu yalnızca ekranda görünen alanda yüklenir. Haritada görünmesi için biraz yakınlaşmalısın.</div>
+          <button type="button" onClick={onToggleEsaWorldcover} style={{ width: "100%", padding: "9px 13px", borderRadius: 12, border: "1px solid rgba(124,58,237,0.44)", background: esaWorldcoverVisible ? "rgba(237,233,254,0.88)" : "rgba(255,255,255,0.14)", color: "#6d28d9", cursor: "pointer", fontWeight: 700, fontSize: 13, marginBottom: 7 }}>
+            {esaWorldcoverVisible ? "✓ ESA Arazi Örtüsünü Gizle" : "▶ ESA Arazi Örtüsünü Haritada Göster"}
+          </button>
+          <div style={{ fontSize: 10, color: "#6d28d9", lineHeight: 1.45, padding: "0 4px 8px" }}>ESA WorldCover 2021 · 10 m raster. Konya'nın mevcut ESA kapsamı gösterilir; kaynak dışındaki kuzey kesim şeffaf kalır.</div>
           <div style={{ marginBottom: 9, padding: "9px 10px", borderRadius: 10, background: "rgba(240,253,244,0.76)", border: "1px solid rgba(22,163,74,0.26)" }}>
             <div style={{ fontSize: 10, fontWeight: 800, color: "#14532d", marginBottom: 7 }}>Harita Lejantı · CORINE 2018</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 8px" }}>

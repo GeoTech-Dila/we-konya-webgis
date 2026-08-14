@@ -8,3 +8,9 @@ geopandas
 shapely
 pyproj
 fiona
+
+numpy
+
+Pillow
+
+rasterio

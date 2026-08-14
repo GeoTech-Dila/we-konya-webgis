@@ -66,6 +66,7 @@ function App() {
   const [sinkholeVisible, setSinkholeVisible] = useState(false);
   const [sinkholeInventoryHeatmapVisible, setSinkholeInventoryHeatmapVisible] = useState(false);
   const [corineLandcoverVisible, setCorineLandcoverVisible] = useState(false);
+  const [esaWorldcoverVisible, setEsaWorldcoverVisible] = useState(false);
   const [karapinarLogisticsVisible, setKarapinarLogisticsVisible] = useState(false);
   const [karapinarHospitalFastVisible, setKarapinarHospitalFastVisible] = useState(false);
   const [karapinarHospitalSafeVisible, setKarapinarHospitalSafeVisible] = useState(false);
@@ -220,6 +221,7 @@ const [service15Visible, setService15Visible] = useState(false);
       "buildings-unreachable": buildingsUnreachableVisible,
       "inaccessible-heatmap": heatmapVisible,
       "corine-landcover": corineLandcoverVisible,
+      "esa-worldcover-2021": esaWorldcoverVisible,
       "karapinar-logistics-routes": karapinarLogisticsVisible,
       "karapinar-logistics-isochrones": karapinarLogisticsVisible,
       "mahalleler": mahalleVisible,
@@ -237,6 +239,7 @@ const [service15Visible, setService15Visible] = useState(false);
     buildingsUnreachableVisible,
     heatmapVisible,
     corineLandcoverVisible,
+    esaWorldcoverVisible,
     karapinarLogisticsVisible,
   ]);
 
@@ -577,7 +580,7 @@ console.log(
     [
       setLayerVisible, setMahalleVisible, setToplanmaVisible,
       setRecommendedAssemblyVisible, setSocioGeologicalVisible, setCriticalServiceVisible,
-      setFaultVisible, setSinkholeVisible, setSinkholeInventoryHeatmapVisible, setCorineLandcoverVisible, setFacilityVisible,
+      setFaultVisible, setSinkholeVisible, setSinkholeInventoryHeatmapVisible, setCorineLandcoverVisible, setEsaWorldcoverVisible, setFacilityVisible,
       setRoadVisible, setEmergencyVisible, setProvinceBoundaryVisible,
       setParksVisible, setLawVisible, setHealthPointVisible,
       setHealthAreaVisible, setTransitPointVisible, setTransitAreaVisible,
@@ -598,7 +601,7 @@ console.log(
     [
       "district-fill", "district-outline", "district-hover",
       "mahalle-fill", "mahalle-outline", "toplanma-points",
-      "fault-lines-line", "sinkholes-fill", "sinkholes-outline", "sinkhole-inventory-heatmap", "corine-landcover-fill", "corine-landcover-outline",
+      "fault-lines-line", "sinkholes-fill", "sinkholes-outline", "sinkhole-inventory-heatmap", "corine-landcover-fill", "corine-landcover-outline", "esa-worldcover-2021",
       "critical-facilities-point", "major-roads-line", "province-boundary-line",
       "parks-fill", "parks-outline", "law-enforcement-point",
       "health-points-point", "health-areas-fill", "health-areas-outline",
@@ -899,6 +902,7 @@ addSrc("inaccessible-heatmap", {
       addSrc("sinkholes", { type: "geojson", data: EMPTY_FC });
       addSrc("sinkhole-inventory-heatmap", { type: "geojson", data: EMPTY_FC });
       addSrc("corine-landcover", { type: "vector", tiles: [`${API_URL}/tiles/corine-2018/{z}/{x}/{y}.pbf`], minzoom: 8, maxzoom: 14 });
+      addSrc("esa-worldcover-2021", { type: "raster", tiles: [`${API_URL}/tiles/esa-worldcover-2021/{z}/{x}/{y}.png`], tileSize: 256, minzoom: 5, maxzoom: 16 });
       addSrc("critical-facilities", { type: "geojson", data: EMPTY_FC });
       addSrc("major-roads", { type: "vector", tiles: [`${API_URL}/tiles/ana-yollar/{z}/{x}/{y}.pbf`], minzoom: 11, maxzoom: 16 });
       addSrc("emergency-points", { type: "geojson", data: EMPTY_FC });
@@ -1323,6 +1327,7 @@ addLyr({
       ];
       addLyr({ id: "corine-landcover-fill", type: "fill", source: "corine-landcover", "source-layer": "corine", minzoom: 8, layout: { visibility: "none" }, paint: { "fill-color": corineColor, "fill-opacity": 0.38 } });
       addLyr({ id: "corine-landcover-outline", type: "line", source: "corine-landcover", "source-layer": "corine", minzoom: 8, layout: { visibility: "none" }, paint: { "line-color": corineColor, "line-width": 0.55, "line-opacity": 0.62 } });
+      addLyr({ id: "esa-worldcover-2021", type: "raster", source: "esa-worldcover-2021", layout: { visibility: "none" }, paint: { "raster-opacity": 0.82, "raster-resampling": "nearest", "raster-fade-duration": 0 } });
       addLyr({ id: "critical-facilities-point", type: "circle", source: "critical-facilities", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#64748b", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.88 } });
       addLyr({ id: "major-roads-line", type: "line", source: "major-roads", "source-layer": "roads", minzoom: 11, layout: { visibility: "none" }, paint: { "line-color": "#64748b", "line-opacity": 0.58, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.7, 15, 2.4] } });
       addLyr({ id: "province-boundary-line", type: "line", source: "province-boundary", layout: { visibility: "none" }, paint: { "line-color": "#0f172a", "line-opacity": 0.86, "line-width": ["interpolate", ["linear"], ["zoom"], 7, 1.3, 12, 3] } });
@@ -2896,6 +2901,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         criticalServiceVisible={criticalServiceVisible}
         sinkholeInventoryHeatmapVisible={sinkholeInventoryHeatmapVisible}
         corineLandcoverVisible={corineLandcoverVisible}
+        esaWorldcoverVisible={esaWorldcoverVisible}
         karapinarLogisticsVisible={karapinarLogisticsVisible}
         karapinarLogisticsLayers={{ hospitalFast: karapinarHospitalFastVisible, hospitalSafe: karapinarHospitalSafeVisible, fireFast: karapinarFireFastVisible, fireSafe: karapinarFireSafeVisible, assemblyFast: karapinarAssemblyFastVisible, assemblySafe: karapinarAssemblySafeVisible, iso3: karapinarIso3Visible, iso5: karapinarIso5Visible, iso10: karapinarIso10Visible }}
         onToggleKarapinarLogistics={toggleKarapinarLogistics}
@@ -2916,6 +2922,13 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
               mapRef.current.setLayoutProperty(layerId, "visibility", nextVisible ? "visible" : "none");
             }
           });
+        }}
+        onToggleEsaWorldcover={() => {
+          const nextVisible = !esaWorldcoverVisible;
+          setEsaWorldcoverVisible(nextVisible);
+          if (mapRef.current?.getLayer("esa-worldcover-2021")) {
+            mapRef.current.setLayoutProperty("esa-worldcover-2021", "visibility", nextVisible ? "visible" : "none");
+          }
         }}
         onToggleSinkholeInventoryHeatmap={() => toggleDataLayer(
           !sinkholeInventoryHeatmapVisible,

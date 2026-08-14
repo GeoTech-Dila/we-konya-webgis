@@ -8,6 +8,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 import json
 import random
+from io import BytesIO
+from math import pi
+
+import numpy as np
+from PIL import Image
+import rasterio
+from rasterio.enums import Resampling
+from rasterio.windows import from_bounds
 from app.resilience import build_region_summary
 
 app = FastAPI()
@@ -28,6 +36,9 @@ app.add_middleware(
 )
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@postgis:5432/webgis")
+
+# Konya'nın mevcut ESA WorldCover 2021 kapsamı.
+ESA_WORLDCOVER_COG_URL = os.getenv("ESA_WORLDCOVER_COG_URL", "https://lrxzolwbujpmxfeljldc.supabase.co/storage/v1/object/public/map-data/esa_worldcover_2021_konya_mevcut_kapsam_10m_3857_cog%20%281%29.tif")
 
 connect_args = {}
 if "supabase" in DATABASE_URL or "pooler" in DATABASE_URL:
@@ -648,6 +659,69 @@ def corine_2018_tile(z: int, x: int, y: int):
         media_type="application/vnd.mapbox-vector-tile",
         headers={"Cache-Control": "public, max-age=86400"},
     )
+
+
+WEB_MERCATOR_LIMIT = 20037508.342789244
+
+
+def _web_mercator_tile_bounds(z: int, x: int, y: int) -> tuple[float, float, float, float]:
+    width = (WEB_MERCATOR_LIMIT * 2) / (1 << z)
+    minx = -WEB_MERCATOR_LIMIT + x * width
+    maxx = minx + width
+    maxy = WEB_MERCATOR_LIMIT - y * width
+    miny = maxy - width
+    return minx, miny, maxx, maxy
+
+
+@lru_cache(maxsize=512)
+def _esa_worldcover_png(z: int, x: int, y: int) -> bytes:
+    """COG'dan tek bir görünür 256 px PNG karosu üretir ve bellekte önbelleğe alır."""
+    if z < 5 or z > 16:
+        return b""
+
+    minx, miny, maxx, maxy = _web_mercator_tile_bounds(z, x, y)
+    with rasterio.Env(
+        GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
+        CPL_VSIL_CURL_ALLOWED_EXTENSIONS=".tif,.tiff",
+        GDAL_HTTP_MULTIRANGE="YES",
+    ):
+        with rasterio.open(ESA_WORLDCOVER_COG_URL) as dataset:
+            left, bottom, right, top = dataset.bounds
+            if maxx <= left or minx >= right or maxy <= bottom or miny >= top:
+                return b""
+            window = from_bounds(minx, miny, maxx, maxy, transform=dataset.transform)
+            band_indexes = [1, 2] if dataset.count >= 2 else [1]
+            data = dataset.read(
+                band_indexes,
+                window=window,
+                out_shape=(len(band_indexes), 256, 256),
+                boundless=True,
+                fill_value=0,
+                resampling=Resampling.nearest,
+            )
+            palette = dataset.colormap(1)
+
+    lut = np.zeros((256, 4), dtype=np.uint8)
+    for value, rgba in palette.items():
+        if 0 <= value < 256:
+            lut[value] = rgba
+    rgba = lut[data[0]]
+    alpha = data[1] if len(data) > 1 else np.where(data[0] == 0, 0, 255).astype(np.uint8)
+    rgba[:, :, 3] = np.minimum(rgba[:, :, 3], alpha)
+    image = Image.fromarray(rgba, mode="RGBA")
+    payload = BytesIO()
+    image.save(payload, format="PNG", optimize=True)
+    return payload.getvalue()
+
+
+@app.get("/tiles/esa-worldcover-2021/{z}/{x}/{y}.png", response_class=Response)
+def esa_worldcover_2021_tile(z: int, x: int, y: int):
+    """ESA WorldCover 2021'i yalnızca ekranda gereken raster karo olarak döndürür."""
+    try:
+        tile = _esa_worldcover_png(z, x, y)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"ESA raster karosu okunamadı: {exc}") from exc
+    return Response(content=tile, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/layers/corine-2018")
