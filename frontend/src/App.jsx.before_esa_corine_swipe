@@ -67,8 +67,6 @@ function App() {
   const [sinkholeInventoryHeatmapVisible, setSinkholeInventoryHeatmapVisible] = useState(false);
   const [corineLandcoverVisible, setCorineLandcoverVisible] = useState(false);
   const [esaWorldcoverVisible, setEsaWorldcoverVisible] = useState(false);
-  const [esaCorineCompareVisible, setEsaCorineCompareVisible] = useState(false);
-  const [esaComparePosition, setEsaComparePosition] = useState(50);
   const [karapinarLogisticsVisible, setKarapinarLogisticsVisible] = useState(false);
   const [karapinarHospitalFastVisible, setKarapinarHospitalFastVisible] = useState(false);
   const [karapinarHospitalSafeVisible, setKarapinarHospitalSafeVisible] = useState(false);
@@ -174,8 +172,6 @@ const [service15Visible, setService15Visible] = useState(false);
   const mahalleDataRef = useRef(null);
   const mahalleRequestRef = useRef(null);
   const mapRef = useRef(null);
-  const esaCompareMapRef = useRef(null);
-  const esaCompareRootRef = useRef(null);
   const dataSourcesDragRef = useRef(null);
 
   const loadedLayersRef = useRef({});
@@ -758,85 +754,6 @@ console.log(
     setAnalysisOpen(false);
     return undefined;
   }, [guideOpen, guideStep]);
-
-  const updateEsaComparePosition = (event) => {
-    const root = esaCompareRootRef.current;
-    if (!root) return;
-    const bounds = root.getBoundingClientRect();
-    const next = ((event.clientX - bounds.left) / bounds.width) * 100;
-    setEsaComparePosition(Math.max(8, Math.min(92, next)));
-  };
-
-  // Karşılaştırma açıldığında ikinci, etkileşimsiz bir harita yalnızca ESA rasterını çizer.
-  // Ana harita CORINE'i sağda tutar; iki harita aynı kamera hareketini paylaşır.
-  useEffect(() => {
-    if (!esaCorineCompareVisible || !mapReady || !esaCompareRootRef.current || !mapRef.current) return undefined;
-    const primary = mapRef.current;
-    const compareMap = new maplibregl.Map({
-      container: esaCompareRootRef.current,
-      interactive: false,
-      attributionControl: false,
-      style: {
-        version: 8,
-        sources: {
-          "carto-light": {
-            type: "raster",
-            tiles: [
-              "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-              "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-              "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-            ],
-            tileSize: 256,
-          },
-        },
-        layers: [{ id: "carto-light-layer", type: "raster", source: "carto-light" }],
-      },
-      center: primary.getCenter().toArray(),
-      zoom: primary.getZoom(),
-      bearing: primary.getBearing(),
-      pitch: primary.getPitch(),
-    });
-    esaCompareMapRef.current = compareMap;
-
-    let queued = false;
-    const syncCamera = () => {
-      if (queued || !compareMap.loaded()) return;
-      queued = true;
-      requestAnimationFrame(() => {
-        queued = false;
-        compareMap.jumpTo({
-          center: primary.getCenter(),
-          zoom: primary.getZoom(),
-          bearing: primary.getBearing(),
-          pitch: primary.getPitch(),
-        });
-      });
-    };
-    const resizeComparison = () => compareMap.resize();
-    primary.on("move", syncCamera);
-    primary.on("resize", resizeComparison);
-    compareMap.on("load", () => {
-      compareMap.addSource("esa-worldcover-2021", {
-        type: "raster",
-        tiles: [`${API_URL}/tiles/esa-worldcover-2021/{z}/{x}/{y}.png`],
-        tileSize: 256,
-        minzoom: 5,
-        maxzoom: 16,
-      });
-      compareMap.addLayer({
-        id: "esa-worldcover-2021", type: "raster", source: "esa-worldcover-2021",
-        paint: { "raster-opacity": 0.92, "raster-resampling": "nearest", "raster-fade-duration": 0 },
-      });
-      syncCamera();
-    });
-
-    return () => {
-      primary.off("move", syncCamera);
-      primary.off("resize", resizeComparison);
-      esaCompareMapRef.current = null;
-      compareMap.remove();
-    };
-  }, [esaCorineCompareVisible, mapReady]);
 
   // --- ANA MAP EFFECT ---
   useEffect(() => {
@@ -2178,25 +2095,6 @@ useEffect(() => {
   return (
     <div style={{ width: "100vw", height: "100vh", position: "relative", overflow: "hidden", background: "#e5e7eb" }}>
       <div id="map" style={{ width: "100%", height: "100%" }} />
-      {esaCorineCompareVisible && <>
-        <div
-          ref={esaCompareRootRef}
-          id="esa-corine-compare-map"
-          aria-hidden="true"
-          style={{ position: "absolute", inset: 0, zIndex: 4, pointerEvents: "none", clipPath: `inset(0 ${100 - esaComparePosition}% 0 0)` }}
-        />
-        <div
-          aria-label="ESA ve CORINE karşılaştırma ayırıcı"
-          onPointerDown={(event) => { event.currentTarget.setPointerCapture?.(event.pointerId); updateEsaComparePosition(event); }}
-          onPointerMove={(event) => { if (event.currentTarget.hasPointerCapture?.(event.pointerId)) updateEsaComparePosition(event); }}
-          style={{ position: "absolute", zIndex: 9, top: 0, bottom: 0, left: `${esaComparePosition}%`, width: 42, transform: "translateX(-50%)", cursor: "ew-resize", touchAction: "none", display: "flex", justifyContent: "center", pointerEvents: "auto" }}
-        >
-          <div style={{ width: 3, height: "100%", background: "rgba(255,255,255,0.96)", boxShadow: "0 0 0 1px rgba(79,70,229,0.5), 0 0 14px rgba(15,23,42,0.28)" }} />
-          <div style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", width: 38, height: 38, borderRadius: 12, display: "grid", placeItems: "center", background: "#ffffff", border: "2px solid #7c3aed", color: "#6d28d9", boxShadow: "0 6px 18px rgba(15,23,42,0.25)", fontWeight: 900, fontSize: 17 }}>↔</div>
-          <div style={{ position: "absolute", top: 18, left: 8, transform: "translateX(-100%)", padding: "5px 8px", borderRadius: 7, background: "rgba(109,40,217,0.92)", color: "white", fontSize: 10, fontWeight: 800, whiteSpace: "nowrap" }}>ESA 2021</div>
-          <div style={{ position: "absolute", top: 18, right: 8, transform: "translateX(100%)", padding: "5px 8px", borderRadius: 7, background: "rgba(21,128,61,0.92)", color: "white", fontSize: 10, fontWeight: 800, whiteSpace: "nowrap" }}>CORINE 2018</div>
-        </div>
-      </>}
       <button className="map-home-button" title="Başlangıç görünümüne dön" aria-label="Başlangıç görünümüne dön"
         onClick={() => mapRef.current?.flyTo({ center: [32.55, 37.87], zoom: 7.05, pitch: 55, bearing: -18, duration: 1200 })}>
         ⌂
@@ -3004,7 +2902,6 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         sinkholeInventoryHeatmapVisible={sinkholeInventoryHeatmapVisible}
         corineLandcoverVisible={corineLandcoverVisible}
         esaWorldcoverVisible={esaWorldcoverVisible}
-        esaCorineCompareVisible={esaCorineCompareVisible}
         karapinarLogisticsVisible={karapinarLogisticsVisible}
         karapinarLogisticsLayers={{ hospitalFast: karapinarHospitalFastVisible, hospitalSafe: karapinarHospitalSafeVisible, fireFast: karapinarFireFastVisible, fireSafe: karapinarFireSafeVisible, assemblyFast: karapinarAssemblyFastVisible, assemblySafe: karapinarAssemblySafeVisible, iso3: karapinarIso3Visible, iso5: karapinarIso5Visible, iso10: karapinarIso10Visible }}
         onToggleKarapinarLogistics={toggleKarapinarLogistics}
@@ -3031,19 +2928,6 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
           setEsaWorldcoverVisible(nextVisible);
           if (mapRef.current?.getLayer("esa-worldcover-2021")) {
             mapRef.current.setLayoutProperty("esa-worldcover-2021", "visibility", nextVisible ? "visible" : "none");
-          }
-        }}
-        onToggleEsaCorineComparison={() => {
-          const nextVisible = !esaCorineCompareVisible;
-          setEsaCorineCompareVisible(nextVisible);
-          if (nextVisible) {
-            // Sağ tarafta yalnız CORINE görünür; ESA ayrı, sol taraftaki karşılaştırma haritasına çizilir.
-            setEsaWorldcoverVisible(false);
-            if (mapRef.current?.getLayer("esa-worldcover-2021")) mapRef.current.setLayoutProperty("esa-worldcover-2021", "visibility", "none");
-            setCorineLandcoverVisible(true);
-            ["corine-landcover-fill", "corine-landcover-outline"].forEach((layerId) => {
-              if (mapRef.current?.getLayer(layerId)) mapRef.current.setLayoutProperty(layerId, "visibility", "visible");
-            });
           }
         }}
         onToggleSinkholeInventoryHeatmap={() => toggleDataLayer(

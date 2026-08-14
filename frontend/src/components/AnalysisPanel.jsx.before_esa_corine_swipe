@@ -160,8 +160,6 @@ function AnalysisPanel({
   onToggleCorineLandcover,
   esaWorldcoverVisible,
   onToggleEsaWorldcover,
-  esaCorineCompareVisible,
-  onToggleEsaCorineComparison,
   karapinarLogisticsVisible,
   karapinarLogisticsLayers,
   onToggleKarapinarLogistics,
@@ -599,8 +597,6 @@ height: `${panelHeight}px`,
               onToggleCorineLandcover={onToggleCorineLandcover}
               esaWorldcoverVisible={esaWorldcoverVisible}
               onToggleEsaWorldcover={onToggleEsaWorldcover}
-              esaCorineCompareVisible={esaCorineCompareVisible}
-              onToggleEsaCorineComparison={onToggleEsaCorineComparison}
               karapinarLogisticsVisible={karapinarLogisticsVisible}
               karapinarLogisticsLayers={karapinarLogisticsLayers}
               onToggleKarapinarLogistics={onToggleKarapinarLogistics}
@@ -614,7 +610,7 @@ height: `${panelHeight}px`,
   );
 }
 
-function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological, criticalServiceVisible, onToggleCriticalService, sinkholeInventoryHeatmapVisible, onToggleSinkholeInventoryHeatmap, sinkholeLanduseTableOpen, setSinkholeLanduseTableOpen, corineLandcoverVisible, onToggleCorineLandcover, esaWorldcoverVisible, onToggleEsaWorldcover, esaCorineCompareVisible, onToggleEsaCorineComparison, karapinarLogisticsVisible, karapinarLogisticsLayers, onToggleKarapinarLogistics, onToggleKarapinarLogisticsGroup }) {
+function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological, criticalServiceVisible, onToggleCriticalService, sinkholeInventoryHeatmapVisible, onToggleSinkholeInventoryHeatmap, sinkholeLanduseTableOpen, setSinkholeLanduseTableOpen, corineLandcoverVisible, onToggleCorineLandcover, esaWorldcoverVisible, onToggleEsaWorldcover, karapinarLogisticsVisible, karapinarLogisticsLayers, onToggleKarapinarLogistics, onToggleKarapinarLogisticsGroup }) {
   return (
     <div
       style={{
@@ -780,10 +776,6 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
             {esaWorldcoverVisible ? "✓ ESA Arazi Örtüsünü Gizle" : "▶ ESA Arazi Örtüsünü Haritada Göster"}
           </button>
           <div style={{ fontSize: 10, color: "#6d28d9", lineHeight: 1.45, padding: "0 4px 8px" }}>ESA WorldCover 2021 · 10 m raster. Konya'nın mevcut ESA kapsamı gösterilir; kaynak dışındaki kuzey kesim şeffaf kalır.</div>
-          <button type="button" onClick={onToggleEsaCorineComparison} style={{ width: "100%", padding: "10px 13px", borderRadius: 12, border: "1px solid rgba(109,40,217,0.52)", background: esaCorineCompareVisible ? "linear-gradient(135deg, #6d28d9, #7c3aed)" : "rgba(255,255,255,0.68)", color: esaCorineCompareVisible ? "#ffffff" : "#6d28d9", cursor: "pointer", fontWeight: 800, fontSize: 13, marginBottom: 7, boxShadow: esaCorineCompareVisible ? "0 5px 14px rgba(109,40,217,0.24)" : "none" }}>
-            {esaCorineCompareVisible ? "✓ ESA – CORINE Karşılaştırmasını Kapat" : "↔ ESA – CORINE Karşılaştır"}
-          </button>
-          <div style={{ fontSize: 10, color: "#5b21b6", lineHeight: 1.4, padding: "0 4px 9px" }}>Sürgüyü sağa veya sola taşı: solda ESA WorldCover 2021, sağda CORINE 2018 görünür.</div>
           <div style={{ marginBottom: 9, padding: "9px 10px", borderRadius: 10, background: "rgba(240,253,244,0.76)", border: "1px solid rgba(22,163,74,0.26)" }}>
             <div style={{ fontSize: 10, fontWeight: 800, color: "#14532d", marginBottom: 7 }}>Harita Lejantı · CORINE 2018</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 8px" }}>
