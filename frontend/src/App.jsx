@@ -90,6 +90,7 @@ function App() {
   const [resilienceVisible, setResilienceVisible] = useState(false);
   const [resilienceInfoOpen, setResilienceInfoOpen] = useState(false);
   const [resilienceRankingHelpOpen, setResilienceRankingHelpOpen] = useState(false);
+  const [emergencyHeatmapInfoOpen, setEmergencyHeatmapInfoOpen] = useState(false);
   const [buildingsVisible, setBuildingsVisible] = useState(false);
 
 const [buildings5Visible, setBuildings5Visible] = useState(false);
@@ -2431,6 +2432,17 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         </div>
       )}
 
+      {emergencyHeatmapInfoOpen && <div style={{ position: "fixed", inset: 0, zIndex: 31, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", background: "rgba(15,23,42,0.32)", backdropFilter: "blur(4px)" }} onClick={() => setEmergencyHeatmapInfoOpen(false)}>
+        <div onClick={(event) => event.stopPropagation()} style={{ width: "min(390px, 100%)", borderRadius: "18px", padding: "20px", background: "rgba(255,255,255,0.98)", color: "#0f172a", boxShadow: "0 20px 55px rgba(15,23,42,0.25)" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "12px" }}>
+            <div><div style={{ color: "#dc2626", fontSize: "11px", fontWeight: "800", letterSpacing: ".05em", textTransform: "uppercase" }}>Acil olay katmanı</div><div style={{ marginTop: "4px", fontSize: "18px", fontWeight: "800" }}>Olay seçimi ve ısı haritası</div></div>
+            <button onClick={() => setEmergencyHeatmapInfoOpen(false)} aria-label="Bilgi panelini kapat" style={{ border: "none", background: "#fef2f2", color: "#dc2626", borderRadius: "9px", cursor: "pointer", fontSize: "18px", width: "30px", height: "30px" }}>×</button>
+          </div>
+          <p style={{ margin: 0, color: "#475569", fontSize: "13px", lineHeight: 1.6 }}>Listeden herhangi bir acil olaya tıkladığında, ilgili olay konumu haritada odaklanır ve <strong>Acil Olaylar Isı Haritası</strong> otomatik olarak açılır.</p>
+          <div style={{ marginTop: "12px", padding: "10px 12px", borderRadius: "10px", background: "#fef2f2", border: "1px solid rgba(220,38,38,0.18)", color: "#991b1b", fontSize: "12px", lineHeight: 1.5 }}>Isı haritasındaki koyu kırmızı alanlar, olay kayıtlarının daha yoğun olduğu yerleri gösterir. Bu görünüm tek başına risk sınıfı veya kesin tehlike sınırı anlamına gelmez.</div>
+        </div>
+      </div>}
+
       {resilienceRankingHelpOpen && <div style={{ position: "fixed", inset: 0, zIndex: 31, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", background: "rgba(15,23,42,0.32)", backdropFilter: "blur(4px)" }} onClick={() => setResilienceRankingHelpOpen(false)}>
         <div onClick={(e) => e.stopPropagation()} style={{ width: "min(390px, 100%)", borderRadius: "18px", padding: "20px", background: "rgba(255,255,255,0.98)", color: "#0f172a", boxShadow: "0 20px 55px rgba(15,23,42,0.25)" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "12px" }}>
@@ -2459,6 +2471,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
           style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "16px", fontWeight: "700" }}>
             <span>{activeSideTab === "events" ? "Acil Olaylar Sınıflandırması" : (resilienceDetailsOpen ? "Mahalle Bazlı Dirençlilik Sıralaması" : "İlçe Bazlı Dirençlilik Skoru Haritası")}</span>
+            {activeSideTab === "events" && <button onClick={(e) => { e.stopPropagation(); setEmergencyHeatmapInfoOpen(true); }} title="Acil olay ısı haritası hakkında bilgi" style={{ border: "none", background: "transparent", color: "#dc2626", cursor: "pointer", fontSize: "14px", padding: 0, lineHeight: 1 }}>ⓘ</button>}
             {activeSideTab === "resilience" && <button onClick={(e) => { e.stopPropagation(); setResilienceRankingHelpOpen(true); }} title="Mahalle sıralamasını nasıl görüntüleyeceğini göster" style={{ border: "none", background: "transparent", color: "#64748b", cursor: "pointer", fontSize: "14px", padding: 0, lineHeight: 1 }}>ⓘ</button>}
           </div>
 {activeSideTab === "events" && eventsPanelOpen && <button className="clear-emergency-overlay-button" onClick={(e) => { e.stopPropagation(); clearEmergencyOverlay(); }}
