@@ -665,11 +665,21 @@ console.log(
       const rect = item.getBoundingClientRect();
       setGuideTargetRect({ left: Math.max(4, rect.left - 6), top: Math.max(4, rect.top - 6), width: rect.width + 12, height: rect.height + 12 });
     };
-    const refreshTarget = () => requestAnimationFrame(updateTarget);
+    let refreshFrame = null;
+    const refreshTarget = () => {
+      const startedAt = performance.now();
+      const followPanel = (now) => {
+        updateTarget();
+        if (now - startedAt < 720) refreshFrame = requestAnimationFrame(followPanel);
+      };
+      if (refreshFrame) cancelAnimationFrame(refreshFrame);
+      refreshFrame = requestAnimationFrame(followPanel);
+    };
     requestAnimationFrame(updateTarget);
     window.addEventListener("resize", updateTarget);
     window.addEventListener("koriz-guide-target-refresh", refreshTarget);
     return () => {
+      if (refreshFrame) cancelAnimationFrame(refreshFrame);
       window.removeEventListener("resize", updateTarget);
       window.removeEventListener("koriz-guide-target-refresh", refreshTarget);
     };
@@ -688,8 +698,8 @@ console.log(
       const openTimer = window.setTimeout(() => {
         setAnalysisOpen(true);
         window.dispatchEvent(new CustomEvent("koriz-guide-analysis-panel-demo"));
-      }, 230);
-      const closeTimer = window.setTimeout(() => setAnalysisOpen(false), 1250);
+      }, 100);
+      const closeTimer = window.setTimeout(() => setAnalysisOpen(false), 820);
       return () => {
         window.clearTimeout(openTimer);
         window.clearTimeout(closeTimer);
