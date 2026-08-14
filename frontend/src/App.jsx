@@ -1435,13 +1435,8 @@ addLyr({
       const viewportSourcePaths = [
 
 
-  ["service-area-5-lines", "/service-area-5-lines"],
-  ["service-area-10-lines", "/service-area-10-lines"],
-  ["service-area-15-lines", "/service-area-15-lines"],
-
-  ["service-area-5-polygons", "/service-area-5-polygons"],
-  ["service-area-10-polygons", "/service-area-10-polygons"],
-  ["service-area-15-polygons", "/service-area-15-polygons"],
+  // Erişim alanları harita sürüklenirken tekrar çağrılmaz. Tam veri yalnız
+  // kullanıcı ilgili süreyi açtığında bir kez getirilir.
 
   ["buildings-5", "/buildings-5"],
   ["buildings-10", "/buildings-10"],
@@ -1535,6 +1530,29 @@ reloadViewportSources();
     if (!map || !map.getLayer("mahalle-outline")) return;
     map.setPaintProperty("mahalle-outline", "line-opacity", mahalleOpacity);
   }, [mahalleOpacity]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const load = async (minutes) => {
+      const loadOne = async (sourceId, path) => {
+        if (loadedLayersRef.current[sourceId]) return;
+        const response = await fetch(`${API_URL}${path}`);
+        if (!response.ok) return;
+        map.getSource(sourceId)?.setData(await response.json());
+        loadedLayersRef.current[sourceId] = true;
+      };
+      // Poligonlar hafiftir ve tam kapsamı ilk anda gösterir.
+      await loadOne(`service-area-${minutes}-polygons`, `/service-area-${minutes}-polygons`);
+      // Yoğun çizgiler yalnız yakın harita görünümünde ayrıca istenir.
+      if (map.getZoom() >= 10) {
+        await loadOne(`service-area-${minutes}-lines`, `/service-area-${minutes}-lines`);
+      }
+    };
+    if (service5Visible) load(5).catch(() => {});
+    if (service10Visible) load(10).catch(() => {});
+    if (service15Visible) load(15).catch(() => {});
+  }, [service5Visible, service10Visible, service15Visible]);
 
   useEffect(() => {
 
