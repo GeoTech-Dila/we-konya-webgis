@@ -23,6 +23,28 @@ const SINKHOLE_LANDUSE_ROWS = [
 
 const analysisCards = [
   {
+    id: "groundwater",
+    title: "Yeraltı Suyu & Obruk",
+    method: "IDW Interpolation",
+    status: "Hazırlanıyor",
+    summary:
+      "Yeraltı su seviyesi düşümü ile obruk oluşumları arasındaki korelasyonu yüzey analizi olarak üretir.",
+    inputs: ["Kuyu ölçüm noktaları", "Obruk envanteri", "Zaman aralığı"],
+    output: "Risk yüzeyi ve yüksek duyarlılık zonları",
+    image: "/heatmap1_gorsel.png",
+  },
+  {
+    id: "exposure",
+    title: "Kritik Altyapı Maruziyeti",
+    method: "Select by Location + Buffer",
+    status: "Gerçek veri hazır",
+    summary:
+      "Sağlık tesisi, okul, bina ve altyapıların fay tamponu veya obruk duyarlı alanlarla çakışmasını bulur.",
+    inputs: ["Kritik tesis katmanı", "Risk bölgesi", "Tampon mesafesi"],
+    output: "Risk altında kalan tesis listesi",
+    image: "/network_centrality_gorsel.png",
+  },
+  {
     id: "vulnerability",
     title: "Sosyo-Ekonomik Kırılganlık ve Jeolojik Tehlike",
     method: "İlçe Bazlı Birleşik Risk Sınıflaması",
