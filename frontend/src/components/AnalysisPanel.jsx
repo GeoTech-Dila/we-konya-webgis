@@ -47,13 +47,13 @@ const analysisCards = [
   },
   {
     id: "logistics",
-    title: "Lojistik Güzergahlar",
-    method: "Network Analysis",
-    status: "Gerçek veri hazır",
+    title: "Karapınar Afet Lojistik Erişim ve Risk Analizi",
+    method: "Ağ Analizi · Hızlı/Güvenli Rota + İzokron",
+    status: "Doğrulanmış pilot analiz hazır",
     summary:
-      "Acil ulaşım yollarının afet bölgelerinden geçip geçmediğini inceler ve alternatif sevkiyat rotaları üretir.",
-    inputs: ["Acil ulaşım yolları", "Afet bölgesi", "Kapanan yollar"],
-    output: "Alternatif rota önerileri",
+      "Karapınar AFAD lojistik üssünden hastane, itfaiye ve toplanma alanlarına erişimi; fay ve obruk etkilerinden kaçınan güvenli alternatiflerle birlikte karşılaştırır.",
+    inputs: ["AFAD lojistik üssü", "Yol ağı", "Fay ve obruk risk bantları", "Kritik tesisler"],
+    output: "Hızlı/riskli ve güvenli alternatif rotalar ile 3-10 dakikalık erişim alanı",
     image: "/network_centrality_gorsel.png",
   },
   {
@@ -148,6 +148,8 @@ function AnalysisPanel({
   onToggleSinkholeInventoryHeatmap,
   corineLandcoverVisible,
   onToggleCorineLandcover,
+  karapinarLogisticsVisible,
+  onToggleKarapinarLogistics,
 
   activeAnalysisLayer,
   setActiveAnalysisLayer,
@@ -185,6 +187,7 @@ function AnalysisPanel({
   const activeCard = analysisCards.find((card) => card.id === activeCardId) || analysisCards[0];
   const [socioInfoOpen, setSocioInfoOpen] = useState(false);
   const [criticalFacilityInfoOpen, setCriticalFacilityInfoOpen] = useState(false);
+  const [logisticsInfoOpen, setLogisticsInfoOpen] = useState(false);
 
   return (
     <>
@@ -354,6 +357,15 @@ height: `${panelHeight}px`,
             <div style={{ color: "#6366f1", fontSize: 12, fontWeight: 800 }}>{activeCard.method}</div>
             <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 2 }}>
               <div style={{ fontSize: 16, fontWeight: 800 }}>{activeCard.title}</div>
+              {activeCard.id === "logistics" && (
+                <button
+                  type="button"
+                  aria-label="Karapınar lojistik analizi hakkında bilgi"
+                  title="Analiz yöntemi hakkında bilgi"
+                  onClick={() => setLogisticsInfoOpen((open) => !open)}
+                  style={{ width: 20, height: 20, padding: 0, borderRadius: "50%", border: "1px solid #86efac", background: "#f0fdf4", color: "#166534", cursor: "pointer", fontWeight: 800, lineHeight: 1 }}
+                >ⓘ</button>
+              )}
               {activeCard.id === "facility-access" && (
                 <button
                   type="button"
@@ -373,6 +385,18 @@ height: `${panelHeight}px`,
                 >ⓘ</button>
               )}
             </div>
+            {activeCard.id === "logistics" && logisticsInfoOpen && (
+              <div style={{ marginTop: 8, padding: "11px", borderRadius: 11, background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#14532d", fontSize: 11, lineHeight: 1.52, maxHeight: 250, overflowY: "auto" }}>
+                <strong style={{ display: "block", marginBottom: 5, fontSize: 12 }}>Bu pilot analiz neyi gösterir?</strong>
+                <p style={{ margin: "0 0 7px" }}>Karapınar Kaymakamlığı AFAD İlçe Lojistik Üssü başlangıç kabul edilmiştir. Buradan hastane, itfaiye ve toplanma alanlarına iki rota türü karşılaştırılır: en hızlı rota ve fay/obruk etkilerini baypas eden güvenli alternatif rota.</p>
+                <strong>Rota renkleri</strong>
+                <p style={{ margin: "3px 0 7px" }}><b style={{ color: "#b91c1c" }}>Kırmızı</b> en hızlı ancak jeolojik risk bandından geçebilen güzergâhı; <b style={{ color: "#15803d" }}>yeşil</b> ise güvenliği önceleyen alternatif güzergâhı temsil eder.</p>
+                <strong>10 dakika erişim alanı</strong>
+                <p style={{ margin: "3px 0 7px" }}>QNEAT3 en hızlı yol yaklaşımı ve 50 km/s varsayılan hız ile 3, 5 ve 10 dakikalık erişim bantları üretilmiştir. Raporun bulgusuna göre ana yapı stokunun %43,10’u 10 dakika içinde kalırken %56,90’u, yani 14.352 bina, bu sürenin dışında kalır.</p>
+                <strong>Nasıl yorumlanmalı?</strong>
+                <p style={{ margin: "3px 0" }}>Bu sonuç resmî trafik süresi veya acil müdahale garantisi değildir. Yol kapanması, anlık trafik ve ikincil tehlikeler ayrıca değerlendirilmelidir; ancak alt-lojistik/müdahale noktaları ve güvenli koridor yatırımları için güçlü bir pilot karar desteğidir.</p>
+              </div>
+            )}
             {activeCard.id === "facility-access" && criticalFacilityInfoOpen && (
               <div style={{ marginTop: 8, padding: "12px", borderRadius: 11, background: "#fff7f7", border: "1px solid #fecaca", color: "#7f1d1d", fontSize: 11, lineHeight: 1.55, maxHeight: 250, overflowY: "auto" }}>
                 <strong style={{ display: "block", marginBottom: 6, fontSize: 12 }}>Kritik tesis hizmet yükü neyi gösterir?</strong>
@@ -452,6 +476,8 @@ height: `${panelHeight}px`,
               onToggleSinkholeInventoryHeatmap={onToggleSinkholeInventoryHeatmap}
               corineLandcoverVisible={corineLandcoverVisible}
               onToggleCorineLandcover={onToggleCorineLandcover}
+              karapinarLogisticsVisible={karapinarLogisticsVisible}
+              onToggleKarapinarLogistics={onToggleKarapinarLogistics}
             />
           )}
         </div>
@@ -461,7 +487,7 @@ height: `${panelHeight}px`,
   );
 }
 
-function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological, criticalServiceVisible, onToggleCriticalService, sinkholeInventoryHeatmapVisible, onToggleSinkholeInventoryHeatmap, corineLandcoverVisible, onToggleCorineLandcover }) {
+function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological, criticalServiceVisible, onToggleCriticalService, sinkholeInventoryHeatmapVisible, onToggleSinkholeInventoryHeatmap, corineLandcoverVisible, onToggleCorineLandcover, karapinarLogisticsVisible, onToggleKarapinarLogistics }) {
   return (
     <div
       style={{
@@ -473,6 +499,22 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
         overflowY: "auto",
       }}
     >
+      {card.id === "logistics" && (
+        <div style={{ gridColumn: "1 / -1", padding: "4px 4px 2px" }}>
+          <button type="button" onClick={onToggleKarapinarLogistics} style={{ width: "100%", padding: "9px 13px", borderRadius: 12, border: "1px solid rgba(22,163,74,0.52)", background: karapinarLogisticsVisible ? "rgba(220,252,231,0.82)" : "rgba(255,255,255,0.14)", color: "#166534", cursor: "pointer", fontWeight: 700, fontSize: 13, marginBottom: 7 }}>
+            {karapinarLogisticsVisible ? "✓ Karapınar Lojistik Analizini Gizle" : "▶ Karapınar Lojistik Analizini Haritada Göster"}
+          </button>
+          <div style={{ padding: "9px 10px", borderRadius: 10, background: "rgba(240,253,244,0.82)", color: "#14532d", fontSize: 11, lineHeight: 1.45, marginBottom: 8 }}>
+            Harita Karapınar pilot alanına yönelir. Rotalar, AFAD lojistik üssünden hastane, itfaiye ve toplanma alanlarına erişimi gösterir.
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, fontSize: 10, color: "#334155" }}>
+            <div style={{ padding: "7px 8px", borderRadius: 9, background: "rgba(254,242,242,0.9)", border: "1px solid #fecaca" }}><span style={{ display: "inline-block", width: 18, height: 3, background: "#dc2626", verticalAlign: "middle", marginRight: 5 }} />Kırmızı: en hızlı / riskli rota</div>
+            <div style={{ padding: "7px 8px", borderRadius: 9, background: "rgba(240,253,244,0.9)", border: "1px solid #bbf7d0" }}><span style={{ display: "inline-block", width: 18, height: 3, background: "#16a34a", verticalAlign: "middle", marginRight: 5 }} />Yeşil: güvenli alternatif</div>
+            <div style={{ gridColumn: "1 / -1", padding: "7px 8px", borderRadius: 9, background: "rgba(239,246,255,0.9)", border: "1px solid #bfdbfe" }}>Mavi erişim bantları: AFAD lojistik üssünden 3, 5 ve 10 dakika içindeki kapsama alanı.</div>
+          </div>
+        </div>
+      )}
+
       {card.id === "vulnerability" && (
         <div style={{ gridColumn: "1 / -1", padding: "4px 4px 0" }}>
           <button type="button" onClick={onToggleSocioGeological} style={{ width: "100%", padding: "9px 13px", borderRadius: 12, border: "1px solid rgba(220,38,38,0.45)", background: socioGeologicalVisible ? "rgba(254,226,226,0.88)" : "rgba(255,255,255,0.12)", color: "#991b1b", cursor: "pointer", fontWeight: 700, fontSize: 13, marginBottom: 6 }}>

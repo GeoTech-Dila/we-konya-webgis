@@ -219,6 +219,48 @@ def sosyo_ekonomik_jeolojik_tehlike():
         return conn.execute(query).scalar()
 
 
+@app.get("/layers/karapinar-lojistik-rotalar")
+def karapinar_loji_rotalar():
+    """Return the pilot area's fast-risky and safe alternative routes."""
+    query = text("""
+        SELECT json_build_object(
+            'type', 'FeatureCollection',
+            'features', COALESCE(json_agg(f.feature), '[]'::json)
+        )
+        FROM (
+            SELECT json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(geom, 4326))::json,
+                'properties', COALESCE(to_jsonb(t) - 'geom', '{}'::jsonb)
+            ) AS feature
+            FROM public.karapinar_afet_lojistik_rotalar_2026 AS t
+        ) AS f;
+    """)
+    with engine.connect() as conn:
+        return conn.execute(query).scalar()
+
+
+@app.get("/layers/karapinar-lojistik-izokron-10dk")
+def karapinar_loji_izokron():
+    """Return the 10-minute AFAD logistics-base access bands."""
+    query = text("""
+        SELECT json_build_object(
+            'type', 'FeatureCollection',
+            'features', COALESCE(json_agg(f.feature), '[]'::json)
+        )
+        FROM (
+            SELECT json_build_object(
+                'type', 'Feature',
+                'geometry', ST_AsGeoJSON(ST_Transform(geom, 4326))::json,
+                'properties', COALESCE(to_jsonb(t) - 'geom', '{}'::jsonb)
+            ) AS feature
+            FROM public.karapinar_afet_lojistik_izokron_10dk_2026 AS t
+        ) AS f;
+    """)
+    with engine.connect() as conn:
+        return conn.execute(query).scalar()
+
+
 @app.get("/layers/oneri-toplanma-alanlari")
 def oneri_toplanma_alanlari():
     """Return preliminary AFAD-oriented safe-park assembly-area scenarios."""

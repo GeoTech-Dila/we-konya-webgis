@@ -57,6 +57,7 @@ function App() {
   const [sinkholeVisible, setSinkholeVisible] = useState(false);
   const [sinkholeInventoryHeatmapVisible, setSinkholeInventoryHeatmapVisible] = useState(false);
   const [corineLandcoverVisible, setCorineLandcoverVisible] = useState(false);
+  const [karapinarLogisticsVisible, setKarapinarLogisticsVisible] = useState(false);
   const [facilityVisible, setFacilityVisible] = useState(false);
   const [roadVisible, setRoadVisible] = useState(false);
   const [emergencyVisible, setEmergencyVisible] = useState(false);
@@ -193,6 +194,8 @@ const [service15Visible, setService15Visible] = useState(false);
       "buildings-unreachable": buildingsUnreachableVisible,
       "inaccessible-heatmap": heatmapVisible,
       "corine-landcover": corineLandcoverVisible,
+      "karapinar-logistics-routes": karapinarLogisticsVisible,
+      "karapinar-logistics-isochrones": karapinarLogisticsVisible,
       "mahalleler": mahalleVisible,
     };
   }, [
@@ -208,6 +211,7 @@ const [service15Visible, setService15Visible] = useState(false);
     buildingsUnreachableVisible,
     heatmapVisible,
     corineLandcoverVisible,
+    karapinarLogisticsVisible,
   ]);
 
   // --- REGION SUMMARY FONKSIYONLARI ---
@@ -461,6 +465,36 @@ console.log(
     }
   };
 
+  // Karapınar pilot analizi toplam 28 küçük geometridir; kullanıcı beklemesin diye arka planda hazırlanır.
+  const loadKarapinarLogisticsLayer = async () => {
+    if (loadedLayersRef.current["karapinar-logistics"]) return;
+    try {
+      const [routesResponse, isochroneResponse] = await Promise.all([
+        fetch(`${API_URL}/layers/karapinar-lojistik-rotalar`),
+        fetch(`${API_URL}/layers/karapinar-lojistik-izokron-10dk`),
+      ]);
+      if (!routesResponse.ok || !isochroneResponse.ok) return;
+      const [routes, isochrones] = await Promise.all([routesResponse.json(), isochroneResponse.json()]);
+      mapRef.current?.getSource("karapinar-logistics-routes")?.setData(routes);
+      mapRef.current?.getSource("karapinar-logistics-isochrones")?.setData(isochrones);
+      loadedLayersRef.current["karapinar-logistics"] = true;
+    } catch {
+      /* Kullanıcı düğmeye bastığında yeniden denenir. */
+    }
+  };
+
+  const toggleKarapinarLogistics = async () => {
+    const nextVisible = !karapinarLogisticsVisible;
+    setKarapinarLogisticsVisible(nextVisible);
+    if (nextVisible) {
+      await loadKarapinarLogisticsLayer();
+      mapRef.current?.flyTo({ center: [33.56, 37.72], zoom: 10.6, pitch: 35, bearing: -16, essential: true });
+    }
+    ["karapinar-logistics-isochrones-fill", "karapinar-logistics-isochrones-outline", "karapinar-logistics-routes-line"].forEach((id) => {
+      if (mapRef.current?.getLayer(id)) mapRef.current.setLayoutProperty(id, "visibility", nextVisible ? "visible" : "none");
+    });
+  };
+
   const toggleDataLayer = async (nextVisible, setter, sourceId, layerIds, endpoint) => {
     setter(nextVisible);
     if (nextVisible && !loadedLayersRef.current[sourceId]) {
@@ -520,6 +554,7 @@ console.log(
       "recommended-assembly-parks-fill", "recommended-assembly-parks-outline",
       "socio-geological-risk-fill", "socio-geological-risk-outline",
       "critical-service-load-fill", "critical-service-load-outline",
+      "karapinar-logistics-isochrones-fill", "karapinar-logistics-isochrones-outline", "karapinar-logistics-routes-line",
       "resilience-district-fill", "critical-accessibility-fill",
       "emergency-points-circle", "emergency-heatmap",
       "service-area-5-lines", "service-area-10-lines", "service-area-15-lines",
@@ -686,8 +721,10 @@ const service15PolyData = EMPTY_FC;
       addSrc("recommended-assembly-parks", { type: "geojson", data: EMPTY_FC });
       addSrc("socio-geological-risk", { type: "geojson", data: EMPTY_FC });
       addSrc("critical-service-load", { type: "geojson", data: EMPTY_FC });
+      addSrc("karapinar-logistics-routes", { type: "geojson", data: EMPTY_FC });
+      addSrc("karapinar-logistics-isochrones", { type: "geojson", data: EMPTY_FC });
       // Temel harita görünür olduktan kısa süre sonra katmanı önbelleğe al.
-      window.setTimeout(() => { loadSocioGeologicalRiskLayer(); loadCriticalServiceLayer(); loadSinkholeInventoryHeatmap(); }, 900);
+      window.setTimeout(() => { loadSocioGeologicalRiskLayer(); loadCriticalServiceLayer(); loadSinkholeInventoryHeatmap(); loadKarapinarLogisticsLayer(); }, 900);
       addSrc("service-area-5-lines", {
   type: "geojson",
   data: service5Data,
@@ -1176,6 +1213,9 @@ addLyr({
       addLyr({ id: "socio-geological-risk-outline", type: "line", source: "socio-geological-risk", layout: { visibility: "none" }, paint: { "line-color": "#7f1d1d", "line-width": 1.35, "line-opacity": 0.84 } });
       addLyr({ id: "critical-service-load-fill", type: "fill", source: "critical-service-load", layout: { visibility: "none" }, paint: { "fill-color": ["step", ["coalesce", ["to-number", ["get", "toplam_puan"]], 0], "#15803d", 6, "#eab308", 9, "#f97316", 12, "#dc2626"], "fill-opacity": 0.48 } });
       addLyr({ id: "critical-service-load-outline", type: "line", source: "critical-service-load", layout: { visibility: "none" }, paint: { "line-color": "#9f1239", "line-width": 1.35, "line-opacity": 0.88 } });
+      addLyr({ id: "karapinar-logistics-isochrones-fill", type: "fill", source: "karapinar-logistics-isochrones", layout: { visibility: "none" }, paint: { "fill-color": ["step", ["coalesce", ["to-number", ["get", "sure_saniye"]], 600], "#60a5fa", 180, "#22c55e", 300, "#facc15", 600, "#fb923c"], "fill-opacity": 0.16 } });
+      addLyr({ id: "karapinar-logistics-isochrones-outline", type: "line", source: "karapinar-logistics-isochrones", layout: { visibility: "none" }, paint: { "line-color": "#2563eb", "line-width": 1.1, "line-opacity": 0.66 } });
+      addLyr({ id: "karapinar-logistics-routes-line", type: "line", source: "karapinar-logistics-routes", layout: { visibility: "none", "line-cap": "round", "line-join": "round" }, paint: { "line-color": ["match", ["get", "guvenlik_sinifi"], "guvenli", "#16a34a", "#dc2626"], "line-width": ["interpolate", ["linear"], ["zoom"], 8, 2.5, 12, 5], "line-opacity": 0.94 } });
       addLyr({ id: "law-enforcement-point", type: "circle", source: "law-enforcement", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#2563eb", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
       addLyr({ id: "health-points-point", type: "circle", source: "health-points", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#0891b2", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
       addLyr({ id: "health-areas-fill", type: "fill", source: "health-areas", layout: { visibility: "none" }, paint: { "fill-color": "#06b6d4", "fill-opacity": 0.22 } });
@@ -2647,6 +2687,8 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         criticalServiceVisible={criticalServiceVisible}
         sinkholeInventoryHeatmapVisible={sinkholeInventoryHeatmapVisible}
         corineLandcoverVisible={corineLandcoverVisible}
+        karapinarLogisticsVisible={karapinarLogisticsVisible}
+        onToggleKarapinarLogistics={toggleKarapinarLogistics}
         onToggleCorineLandcover={() => toggleDataLayer(
           !corineLandcoverVisible,
           setCorineLandcoverVisible,
