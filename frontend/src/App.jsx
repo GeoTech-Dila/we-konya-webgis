@@ -2012,6 +2012,30 @@ useEffect(() => {
     setScaleInput("");
   };
 
+
+  // Telefonda rehber kartı hedef panelin karşı tarafında kalır; böylece açıklama, gösterilen alanı kapatmaz.
+  const guideDialogPlacement = (() => {
+    const step = guideStep >= 0 ? USER_GUIDE_STEPS[guideStep] : null;
+    const mobile = typeof window !== "undefined" && window.innerWidth <= 768;
+    const analysisStep = Boolean(step?.analysisPanelDemo || step?.analysisCardId);
+    const targetUpperArea = Boolean(guideTargetRect && guideTargetRect.top < window.innerHeight * 0.48);
+
+    if (mobile && guideStep >= 0) {
+      return targetUpperArea
+        ? { top: "auto", bottom: "18px", width: "min(340px, calc(100vw - 24px))", maxHeight: "min(270px, calc(100vh - 86px))", padding: "13px" }
+        : { top: "74px", bottom: "auto", width: "min(340px, calc(100vw - 24px))", maxHeight: "min(270px, calc(100vh - 96px))", padding: "13px" };
+    }
+
+    const placeAtTop = Boolean(analysisStep || (guideTargetRect && guideTargetRect.top > window.innerHeight / 2));
+    return {
+      top: placeAtTop ? "24px" : "auto",
+      bottom: placeAtTop ? "auto" : "24px",
+      width: "min(370px, calc(100vw - 32px))",
+      maxHeight: "calc(100vh - 48px)",
+      padding: "18px",
+    };
+  })();
+
   return (
     <div style={{ width: "100vw", height: "100vh", position: "relative", overflow: "hidden", background: "#e5e7eb" }}>
       <div id="map" style={{ width: "100%", height: "100%" }} />
@@ -2851,7 +2875,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
       </button>
       {guideOpen && <>
         {guideStep < 0 ? <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(15,23,42,0.56)", backdropFilter: "blur(3px)" }} /> : guideTargetRect && <div style={{ position: "fixed", left: guideTargetRect.left, top: guideTargetRect.top, width: guideTargetRect.width, height: guideTargetRect.height, zIndex: 1000, borderRadius: "16px", border: "2px solid #f59e0b", boxShadow: "0 0 0 9999px rgba(15,23,42,0.58), 0 0 28px rgba(245,158,11,0.62)", pointerEvents: "none" }} />}
-        <div role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 1001, left: "50%", top: guideStep >= 0 && (USER_GUIDE_STEPS[guideStep]?.analysisPanelDemo || USER_GUIDE_STEPS[guideStep]?.analysisCardId || (guideTargetRect && guideTargetRect.top > window.innerHeight / 2)) ? "24px" : "auto", bottom: guideStep >= 0 && (USER_GUIDE_STEPS[guideStep]?.analysisPanelDemo || USER_GUIDE_STEPS[guideStep]?.analysisCardId || (guideTargetRect && guideTargetRect.top > window.innerHeight / 2)) ? "auto" : "24px", transform: "translateX(-50%)", width: "min(370px, calc(100vw - 32px))", maxHeight: "calc(100vh - 48px)", overflowY: "auto", padding: "18px", borderRadius: "16px", background: "rgba(255,255,255,0.97)", color: "#0f172a", boxShadow: "0 16px 42px rgba(15,23,42,0.32)" }}>
+        <div role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 1001, left: "50%", top: guideDialogPlacement.top, bottom: guideDialogPlacement.bottom, transform: "translateX(-50%)", width: guideDialogPlacement.width, maxHeight: guideDialogPlacement.maxHeight, overflowY: "auto", padding: guideDialogPlacement.padding, borderRadius: "16px", background: "rgba(255,255,255,0.97)", color: "#0f172a", boxShadow: "0 16px 42px rgba(15,23,42,0.32)" }}>
           {guideStep < 0 ? <>
             <div style={{ color: "#dc2626", fontSize: "11px", fontWeight: "900", letterSpacing: "0.08em" }}>KOR-İZ KULLANICI REHBERİ</div>
             <div style={{ fontSize: "21px", fontWeight: "800", marginTop: "6px" }}>Haritayı 1 dakikada keşfedin</div>
