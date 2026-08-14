@@ -337,6 +337,46 @@ def yollar(bbox: str | None = None):
         return conn.execute(query, params).scalar()
 
 
+SERVICE_AREA_TILESETS = {
+    "5-polygons": ("service_area_5_polygons", "service5polygons", ("toplanma_id",)),
+    "10-polygons": ("service_area_10_polygons", "service10polygons", ("toplanma_id",)),
+    "15-polygons": ("service_area_polygons", "service15polygons", ("toplanma_id",)),
+    "5-lines": ("service_area_5_lines", "service5lines", ("id",)),
+    "10-lines": ("service_area_10_lines", "service10lines", ("id",)),
+    "15-lines": ("service_area_15_lines", "service15lines", ("id",)),
+}
+
+
+@app.get("/tiles/service-area/{layer}/{z}/{x}/{y}.pbf", response_class=Response)
+def service_area_tile(layer: str, z: int, x: int, y: int):
+    """Return one compact, cached tile from an existing service-area table."""
+    config = SERVICE_AREA_TILESETS.get(layer)
+    if config is None:
+        raise HTTPException(status_code=404, detail="Erişilebilirlik karo katmanı bulunamadı.")
+    table, layer_name, properties = config
+    columns = ", ".join(properties)
+    query = text(f"""
+        WITH tile_bounds AS (
+            SELECT ST_TileEnvelope(:z, :x, :y) AS geom_3857
+        ), mvt_rows AS (
+            SELECT {columns},
+                   ST_AsMVTGeom(s.geom, t.geom_3857, 4096, 32, true) AS geom
+            FROM public.{table} s
+            CROSS JOIN tile_bounds t
+            WHERE s.geom && t.geom_3857
+              AND ST_Intersects(s.geom, t.geom_3857)
+        )
+        SELECT ST_AsMVT(mvt_rows, '{layer_name}', 4096, 'geom') FROM mvt_rows;
+    """)
+    with engine.connect() as conn:
+        tile = conn.execute(query, {"z": z, "x": x, "y": y}).scalar() or b""
+    return Response(
+        content=bytes(tile),
+        media_type="application/vnd.mapbox-vector-tile",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 @app.get("/service-area-15-polygons")
 def service_area_15_polygons(bbox: str | None = None):
 

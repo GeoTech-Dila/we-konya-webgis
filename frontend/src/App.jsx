@@ -816,34 +816,16 @@ const service15PolyData = EMPTY_FC;
       addSrc("karapinar-logistics-isochrones", { type: "geojson", data: EMPTY_FC });
       // Temel harita görünür olduktan kısa süre sonra katmanı önbelleğe al.
       window.setTimeout(() => { loadSocioGeologicalRiskLayer(); loadCriticalServiceLayer(); loadSinkholeInventoryHeatmap(); loadKarapinarLogisticsLayer(); }, 900);
-      addSrc("service-area-5-lines", {
-  type: "geojson",
-  data: service5Data,
-});
+      addSrc("service-area-5-lines", { type: "vector", tiles: [`${API_URL}/tiles/service-area/5-lines/{z}/{x}/{y}.pbf`], minzoom: 10, maxzoom: 16 });
 
-addSrc("service-area-10-lines", {
-  type: "geojson",
-  data: service10Data,
-});
+addSrc("service-area-10-lines", { type: "vector", tiles: [`${API_URL}/tiles/service-area/10-lines/{z}/{x}/{y}.pbf`], minzoom: 10, maxzoom: 16 });
 
-addSrc("service-area-15-lines", {
-  type: "geojson",
-  data: service15Data,
-});
-addSrc("service-area-5-polygons", {
-  type: "geojson",
-  data: service5PolyData,
-});
+addSrc("service-area-15-lines", { type: "vector", tiles: [`${API_URL}/tiles/service-area/15-lines/{z}/{x}/{y}.pbf`], minzoom: 10, maxzoom: 16 });
+addSrc("service-area-5-polygons", { type: "vector", tiles: [`${API_URL}/tiles/service-area/5-polygons/{z}/{x}/{y}.pbf`], minzoom: 7, maxzoom: 16 });
 
-addSrc("service-area-10-polygons", {
-  type: "geojson",
-  data: service10PolyData,
-});
+addSrc("service-area-10-polygons", { type: "vector", tiles: [`${API_URL}/tiles/service-area/10-polygons/{z}/{x}/{y}.pbf`], minzoom: 7, maxzoom: 16 });
 
-addSrc("service-area-15-polygons", {
-  type: "geojson",
-  data: service15PolyData,
-});
+addSrc("service-area-15-polygons", { type: "vector", tiles: [`${API_URL}/tiles/service-area/15-polygons/{z}/{x}/{y}.pbf`], minzoom: 7, maxzoom: 16 });
 
 addSrc("buildings-3d", {
   type: "vector",
@@ -1183,6 +1165,7 @@ addLyr({
   type: "fill",
 
   source: "service-area-15-polygons",
+  "source-layer": "service15polygons",
 
   paint: {
     "fill-color": "#ef4444",
@@ -1195,6 +1178,7 @@ addLyr({
   type: "fill",
 
   source: "service-area-10-polygons",
+  "source-layer": "service10polygons",
 
   paint: {
     "fill-color": "#f59e0b",
@@ -1207,6 +1191,7 @@ addLyr({
   type: "fill",
 
   source: "service-area-5-polygons",
+  "source-layer": "service5polygons",
 
   paint: {
     "fill-color": "#22c55e",
@@ -1217,6 +1202,7 @@ addLyr({
   id: "service-area-15-line",
   type: "line",
   source: "service-area-15-lines",
+  "source-layer": "service15lines",
 
   layout: {
     visibility: "visible",
@@ -1232,6 +1218,7 @@ addLyr({
   id: "service-area-10-line",
   type: "line",
   source: "service-area-10-lines",
+  "source-layer": "service10lines",
 
   layout: {
     visibility: "visible",
@@ -1247,6 +1234,7 @@ addLyr({
   id: "service-area-5-line",
   type: "line",
   source: "service-area-5-lines",
+  "source-layer": "service5lines",
 
   layout: {
     visibility: "visible",
@@ -1529,29 +1517,6 @@ reloadViewportSources();
     if (!map || !map.getLayer("mahalle-outline")) return;
     map.setPaintProperty("mahalle-outline", "line-opacity", mahalleOpacity);
   }, [mahalleOpacity]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    const load = async (minutes) => {
-      const loadOne = async (sourceId, path) => {
-        if (loadedLayersRef.current[sourceId]) return;
-        const response = await fetch(`${API_URL}${path}`);
-        if (!response.ok) return;
-        map.getSource(sourceId)?.setData(await response.json());
-        loadedLayersRef.current[sourceId] = true;
-      };
-      // Poligonlar hafiftir ve tam kapsamı ilk anda gösterir.
-      await loadOne(`service-area-${minutes}-polygons`, `/service-area-${minutes}-polygons`);
-      // Yoğun çizgiler yalnız yakın harita görünümünde ayrıca istenir.
-      if (map.getZoom() >= 10) {
-        await loadOne(`service-area-${minutes}-lines`, `/service-area-${minutes}-lines`);
-      }
-    };
-    if (service5Visible) load(5).catch(() => {});
-    if (service10Visible) load(10).catch(() => {});
-    if (service15Visible) load(15).catch(() => {});
-  }, [service5Visible, service10Visible, service15Visible]);
 
   useEffect(() => {
 
