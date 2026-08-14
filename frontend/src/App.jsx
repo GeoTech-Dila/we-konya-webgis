@@ -1459,9 +1459,22 @@ addLyr({
         pin.lineWidth = 2;
         pin.strokeStyle = "#dcfce7";
         pin.stroke();
+        // Beyaz merkezdeki dört içe bakan ok, acil toplanma alanı sembolünü ifade eder.
         pin.beginPath();
-        pin.arc(22, 19, 6, 0, Math.PI * 2);
+        pin.arc(22, 19, 6.4, 0, Math.PI * 2);
         pin.fillStyle = "#f0fdf4";
+        pin.fill();
+        pin.fillStyle = "#15803d";
+        [[20.3, 19, 16.7, 16.5, 16.7, 21.5], [23.7, 19, 27.3, 16.5, 27.3, 21.5], [22, 17.3, 19.5, 13.7, 24.5, 13.7], [22, 20.7, 19.5, 24.3, 24.5, 24.3]].forEach((points) => {
+          pin.beginPath();
+          pin.moveTo(points[0], points[1]);
+          pin.lineTo(points[2], points[3]);
+          pin.lineTo(points[4], points[5]);
+          pin.closePath();
+          pin.fill();
+        });
+        pin.beginPath();
+        pin.arc(22, 19, 1.55, 0, Math.PI * 2);
         pin.fill();
         pin.restore();
         map.addImage("assembly-area-pin", pin.getImageData(0, 0, 44, 50));
