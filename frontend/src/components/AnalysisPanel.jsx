@@ -482,9 +482,9 @@ height: `${panelHeight}px`,
               onToggleCriticalService={onToggleCriticalService}
               sinkholeInventoryHeatmapVisible={sinkholeInventoryHeatmapVisible}
               onToggleSinkholeInventoryHeatmap={onToggleSinkholeInventoryHeatmap}
-              
-               sinkholeLanduseTableOpen={sinkholeLanduseTableOpen}
-               setSinkholeLanduseTableOpen={setSinkholeLanduseTableOpen}corineLandcoverVisible={corineLandcoverVisible}
+              sinkholeLanduseTableOpen={sinkholeLanduseTableOpen}
+              setSinkholeLanduseTableOpen={setSinkholeLanduseTableOpen}
+              corineLandcoverVisible={corineLandcoverVisible}
               onToggleCorineLandcover={onToggleCorineLandcover}
               karapinarLogisticsVisible={karapinarLogisticsVisible}
               karapinarLogisticsLayers={karapinarLogisticsLayers}
@@ -499,7 +499,7 @@ height: `${panelHeight}px`,
   );
 }
 
-function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological, criticalServiceVisible, onToggleCriticalService, sinkholeInventoryHeatmapVisible, onToggleSinkholeInventoryHeatmap, corineLandcoverVisible, onToggleCorineLandcover, karapinarLogisticsVisible, karapinarLogisticsLayers, onToggleKarapinarLogistics, onToggleKarapinarLogisticsGroup }) {
+function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological, criticalServiceVisible, onToggleCriticalService, sinkholeInventoryHeatmapVisible, onToggleSinkholeInventoryHeatmap, sinkholeLanduseTableOpen, setSinkholeLanduseTableOpen, corineLandcoverVisible, onToggleCorineLandcover, karapinarLogisticsVisible, karapinarLogisticsLayers, onToggleKarapinarLogistics, onToggleKarapinarLogisticsGroup }) {
   return (
     <div
       style={{
