@@ -581,6 +581,35 @@ def fay_hatlari():
         return conn.execute(query).scalar()
 
 
+@app.get("/tiles/corine-2018/{z}/{x}/{y}.pbf", response_class=Response)
+def corine_2018_tile(z: int, x: int, y: int):
+    """Return only one visible CORINE map tile as a compact binary payload."""
+    query = text("""
+        WITH tile_bounds AS (
+            SELECT ST_TileEnvelope(:z, :x, :y) AS geom_3857
+        ),
+        mvt_rows AS (
+            SELECT
+                c.id,
+                c.code_18,
+                c.area_ha,
+                ST_AsMVTGeom(ST_Transform(c.geom, 3857), t.geom_3857, 4096, 32, true) AS geom
+            FROM public.konya_corine_2018 c
+            CROSS JOIN tile_bounds t
+            WHERE c.geom && ST_Transform(t.geom_3857, 4326)
+              AND ST_Intersects(c.geom, ST_Transform(t.geom_3857, 4326))
+        )
+        SELECT ST_AsMVT(mvt_rows, 'corine', 4096, 'geom') FROM mvt_rows;
+    """)
+    with engine.connect() as conn:
+        tile = conn.execute(query, {"z": z, "x": x, "y": y}).scalar() or b""
+    return Response(
+        content=bytes(tile),
+        media_type="application/vnd.mapbox-vector-tile",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 @app.get("/layers/corine-2018")
 def corine_2018(bbox: str | None = None):
     """Return only the visible, simplified CORINE 2018 polygons."""

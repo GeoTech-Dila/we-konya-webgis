@@ -880,7 +880,7 @@ addSrc("inaccessible-heatmap", {
       addSrc("fault-lines", { type: "geojson", data: EMPTY_FC });
       addSrc("sinkholes", { type: "geojson", data: EMPTY_FC });
       addSrc("sinkhole-inventory-heatmap", { type: "geojson", data: EMPTY_FC });
-      addSrc("corine-landcover", { type: "geojson", data: EMPTY_FC });
+      addSrc("corine-landcover", { type: "vector", tiles: [`${API_URL}/tiles/corine-2018/{z}/{x}/{y}.pbf`], minzoom: 8, maxzoom: 14 });
       addSrc("critical-facilities", { type: "geojson", data: EMPTY_FC });
       addSrc("major-roads", { type: "vector", tiles: [`${API_URL}/tiles/ana-yollar/{z}/{x}/{y}.pbf`], minzoom: 11, maxzoom: 16 });
       addSrc("emergency-points", { type: "geojson", data: EMPTY_FC });
@@ -1291,8 +1291,8 @@ addLyr({
         ["in", ["get", "code_18"], ["literal", ["511", "512", "521", "522", "523"]]], "#2563eb",
         "#94a3b8"
       ];
-      addLyr({ id: "corine-landcover-fill", type: "fill", source: "corine-landcover", minzoom: 8, layout: { visibility: "none" }, paint: { "fill-color": corineColor, "fill-opacity": 0.38 } });
-      addLyr({ id: "corine-landcover-outline", type: "line", source: "corine-landcover", minzoom: 8, layout: { visibility: "none" }, paint: { "line-color": corineColor, "line-width": 0.55, "line-opacity": 0.62 } });
+      addLyr({ id: "corine-landcover-fill", type: "fill", source: "corine-landcover", "source-layer": "corine", minzoom: 8, layout: { visibility: "none" }, paint: { "fill-color": corineColor, "fill-opacity": 0.38 } });
+      addLyr({ id: "corine-landcover-outline", type: "line", source: "corine-landcover", "source-layer": "corine", minzoom: 8, layout: { visibility: "none" }, paint: { "line-color": corineColor, "line-width": 0.55, "line-opacity": 0.62 } });
       addLyr({ id: "critical-facilities-point", type: "circle", source: "critical-facilities", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#64748b", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.88 } });
       addLyr({ id: "major-roads-line", type: "line", source: "major-roads", "source-layer": "roads", minzoom: 11, layout: { visibility: "none" }, paint: { "line-color": "#64748b", "line-opacity": 0.58, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.7, 15, 2.4] } });
       addLyr({ id: "province-boundary-line", type: "line", source: "province-boundary", layout: { visibility: "none" }, paint: { "line-color": "#0f172a", "line-opacity": 0.86, "line-width": ["interpolate", ["linear"], ["zoom"], 7, 1.3, 12, 3] } });
@@ -1443,7 +1443,6 @@ addLyr({
   ["buildings-15", "/buildings-15"],
   ["buildings-unreachable", "/buildings-unreachable"],
   ["inaccessible-heatmap", "/inaccessible-buildings-heatmap"],
-  ["corine-landcover", "/layers/corine-2018"],
 
 ];
 
@@ -2817,13 +2816,15 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
           };
           toggleKarapinarLogisticsGroup(group, handlers[group][0], handlers[group][1]);
         }}
-        onToggleCorineLandcover={() => toggleDataLayer(
-          !corineLandcoverVisible,
-          setCorineLandcoverVisible,
-          "corine-landcover",
-          ["corine-landcover-fill", "corine-landcover-outline"],
-          "/layers/corine-2018"
-        )}
+        onToggleCorineLandcover={() => {
+          const nextVisible = !corineLandcoverVisible;
+          setCorineLandcoverVisible(nextVisible);
+          ["corine-landcover-fill", "corine-landcover-outline"].forEach((layerId) => {
+            if (mapRef.current?.getLayer(layerId)) {
+              mapRef.current.setLayoutProperty(layerId, "visibility", nextVisible ? "visible" : "none");
+            }
+          });
+        }}
         onToggleSinkholeInventoryHeatmap={() => toggleDataLayer(
           !sinkholeInventoryHeatmapVisible,
           setSinkholeInventoryHeatmapVisible,
