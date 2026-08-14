@@ -58,6 +58,12 @@ function App() {
   const [sinkholeInventoryHeatmapVisible, setSinkholeInventoryHeatmapVisible] = useState(false);
   const [corineLandcoverVisible, setCorineLandcoverVisible] = useState(false);
   const [karapinarLogisticsVisible, setKarapinarLogisticsVisible] = useState(false);
+  const [karapinarHospitalVisible, setKarapinarHospitalVisible] = useState(false);
+  const [karapinarFireVisible, setKarapinarFireVisible] = useState(false);
+  const [karapinarAssemblyVisible, setKarapinarAssemblyVisible] = useState(false);
+  const [karapinarIso3Visible, setKarapinarIso3Visible] = useState(false);
+  const [karapinarIso5Visible, setKarapinarIso5Visible] = useState(false);
+  const [karapinarIso10Visible, setKarapinarIso10Visible] = useState(false);
   const [facilityVisible, setFacilityVisible] = useState(false);
   const [roadVisible, setRoadVisible] = useState(false);
   const [emergencyVisible, setEmergencyVisible] = useState(false);
@@ -483,16 +489,37 @@ console.log(
     }
   };
 
+  const karapinarLogisticsGroups = {
+    hospital: ["karapinar-logistics-hospital-fast-line", "karapinar-logistics-hospital-safe-line"],
+    fire: ["karapinar-logistics-fire-fast-line", "karapinar-logistics-fire-safe-line"],
+    assembly: ["karapinar-logistics-assembly-fast-line", "karapinar-logistics-assembly-safe-line"],
+    iso3: ["karapinar-logistics-iso-3-line"],
+    iso5: ["karapinar-logistics-iso-5-line"],
+    iso10: ["karapinar-logistics-iso-10-fill", "karapinar-logistics-iso-10-line"],
+  };
+  const setKarapinarGroupVisibility = (layerIds, visible) => {
+    layerIds.forEach((id) => {
+      if (mapRef.current?.getLayer(id)) mapRef.current.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
+    });
+  };
   const toggleKarapinarLogistics = async () => {
     const nextVisible = !karapinarLogisticsVisible;
     setKarapinarLogisticsVisible(nextVisible);
+    setKarapinarHospitalVisible(nextVisible); setKarapinarFireVisible(nextVisible); setKarapinarAssemblyVisible(nextVisible);
+    setKarapinarIso3Visible(nextVisible); setKarapinarIso5Visible(nextVisible); setKarapinarIso10Visible(nextVisible);
     if (nextVisible) {
       await loadKarapinarLogisticsLayer();
       mapRef.current?.flyTo({ center: [33.56, 37.72], zoom: 10.6, pitch: 35, bearing: -16, essential: true });
     }
-    ["karapinar-logistics-isochrones-fill", "karapinar-logistics-isochrones-outline", "karapinar-logistics-fast-line", "karapinar-logistics-safe-line"].forEach((id) => {
+    Object.values(karapinarLogisticsGroups).flat().forEach((id) => {
       if (mapRef.current?.getLayer(id)) mapRef.current.setLayoutProperty(id, "visibility", nextVisible ? "visible" : "none");
     });
+  };
+  const toggleKarapinarLogisticsGroup = (group, visible, setVisible) => {
+    const nextVisible = !visible;
+    setVisible(nextVisible);
+    if (nextVisible) setKarapinarLogisticsVisible(true);
+    setKarapinarGroupVisibility(karapinarLogisticsGroups[group], nextVisible);
   };
 
   const toggleDataLayer = async (nextVisible, setter, sourceId, layerIds, endpoint) => {
@@ -554,7 +581,10 @@ console.log(
       "recommended-assembly-parks-fill", "recommended-assembly-parks-outline",
       "socio-geological-risk-fill", "socio-geological-risk-outline",
       "critical-service-load-fill", "critical-service-load-outline",
-      "karapinar-logistics-isochrones-fill", "karapinar-logistics-isochrones-outline", "karapinar-logistics-fast-line", "karapinar-logistics-safe-line",
+      "karapinar-logistics-iso-10-fill", "karapinar-logistics-iso-3-line", "karapinar-logistics-iso-5-line", "karapinar-logistics-iso-10-line",
+      "karapinar-logistics-hospital-fast-line", "karapinar-logistics-hospital-safe-line",
+      "karapinar-logistics-fire-fast-line", "karapinar-logistics-fire-safe-line",
+      "karapinar-logistics-assembly-fast-line", "karapinar-logistics-assembly-safe-line",
       "resilience-district-fill", "critical-accessibility-fill",
       "emergency-points-circle", "emergency-heatmap",
       "service-area-5-lines", "service-area-10-lines", "service-area-15-lines",
@@ -1213,19 +1243,18 @@ addLyr({
       addLyr({ id: "socio-geological-risk-outline", type: "line", source: "socio-geological-risk", layout: { visibility: "none" }, paint: { "line-color": "#7f1d1d", "line-width": 1.35, "line-opacity": 0.84 } });
       addLyr({ id: "critical-service-load-fill", type: "fill", source: "critical-service-load", layout: { visibility: "none" }, paint: { "fill-color": ["step", ["coalesce", ["to-number", ["get", "toplam_puan"]], 0], "#15803d", 6, "#eab308", 9, "#f97316", 12, "#dc2626"], "fill-opacity": 0.48 } });
       addLyr({ id: "critical-service-load-outline", type: "line", source: "critical-service-load", layout: { visibility: "none" }, paint: { "line-color": "#9f1239", "line-width": 1.35, "line-opacity": 0.88 } });
-      // Kaynak her dakika için birikimli poligon içerir. Görsel karmaşayı önlemek için
-      // yalnızca anlamlı 3, 5 ve 10 dakika sınırlarını gösteriyoruz.
-      addLyr({ id: "karapinar-logistics-isochrones-fill", type: "fill", source: "karapinar-logistics-isochrones", filter: ["==", ["get", "sure_saniye"], 600], layout: { visibility: "none" }, paint: { "fill-color": "#60a5fa", "fill-opacity": 0.11 } });
-      addLyr({ id: "karapinar-logistics-isochrones-outline", type: "line", source: "karapinar-logistics-isochrones", filter: ["in", ["get", "sure_saniye"], ["literal", [180, 300, 600]]], layout: { visibility: "none" }, paint: { "line-color": ["match", ["get", "sure_saniye"], 180, "#16a34a", 300, "#f59e0b", 600, "#2563eb", "#64748b"], "line-width": ["interpolate", ["linear"], ["zoom"], 8, 1.4, 12, 2.4], "line-opacity": 0.92 } });
-      // Renk tesis türünü, çizgi biçimi rota türünü gösterir.
-      const karapinarRouteColor = ["match", ["get", "hedef_turu"],
-        "Hastane", "#2563eb",       // mavi
-        "İtfaiye", "#ea580c",       // turuncu
-        "Toplanma alanı", "#7c3aed", // mor
-        "#64748b"
-      ];
-      addLyr({ id: "karapinar-logistics-fast-line", type: "line", source: "karapinar-logistics-routes", filter: ["==", ["get", "guvenlik_sinifi"], "riskli"], layout: { visibility: "none", "line-cap": "round", "line-join": "round" }, paint: { "line-color": karapinarRouteColor, "line-width": ["interpolate", ["linear"], ["zoom"], 8, 2.7, 12, 5.2], "line-opacity": 0.95 } });
-      addLyr({ id: "karapinar-logistics-safe-line", type: "line", source: "karapinar-logistics-routes", filter: ["==", ["get", "guvenlik_sinifi"], "guvenli"], layout: { visibility: "none", "line-cap": "round", "line-join": "round" }, paint: { "line-color": karapinarRouteColor, "line-width": ["interpolate", ["linear"], ["zoom"], 8, 2.7, 12, 5.2], "line-opacity": 0.95, "line-dasharray": [1.4, 1.15] } });
+      // Her dakika için birikimli poligon yerine 3, 5 ve 10 dakika katmanları ayrı kontrol edilir.
+      addLyr({ id: "karapinar-logistics-iso-10-fill", type: "fill", source: "karapinar-logistics-isochrones", filter: ["==", ["get", "sure_saniye"], 600], layout: { visibility: "none" }, paint: { "fill-color": "#60a5fa", "fill-opacity": 0.11 } });
+      addLyr({ id: "karapinar-logistics-iso-3-line", type: "line", source: "karapinar-logistics-isochrones", filter: ["==", ["get", "sure_saniye"], 180], layout: { visibility: "none" }, paint: { "line-color": "#16a34a", "line-width": 2.3, "line-opacity": 0.94 } });
+      addLyr({ id: "karapinar-logistics-iso-5-line", type: "line", source: "karapinar-logistics-isochrones", filter: ["==", ["get", "sure_saniye"], 300], layout: { visibility: "none" }, paint: { "line-color": "#f59e0b", "line-width": 2.3, "line-opacity": 0.94 } });
+      addLyr({ id: "karapinar-logistics-iso-10-line", type: "line", source: "karapinar-logistics-isochrones", filter: ["==", ["get", "sure_saniye"], 600], layout: { visibility: "none" }, paint: { "line-color": "#2563eb", "line-width": 2.3, "line-opacity": 0.94 } });
+      const karapinarRouteLayer = (id, facility, safety, color, dashed = false) => addLyr({ id, type: "line", source: "karapinar-logistics-routes", filter: ["all", ["==", ["get", "hedef_turu"], facility], ["==", ["get", "guvenlik_sinifi"], safety]], layout: { visibility: "none", "line-cap": "round", "line-join": "round" }, paint: { "line-color": color, "line-width": ["interpolate", ["linear"], ["zoom"], 8, 2.7, 12, 5.2], "line-opacity": 0.95, ...(dashed ? { "line-dasharray": [1.4, 1.15] } : {}) } });
+      karapinarRouteLayer("karapinar-logistics-hospital-fast-line", "Hastane", "riskli", "#2563eb");
+      karapinarRouteLayer("karapinar-logistics-hospital-safe-line", "Hastane", "guvenli", "#2563eb", true);
+      karapinarRouteLayer("karapinar-logistics-fire-fast-line", "İtfaiye", "riskli", "#ea580c");
+      karapinarRouteLayer("karapinar-logistics-fire-safe-line", "İtfaiye", "guvenli", "#ea580c", true);
+      karapinarRouteLayer("karapinar-logistics-assembly-fast-line", "Toplanma alanı", "riskli", "#7c3aed");
+      karapinarRouteLayer("karapinar-logistics-assembly-safe-line", "Toplanma alanı", "guvenli", "#7c3aed", true);
       addLyr({ id: "law-enforcement-point", type: "circle", source: "law-enforcement", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#2563eb", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
       addLyr({ id: "health-points-point", type: "circle", source: "health-points", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#0891b2", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
       addLyr({ id: "health-areas-fill", type: "fill", source: "health-areas", layout: { visibility: "none" }, paint: { "fill-color": "#06b6d4", "fill-opacity": 0.22 } });
@@ -2698,7 +2727,15 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         sinkholeInventoryHeatmapVisible={sinkholeInventoryHeatmapVisible}
         corineLandcoverVisible={corineLandcoverVisible}
         karapinarLogisticsVisible={karapinarLogisticsVisible}
+        karapinarLogisticsLayers={{ hospital: karapinarHospitalVisible, fire: karapinarFireVisible, assembly: karapinarAssemblyVisible, iso3: karapinarIso3Visible, iso5: karapinarIso5Visible, iso10: karapinarIso10Visible }}
         onToggleKarapinarLogistics={toggleKarapinarLogistics}
+        onToggleKarapinarLogisticsGroup={(group) => {
+          const handlers = {
+            hospital: [karapinarHospitalVisible, setKarapinarHospitalVisible], fire: [karapinarFireVisible, setKarapinarFireVisible], assembly: [karapinarAssemblyVisible, setKarapinarAssemblyVisible],
+            iso3: [karapinarIso3Visible, setKarapinarIso3Visible], iso5: [karapinarIso5Visible, setKarapinarIso5Visible], iso10: [karapinarIso10Visible, setKarapinarIso10Visible],
+          };
+          toggleKarapinarLogisticsGroup(group, handlers[group][0], handlers[group][1]);
+        }}
         onToggleCorineLandcover={() => toggleDataLayer(
           !corineLandcoverVisible,
           setCorineLandcoverVisible,

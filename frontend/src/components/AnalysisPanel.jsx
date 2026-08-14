@@ -149,7 +149,9 @@ function AnalysisPanel({
   corineLandcoverVisible,
   onToggleCorineLandcover,
   karapinarLogisticsVisible,
+  karapinarLogisticsLayers,
   onToggleKarapinarLogistics,
+  onToggleKarapinarLogisticsGroup,
 
   activeAnalysisLayer,
   setActiveAnalysisLayer,
@@ -477,7 +479,9 @@ height: `${panelHeight}px`,
               corineLandcoverVisible={corineLandcoverVisible}
               onToggleCorineLandcover={onToggleCorineLandcover}
               karapinarLogisticsVisible={karapinarLogisticsVisible}
+              karapinarLogisticsLayers={karapinarLogisticsLayers}
               onToggleKarapinarLogistics={onToggleKarapinarLogistics}
+              onToggleKarapinarLogisticsGroup={onToggleKarapinarLogisticsGroup}
             />
           )}
         </div>
@@ -487,7 +491,7 @@ height: `${panelHeight}px`,
   );
 }
 
-function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological, criticalServiceVisible, onToggleCriticalService, sinkholeInventoryHeatmapVisible, onToggleSinkholeInventoryHeatmap, corineLandcoverVisible, onToggleCorineLandcover, karapinarLogisticsVisible, onToggleKarapinarLogistics }) {
+function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recommendedAssemblyVisible, selectedAssemblyScenario, assemblyScenarioLoading, onToggleRecommendedAssembly, socioGeologicalVisible, onToggleSocioGeological, criticalServiceVisible, onToggleCriticalService, sinkholeInventoryHeatmapVisible, onToggleSinkholeInventoryHeatmap, corineLandcoverVisible, onToggleCorineLandcover, karapinarLogisticsVisible, karapinarLogisticsLayers, onToggleKarapinarLogistics, onToggleKarapinarLogisticsGroup }) {
   return (
     <div
       style={{
@@ -506,6 +510,16 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
           </button>
           <div style={{ padding: "9px 10px", borderRadius: 10, background: "rgba(240,253,244,0.82)", color: "#14532d", fontSize: 11, lineHeight: 1.45, marginBottom: 8 }}>
             Harita Karapınar pilot alanına yönelir. Rotalar, AFAD lojistik üssünden hastane, itfaiye ve toplanma alanlarına erişimi gösterir.
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginBottom: 8 }}>
+            {[ 
+              ["hospital", "Hastane rotaları", "#2563eb"], ["fire", "İtfaiye rotaları", "#ea580c"], ["assembly", "Toplanma alanı rotaları", "#7c3aed"],
+              ["iso3", "3 dk erişim", "#16a34a"], ["iso5", "5 dk erişim", "#f59e0b"], ["iso10", "10 dk erişim", "#2563eb"],
+            ].map(([key, label, color]) => (
+              <button key={key} type="button" onClick={() => onToggleKarapinarLogisticsGroup(key)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, padding: "7px 8px", borderRadius: 9, border: `1px solid ${karapinarLogisticsLayers?.[key] ? color : "#cbd5e1"}`, background: karapinarLogisticsLayers?.[key] ? "rgba(255,255,255,0.9)" : "rgba(248,250,252,0.72)", color: "#334155", cursor: "pointer", fontSize: 10, fontWeight: 700, textAlign: "left" }}>
+                <span><span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: color, marginRight: 5 }} />{label}</span><span style={{ color: karapinarLogisticsLayers?.[key] ? "#15803d" : "#94a3b8" }}>{karapinarLogisticsLayers?.[key] ? "●" : "○"}</span>
+              </button>
+            ))}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, fontSize: 10, color: "#334155" }}>
             <div style={{ padding: "7px 8px", borderRadius: 9, background: "rgba(239,246,255,0.9)", border: "1px solid #bfdbfe" }}><span style={{ display: "inline-block", width: 18, height: 3, background: "#2563eb", verticalAlign: "middle", marginRight: 5 }} />Mavi: hastane rotaları</div>
