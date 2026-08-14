@@ -87,17 +87,6 @@ const analysisCards = [
     output: "Resmî olmayan, AFAD odaklı ön elemeden geçen güvenli park parçaları",
     image: "/service_area1_gorsel.png",
   },
-  {
-    id: "resilience",
-    title: "Afet Dirençlilik Skoru",
-    method: "Ağırlıklı skor modeli",
-    status: "Model taslağı",
-    summary:
-      "Tüm analizlerden gelen göstergeleri birleştirerek her mahalle veya ilçeye dirençlilik skoru verir.",
-    inputs: ["Erişilebilirlik", "Maruziyet", "Kırılganlık", "Altyapı"],
-    output: "0-100 afet dirençlilik skoru",
-    image: "/3danaliz_gorsel.png",
-  },
 ];
 
 function AnalysisPanel({
