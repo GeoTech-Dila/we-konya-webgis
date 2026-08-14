@@ -1,5 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 
+const SINKHOLE_LANDUSE_HEADERS = [
+  "Arazi Kullanımı / Örtüsü Kategorisi",
+  "CORINE 2018 Kodu & Tanımı",
+  "CORINE Obruk (Adet)",
+  "CORINE Oran (%)",
+  "ESA WorldCover 2021 Kodu & Tanımı",
+  "ESA Obruk (Adet)",
+  "ESA Oran (%)",
+  "Mekânsal Çözünürlük ve Sınıflandırma Farkı",
+];
+
+// Kaynak: ESA 2021 statistic by categories.xlsx / Sayfa2. Değerler kaynak tablodan değiştirilmeden aktarılmıştır.
+const SINKHOLE_LANDUSE_ROWS = [
+  ["Tarım Alanları (Aktif / İşlenen)", "211 (Kuru Tarım) + 212 (Sulu Tarım) + 243 (Karma)", "183", "0.5737", "40 (Cropland)", "146", "0.4577", "ESA verisinde piksel bazlı nadas/otlak ayrımları yapıldığı için salt aktif ekili parseller netleşmiştir."],
+  ["Mera, Otlak ve Doğal Bitki", "231 (Mera) + 321 (Doğal Çayır) + 333 (Seyrek Bitki)", "121", "0.3793", "30 (Grassland) + 60 (Bare/Sparse)", "168", "0.5267", "CORINE'de Kuru Tarım (211) poligonu içinde kalan nadas/mera alanları ESA 10m pikselde çayır/mera olarak ayrışmıştır."],
+  ["Su Kütleleri / Göller", "512 (Su Kütleleri)", "0", "0", "80 (Permanent Water)", "4", "0.0125", "10m çözünürlük sayesinde içi suyla dolmuş / göllenmiş mikro obruklar doğrudan su pikseli olarak tespit edilmiştir."],
+  ["Yerleşim / Yapılaşmış Alan", "112 (Kesintili Kentsel Yapı)", "0", "0", "50 (Built-up)", "1", "0.0031", "CORINE genelleştirmesinde kaçan altyapı/yapı teğetindeki obruk, ESA pikselinde doğrudan yapılaşmış alanla eşleşmiştir."],
+  ["Diğer / Geçiş Alanları", "122 / 323 / 411 / 421 vb.", "15", "0.047", "—", "0", "0", "CORINE geniş ölçekli poligon sınırlarının teğet farklarından kaynaklanmaktadır."],
+  ["TOPLAM", "İl Geneli Stok", "319", "1", "İl Geneli Stok", "319", "1", "Mekânsal Hassasiyet: Vektör Genelleştirme (2018) vs. 10m Raster (2021)"],
+];
+
 const analysisCards = [
   {
     id: "groundwater",
@@ -212,10 +233,75 @@ function AnalysisPanel({
   const [criticalFacilityInfoOpen, setCriticalFacilityInfoOpen] = useState(false);
   const [logisticsInfoOpen, setLogisticsInfoOpen] = useState(false);
   const [sinkholeLanduseTableOpen, setSinkholeLanduseTableOpen] = useState(false);
+  const [sinkholeLanduseTablePosition, setSinkholeLanduseTablePosition] = useState(() => ({
+    left: typeof window === "undefined" ? 24 : Math.max(12, Math.floor((window.innerWidth - 960) / 2)),
+    top: 92,
+  }));
+  const sinkholeTableDragRef = useRef(null);
+
+  useEffect(() => () => {
+    const drag = sinkholeTableDragRef.current;
+    if (!drag) return;
+    window.removeEventListener("pointermove", drag.onMove);
+    window.removeEventListener("pointerup", drag.onEnd);
+  }, []);
+
+  const startSinkholeLanduseTableDrag = (event) => {
+    if (event.button !== 0 || event.target.closest("button")) return;
+    const panel = document.querySelector(".sinkhole-landuse-attribute-window");
+    if (!panel) return;
+    event.preventDefault();
+    const bounds = panel.getBoundingClientRect();
+    const start = { x: event.clientX, y: event.clientY, left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height };
+    const onMove = (moveEvent) => {
+      const maxLeft = Math.max(8, window.innerWidth - start.width - 8);
+      const maxTop = Math.max(8, window.innerHeight - Math.min(start.height, 160) - 8);
+      setSinkholeLanduseTablePosition({
+        left: Math.max(8, Math.min(maxLeft, start.left + moveEvent.clientX - start.x)),
+        top: Math.max(8, Math.min(maxTop, start.top + moveEvent.clientY - start.y)),
+      });
+    };
+    const onEnd = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onEnd);
+      sinkholeTableDragRef.current = null;
+    };
+    sinkholeTableDragRef.current = { onMove, onEnd };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onEnd);
+  };
 
   return (
     <>
 
+
+
+      {sinkholeLanduseTableOpen && (
+        <section className="sinkhole-landuse-attribute-window" role="dialog" aria-label="Obrukların arazi kullanımı öznitelik tablosu" style={{ position: "fixed", left: `${sinkholeLanduseTablePosition.left}px`, top: `${sinkholeLanduseTablePosition.top}px`, zIndex: 130, width: "min(940px, calc(100vw - 24px))", maxHeight: "min(620px, calc(100vh - 24px))", display: "flex", flexDirection: "column", overflow: "hidden", border: "1px solid #b9bcff", borderRadius: 10, background: "#ffffff", color: "#0f172a", boxShadow: "0 18px 46px rgba(115,118,242,0.24)" }}>
+          <header onPointerDown={startSinkholeLanduseTableDrag} style={{ flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "10px 12px", cursor: "grab", userSelect: "none", background: "linear-gradient(135deg, #f7f7ff, #dfe0ff)", color: "#585bd8" }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 800 }}>Öznitelik Tablosu · Obrukların Arazi Kullanımı Dağılımı</div>
+              <div style={{ marginTop: 2, fontSize: 10, color: "#7376f2" }}>ESA 2021 statistic by categories.xlsx · Sayfa2 · Taşımak için bu başlıktan tutun</div>
+            </div>
+            <button type="button" onClick={() => setSinkholeLanduseTableOpen(false)} aria-label="Öznitelik tablosunu kapat" title="Kapat" style={{ flex: "0 0 auto", width: 28, height: 28, border: "1px solid rgba(115,118,242,0.34)", borderRadius: 7, background: "rgba(255,255,255,0.70)", color: "#5f63e8", cursor: "pointer", fontSize: 17, lineHeight: 1 }}>×</button>
+          </header>
+          <div style={{ overflow: "auto", background: "#ffffff" }}>
+            <table style={{ width: "100%", minWidth: 1210, borderCollapse: "separate", borderSpacing: 0, fontSize: 11, lineHeight: 1.38 }}>
+              <thead>
+                <tr>{SINKHOLE_LANDUSE_HEADERS.map((header) => <th key={header} style={{ position: "sticky", top: 0, zIndex: 1, padding: "9px 10px", textAlign: "left", verticalAlign: "bottom", background: "#ebecff", color: "#585bd8", borderRight: "1px solid #d7d8ff", borderBottom: "2px solid #b9bcff", fontWeight: 800, whiteSpace: "normal" }}>{header}</th>)}</tr>
+              </thead>
+              <tbody>
+                {SINKHOLE_LANDUSE_ROWS.map((row, rowIndex) => (
+                  <tr key={`${row[0]}-${rowIndex}`} style={{ background: rowIndex === SINKHOLE_LANDUSE_ROWS.length - 1 ? "#f4f4ff" : rowIndex % 2 ? "#fbfbff" : "#ffffff" }}>
+                    {row.map((value, columnIndex) => <td key={`${rowIndex}-${columnIndex}`} style={{ padding: "9px 10px", verticalAlign: "top", borderRight: "1px solid #e3e4ff", borderBottom: "1px solid #e3e4ff", color: "#1e293b", fontWeight: rowIndex === SINKHOLE_LANDUSE_ROWS.length - 1 ? 800 : columnIndex === 0 ? 700 : 400 }}>{value}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <footer style={{ flex: "0 0 auto", padding: "7px 11px", borderTop: "1px solid #d7d8ff", background: "#f7f7ff", color: "#7376f2", fontSize: 10 }}>Kaynak tablo değerleri ve açıklamaları değiştirilmeden gösterilmektedir. Yatay kaydırma çubuğu ile tüm sütunları inceleyebilirsin.</footer>
+        </section>
+      )}
 
       <aside
       id="analysis-panel"
@@ -709,19 +795,6 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
               </button>
               <div style={{ borderRadius: 999, padding: "4px 7px", background: "#fff7ed", color: "#c2410c", fontSize: 10, fontWeight: 900 }}>319 OBRUK</div>
             </div>
-            {sinkholeLanduseTableOpen && (
-              <div style={{ margin: "0 0 10px", border: "1px solid #fed7aa", borderRadius: 9, overflow: "hidden", background: "#ffffff" }}>
-                <div style={{ padding: "7px 8px", background: "#fff7ed", color: "#9a3412", fontSize: 10, fontWeight: 800 }}>Öznitelik Tablosu · ESA WorldCover 2021</div>
-                <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 44px 42px", gap: 6, padding: "6px 8px", color: "#7c2d12", fontSize: 9, fontWeight: 900 }}><span>Arazi kullanımı</span><span style={{ textAlign: "right" }}>Sayı</span><span style={{ textAlign: "right" }}>%</span></div>
-                {[
-                  ["Mera, otlak ve doğal bitki", "168", "52,7"],
-                  ["Tarım alanları", "146", "45,8"],
-                  ["Su kütleleri / göllenmiş alan", "4", "1,3"],
-                  ["Yerleşim / yapılaşmış alan", "1", "0,3"],
-                ].map(([label, count, percent]) => <div key={label} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 44px 42px", gap: 6, padding: "6px 8px", borderTop: "1px solid #ffedd5", color: "#431407", fontSize: 9 }}><span>{label}</span><span style={{ textAlign: "right", fontWeight: 800 }}>{count}</span><span style={{ textAlign: "right" }}>{percent}</span></div>)}
-                <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 44px 42px", gap: 6, padding: "7px 8px", borderTop: "1px solid #fed7aa", background: "#fffaf0", color: "#7c2d12", fontSize: 9, fontWeight: 900 }}><span>TOPLAM</span><span style={{ textAlign: "right" }}>319</span><span style={{ textAlign: "right" }}>100</span></div>
-              </div>
-            )}
             <div style={{ display: "grid", gap: 7 }}>
               {[
                 ["Mera, otlak ve doğal bitki", 168, "52,7", "#65a30d"],
