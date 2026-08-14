@@ -59,6 +59,7 @@ function App() {
   const [layerVisible, setLayerVisible] = useState(true);
   const [mahalleVisible, setMahalleVisible] = useState(false);
   const [toplanmaVisible, setToplanmaVisible] = useState(true);
+  const [assemblyAreaPolygonsVisible, setAssemblyAreaPolygonsVisible] = useState(true);
   const [recommendedAssemblyVisible, setRecommendedAssemblyVisible] = useState(false);
   const [socioGeologicalVisible, setSocioGeologicalVisible] = useState(false);
   const [criticalServiceVisible, setCriticalServiceVisible] = useState(false);
@@ -119,6 +120,7 @@ const [service15Visible, setService15Visible] = useState(false);
   const [mahalleOpacity, setMahalleOpacity] = useState(1);
   const [serviceOpacity, setServiceOpacity] = useState(1);
   const [toplanmaOpacity, setToplanmaOpacity] = useState(1);
+  const [assemblyAreaPolygonsOpacity, setAssemblyAreaPolygonsOpacity] = useState(1);
   const [districtOpacity, setDistrictOpacity] = useState(1);
   const [buildingsOpacity, setBuildingsOpacity] = useState(0.88);
   const [heatmapOpacity, setHeatmapOpacity] = useState(0.40);
@@ -583,7 +585,7 @@ console.log(
   // Katmanlar panelindeki temel ve analiz katmanlarının tamamını tek seferde gizler.
   const closeAllLayers = () => {
     [
-      setLayerVisible, setMahalleVisible, setToplanmaVisible,
+      setLayerVisible, setMahalleVisible, setToplanmaVisible, setAssemblyAreaPolygonsVisible,
       setRecommendedAssemblyVisible, setSocioGeologicalVisible, setCriticalServiceVisible,
       setFaultVisible, setSinkholeVisible, setSinkholeInventoryHeatmapVisible, setCorineLandcoverVisible, setEsaWorldcoverVisible, setFacilityVisible,
       setRoadVisible, setEmergencyVisible, setProvinceBoundaryVisible,
@@ -1731,14 +1733,20 @@ reloadViewportSources();
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.getLayer("toplanma-points")) return;
-    const visibility = toplanmaVisible ? "visible" : "none";
-    ["toplanma-points", "assembly-area-polygons-fill", "assembly-area-polygons-outline"].forEach((layerId) => {
+    map.setLayoutProperty("toplanma-points", "visibility", toplanmaVisible ? "visible" : "none");
+    map.setPaintProperty("toplanma-points", "icon-opacity", toplanmaOpacity);
+  }, [toplanmaVisible, toplanmaOpacity]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer("assembly-area-polygons-fill")) return;
+    const visibility = assemblyAreaPolygonsVisible ? "visible" : "none";
+    ["assembly-area-polygons-fill", "assembly-area-polygons-outline"].forEach((layerId) => {
       if (map.getLayer(layerId)) map.setLayoutProperty(layerId, "visibility", visibility);
     });
-    map.setPaintProperty("toplanma-points", "icon-opacity", toplanmaOpacity);
-    if (map.getLayer("assembly-area-polygons-fill")) map.setPaintProperty("assembly-area-polygons-fill", "fill-opacity", 0.14 * toplanmaOpacity);
-    if (map.getLayer("assembly-area-polygons-outline")) map.setPaintProperty("assembly-area-polygons-outline", "line-opacity", 0.88 * toplanmaOpacity);
-  }, [toplanmaVisible, toplanmaOpacity]);
+    map.setPaintProperty("assembly-area-polygons-fill", "fill-opacity", 0.14 * assemblyAreaPolygonsOpacity);
+    if (map.getLayer("assembly-area-polygons-outline")) map.setPaintProperty("assembly-area-polygons-outline", "line-opacity", 0.88 * assemblyAreaPolygonsOpacity);
+  }, [assemblyAreaPolygonsVisible, assemblyAreaPolygonsOpacity]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -3017,7 +3025,8 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
           },
           {
             id: "emergency", title: "Acil Durum ve Hizmetler", items: [
-              { label: "Toplanma Alanları", color: "#16a34a", checked: toplanmaVisible, type: "point", opacity: toplanmaOpacity, onOpacity: setToplanmaOpacity, onChange: () => setToplanmaVisible((v) => !v) },
+              { label: "Acil Toplanma Alanları – Konumsal Veri", color: "#16a34a", checked: toplanmaVisible, type: "point", opacity: toplanmaOpacity, onOpacity: setToplanmaOpacity, onChange: () => setToplanmaVisible((v) => !v) },
+              { label: "Acil Toplanma Alanları – Alansal Veri", color: "#15803d", checked: assemblyAreaPolygonsVisible, type: "area", opacity: assemblyAreaPolygonsOpacity, onOpacity: setAssemblyAreaPolygonsOpacity, onChange: () => setAssemblyAreaPolygonsVisible((v) => !v) },
               { label: "Acil Durum Noktaları", color: "#f97316", checked: emergencyVisible, type: "point", onChange: async () => { const next = !emergencyVisible; setEmergencyVisible(next); if (next) await loadEmergencyData(); mapRef.current?.setLayoutProperty("emergency-points-circle", "visibility", next ? "visible" : "none"); } },
               { label: "Kritik Tesisler", color: "#64748b", checked: facilityVisible, type: "point", onChange: () => toggleDataLayer(!facilityVisible, setFacilityVisible, "critical-facilities", ["critical-facilities-point"], "/layers/kritik-tesisler") },
               { label: "Kolluk", color: "#2563eb", checked: lawVisible, type: "point", onChange: () => toggleDataLayer(!lawVisible, setLawVisible, "law-enforcement", ["law-enforcement-point"], "/layers/kolluk") },
