@@ -508,9 +508,11 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
             Harita Karapınar pilot alanına yönelir. Rotalar, AFAD lojistik üssünden hastane, itfaiye ve toplanma alanlarına erişimi gösterir.
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, fontSize: 10, color: "#334155" }}>
-            <div style={{ padding: "7px 8px", borderRadius: 9, background: "rgba(254,242,242,0.9)", border: "1px solid #fecaca" }}><span style={{ display: "inline-block", width: 18, height: 3, background: "#dc2626", verticalAlign: "middle", marginRight: 5 }} />Kırmızı: en hızlı / riskli rota</div>
-            <div style={{ padding: "7px 8px", borderRadius: 9, background: "rgba(240,253,244,0.9)", border: "1px solid #bbf7d0" }}><span style={{ display: "inline-block", width: 18, height: 3, background: "#16a34a", verticalAlign: "middle", marginRight: 5 }} />Yeşil: güvenli alternatif</div>
-            <div style={{ gridColumn: "1 / -1", padding: "7px 8px", borderRadius: 9, background: "rgba(239,246,255,0.9)", border: "1px solid #bfdbfe" }}>Mavi erişim bantları: AFAD lojistik üssünden 3, 5 ve 10 dakika içindeki kapsama alanı.</div>
+            <div style={{ padding: "7px 8px", borderRadius: 9, background: "rgba(239,246,255,0.9)", border: "1px solid #bfdbfe" }}><span style={{ display: "inline-block", width: 18, height: 3, background: "#2563eb", verticalAlign: "middle", marginRight: 5 }} />Mavi: hastane rotaları</div>
+            <div style={{ padding: "7px 8px", borderRadius: 9, background: "rgba(255,247,237,0.9)", border: "1px solid #fed7aa" }}><span style={{ display: "inline-block", width: 18, height: 3, background: "#ea580c", verticalAlign: "middle", marginRight: 5 }} />Turuncu: itfaiye rotaları</div>
+            <div style={{ padding: "7px 8px", borderRadius: 9, background: "rgba(250,245,255,0.9)", border: "1px solid #ddd6fe" }}><span style={{ display: "inline-block", width: 18, height: 3, background: "#7c3aed", verticalAlign: "middle", marginRight: 5 }} />Mor: toplanma alanı rotaları</div>
+            <div style={{ padding: "7px 8px", borderRadius: 9, background: "rgba(248,250,252,0.9)", border: "1px solid #cbd5e1" }}><span style={{ display: "inline-block", width: 18, height: 3, background: "#475569", verticalAlign: "middle", marginRight: 5 }} />Düz: en hızlı · Kesikli: güvenli</div>
+            <div style={{ gridColumn: "1 / -1", padding: "7px 8px", borderRadius: 9, background: "rgba(239,246,255,0.9)", border: "1px solid #bfdbfe" }}>Erişim bantları: yeşil 3 dk, turuncu 5 dk, mavi 10 dk.</div>
           </div>
         </div>
       )}

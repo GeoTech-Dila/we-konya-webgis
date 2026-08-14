@@ -490,7 +490,7 @@ console.log(
       await loadKarapinarLogisticsLayer();
       mapRef.current?.flyTo({ center: [33.56, 37.72], zoom: 10.6, pitch: 35, bearing: -16, essential: true });
     }
-    ["karapinar-logistics-isochrones-fill", "karapinar-logistics-isochrones-outline", "karapinar-logistics-routes-line"].forEach((id) => {
+    ["karapinar-logistics-isochrones-fill", "karapinar-logistics-isochrones-outline", "karapinar-logistics-fast-line", "karapinar-logistics-safe-line"].forEach((id) => {
       if (mapRef.current?.getLayer(id)) mapRef.current.setLayoutProperty(id, "visibility", nextVisible ? "visible" : "none");
     });
   };
@@ -554,7 +554,7 @@ console.log(
       "recommended-assembly-parks-fill", "recommended-assembly-parks-outline",
       "socio-geological-risk-fill", "socio-geological-risk-outline",
       "critical-service-load-fill", "critical-service-load-outline",
-      "karapinar-logistics-isochrones-fill", "karapinar-logistics-isochrones-outline", "karapinar-logistics-routes-line",
+      "karapinar-logistics-isochrones-fill", "karapinar-logistics-isochrones-outline", "karapinar-logistics-fast-line", "karapinar-logistics-safe-line",
       "resilience-district-fill", "critical-accessibility-fill",
       "emergency-points-circle", "emergency-heatmap",
       "service-area-5-lines", "service-area-10-lines", "service-area-15-lines",
@@ -1217,7 +1217,15 @@ addLyr({
       // yalnızca anlamlı 3, 5 ve 10 dakika sınırlarını gösteriyoruz.
       addLyr({ id: "karapinar-logistics-isochrones-fill", type: "fill", source: "karapinar-logistics-isochrones", filter: ["==", ["get", "sure_saniye"], 600], layout: { visibility: "none" }, paint: { "fill-color": "#60a5fa", "fill-opacity": 0.11 } });
       addLyr({ id: "karapinar-logistics-isochrones-outline", type: "line", source: "karapinar-logistics-isochrones", filter: ["in", ["get", "sure_saniye"], ["literal", [180, 300, 600]]], layout: { visibility: "none" }, paint: { "line-color": ["match", ["get", "sure_saniye"], 180, "#16a34a", 300, "#f59e0b", 600, "#2563eb", "#64748b"], "line-width": ["interpolate", ["linear"], ["zoom"], 8, 1.4, 12, 2.4], "line-opacity": 0.92 } });
-      addLyr({ id: "karapinar-logistics-routes-line", type: "line", source: "karapinar-logistics-routes", layout: { visibility: "none", "line-cap": "round", "line-join": "round" }, paint: { "line-color": ["match", ["get", "guvenlik_sinifi"], "guvenli", "#16a34a", "#dc2626"], "line-width": ["interpolate", ["linear"], ["zoom"], 8, 2.5, 12, 5], "line-opacity": 0.94 } });
+      // Renk tesis türünü, çizgi biçimi rota türünü gösterir.
+      const karapinarRouteColor = ["match", ["get", "hedef_turu"],
+        "Hastane", "#2563eb",       // mavi
+        "İtfaiye", "#ea580c",       // turuncu
+        "Toplanma alanı", "#7c3aed", // mor
+        "#64748b"
+      ];
+      addLyr({ id: "karapinar-logistics-fast-line", type: "line", source: "karapinar-logistics-routes", filter: ["==", ["get", "guvenlik_sinifi"], "riskli"], layout: { visibility: "none", "line-cap": "round", "line-join": "round" }, paint: { "line-color": karapinarRouteColor, "line-width": ["interpolate", ["linear"], ["zoom"], 8, 2.7, 12, 5.2], "line-opacity": 0.95 } });
+      addLyr({ id: "karapinar-logistics-safe-line", type: "line", source: "karapinar-logistics-routes", filter: ["==", ["get", "guvenlik_sinifi"], "guvenli"], layout: { visibility: "none", "line-cap": "round", "line-join": "round" }, paint: { "line-color": karapinarRouteColor, "line-width": ["interpolate", ["linear"], ["zoom"], 8, 2.7, 12, 5.2], "line-opacity": 0.95, "line-dasharray": [1.4, 1.15] } });
       addLyr({ id: "law-enforcement-point", type: "circle", source: "law-enforcement", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#2563eb", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
       addLyr({ id: "health-points-point", type: "circle", source: "health-points", layout: { visibility: "none" }, paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 3, 13, 6], "circle-color": "#0891b2", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1, "circle-opacity": 0.9 } });
       addLyr({ id: "health-areas-fill", type: "fill", source: "health-areas", layout: { visibility: "none" }, paint: { "fill-color": "#06b6d4", "fill-opacity": 0.22 } });
