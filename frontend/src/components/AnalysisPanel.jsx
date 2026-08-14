@@ -391,8 +391,13 @@ height: `${panelHeight}px`,
               <div style={{ marginTop: 8, padding: "11px", borderRadius: 11, background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#14532d", fontSize: 11, lineHeight: 1.52, maxHeight: 250, overflowY: "auto" }}>
                 <strong style={{ display: "block", marginBottom: 5, fontSize: 12 }}>Bu pilot analiz neyi gösterir?</strong>
                 <p style={{ margin: "0 0 7px" }}>Karapınar Kaymakamlığı AFAD İlçe Lojistik Üssü başlangıç kabul edilmiştir. Buradan hastane, itfaiye ve toplanma alanlarına iki rota türü karşılaştırılır: en hızlı rota ve fay/obruk etkilerini baypas eden güvenli alternatif rota.</p>
-                <strong>Rota renkleri</strong>
-                <p style={{ margin: "3px 0 7px" }}><b style={{ color: "#b91c1c" }}>Kırmızı</b> en hızlı ancak jeolojik risk bandından geçebilen güzergâhı; <b style={{ color: "#15803d" }}>yeşil</b> ise güvenliği önceleyen alternatif güzergâhı temsil eder.</p>
+                <strong>Rota ve çizgi rehberi</strong>
+                <div style={{ margin: "5px 0 8px", display: "grid", gap: 4 }}>
+                  <span><b style={{ color: "#2563eb" }}>Mavi</b>: hastane rotaları</span>
+                  <span><b style={{ color: "#ea580c" }}>Turuncu</b>: itfaiye rotaları</span>
+                  <span><b style={{ color: "#7c3aed" }}>Mor</b>: toplanma alanı rotaları</span>
+                  <span><b>Düz çizgi</b> en hızlı güzergâhı; <b>kesikli çizgi</b> fay ve obruk etkilerinden kaçınmayı önceleyen güvenli alternatif güzergâhı gösterir.</span>
+                </div>
                 <strong>10 dakika erişim alanı</strong>
                 <p style={{ margin: "3px 0 7px" }}>QNEAT3 en hızlı yol yaklaşımı ve 50 km/s varsayılan hız ile 3, 5 ve 10 dakikalık erişim bantları üretilmiştir. Raporun bulgusuna göre ana yapı stokunun %43,10’u 10 dakika içinde kalırken %56,90’u, yani 14.352 bina, bu sürenin dışında kalır.</p>
                 <strong>Nasıl yorumlanmalı?</strong>
