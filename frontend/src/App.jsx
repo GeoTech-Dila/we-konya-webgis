@@ -1466,7 +1466,7 @@ addLyr({
         layout: {
           "icon-image": "assembly-area-pin",
           "icon-anchor": "bottom",
-          "icon-size": ["interpolate", ["linear"], ["zoom"], 7, 0.56, 11, 0.76, 15, 1.02],
+          "icon-size": ["interpolate", ["linear"], ["zoom"], 7, 0.46, 11, 0.64, 15, 0.86],
           "icon-allow-overlap": true,
           "icon-ignore-placement": true,
         },
