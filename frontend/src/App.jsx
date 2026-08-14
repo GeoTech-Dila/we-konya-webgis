@@ -41,8 +41,10 @@ const USER_GUIDE_STEPS = [
   { selector: ".analysis-panel", analysisCardId: "facility-access", title: "Kritik Tesis Hizmet Yükü", text: "İtfaiye, ASHİ/112 ve hastanelerin nüfus ve yapı stoğu karşısındaki hizmet yükünü gösterir. Yüksek puan, altyapının güçlendirilmesi gereken ilçeleri işaret eder." },
   { selector: ".analysis-panel", analysisCardId: "recommended-assembly", title: "Öneri Toplanma Alanları", text: "Resmî alan değildir. Güvenli park parçalarını, fay-obruk etkisini ve mahalle nüfusunu AFAD odaklı bir ön eleme senaryosunda birleştirir." },
   { selector: ".analysis-panel", analysisCardId: "sinkhole-building", title: "Obruk Yoğunluğu ve Arazi Kullanımı", text: "319 obruk kaydının yoğunluğunu ve ESA WorldCover arazi kullanım dağılımını gösterir. Aynı karttan CORINE katmanını ve Öznitelik Tablosunu açabilirsin." },
-  { selector: ".side-events-panel", title: "Acil Olaylar", text: "Olayların toplamını ve kategori dağılımını görür; Detay Gör ile sayfalı listeye geçersin." },
-  { selector: ".resilience-legend-panel", title: "Dirençlilik Skoru", text: "Renk haritasını buradan açabilirsin. Sağ panelde ilçe seçerek mahalle sıralamasını incelersin." },
+  { selector: ".emergency-summary-guide", emergencyOverview: true, title: "Acil Olaylar Özeti", text: "Olaylar sekmesi önce toplam acil olay sayısını ve kategori dağılımını gösterir. Böylece hangi olay türünün öne çıktığını listeyi yüklemeden hızlıca görürsün." },
+  { selector: ".emergency-detail-guide", emergencyDetail: true, title: "Acil Olayların Ayrıntısı", text: "Detay Gör bölümünde olayları kategoriye göre süzebilir, tek tek haritada odaklayabilir ve 10'arlı sayfalarla ilerleyebilirsin. Bu yöntem tüm olayları aynı anda yüklemez." },
+  { selector: ".resilience-legend-panel", resilienceOverview: true, title: "İlçe Bazlı Dirençlilik Skoru Haritası", text: "Dirençlilik sekmesi ilk olarak ilçe renk haritasını açar. Renk skalası kritik, orta ve güçlü ilçeleri karşılaştırır; simgeden haritayı açıp kapatabilirsin." },
+  { selector: ".resilience-district-detail", resilienceDetail: true, title: "Mahalle Bazlı Detay", text: "Mahalle Bazlı Detay Gör düğmesiyle ilçe seçimine geçersin. Seçtiğin ilçenin mahalleleri sıralanır; sıralama yönünü de değiştirebilirsin." },
   { selector: ".neighborhood-search", title: "Mahalle Arama", text: "Mahalle adını büyük-küçük harf fark etmeden yaz; harita seni doğrudan o bölgeye götürür." },
   { selector: ".maplibregl-ctrl-group", title: "Yakınlaştırma ve Kuzey", text: "+ ve − düğmeleriyle haritayı yakınlaştırıp uzaklaştırabilirsin. Pusula simgesine dokunarak haritayı tekrar kuzey yönüne çevirirsin." },
   { selector: ".map-home-button", title: "Başlangıç Görünümü", text: "Ev simgesi haritayı KOR-İZ’in ilk açılış görünümüne geri döndürür." },
@@ -711,6 +713,26 @@ console.log(
       setAnalysisOpen(true);
       window.dispatchEvent(new CustomEvent("koriz-guide-analysis-card", { detail: { id: step.analysisCardId } }));
       return undefined;
+    }
+
+    if (step?.emergencyOverview || step?.emergencyDetail) {
+      setAnalysisOpen(false);
+      setEventsPanelOpen(true);
+      setActiveSideTab("events");
+      setEmergencyPage(1);
+      setEmergencyCategory("Tümü");
+      setEmergencyDetailsOpen(Boolean(step.emergencyDetail));
+      const refreshTimer = window.setTimeout(() => window.dispatchEvent(new CustomEvent("koriz-guide-target-refresh")), 80);
+      return () => window.clearTimeout(refreshTimer);
+    }
+
+    if (step?.resilienceOverview || step?.resilienceDetail) {
+      setAnalysisOpen(false);
+      setEventsPanelOpen(true);
+      setActiveSideTab("resilience");
+      setResilienceDetailsOpen(Boolean(step.resilienceDetail));
+      const refreshTimer = window.setTimeout(() => window.dispatchEvent(new CustomEvent("koriz-guide-target-refresh")), 80);
+      return () => window.clearTimeout(refreshTimer);
     }
 
     setAnalysisOpen(false);
@@ -2445,7 +2467,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
           <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
             {activeSideTab === "events" ? (
               emergencyDetailsOpen ? <>
-                <div style={{ padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div className="emergency-detail-guide" style={{ padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "12px", fontWeight: "700", background: "#fff7ed", color: "#c2410c", borderRadius: "999px", padding: "5px 9px" }}>
                     {emergencyPageTotal} kayıt
                   </span>
@@ -2521,7 +2543,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
                     style={{ border: "1px solid rgba(148,163,184,0.45)", background: "rgba(255,255,255,0.62)", borderRadius: "8px", padding: "6px 9px", fontSize: "11px", fontWeight: "700", cursor: emergencyPage * 10 >= emergencyPageTotal ? "not-allowed" : "pointer", opacity: emergencyPage * 10 >= emergencyPageTotal ? 0.42 : 1 }}>Sonraki 10</button>
                 </div>
               </> : (
-                <div style={{ flex: 1, overflowY: "auto", padding: "14px 12px 12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div className="emergency-summary-guide" style={{ flex: 1, overflowY: "auto", padding: "14px 12px 12px", display: "flex", flexDirection: "column", gap: "10px" }}>
                   <div style={{ padding: "18px 12px", textAlign: "center", borderRadius: "12px", background: "linear-gradient(135deg, rgba(254,242,242,0.90), rgba(255,255,255,0.62))", border: "1px solid rgba(239,68,68,0.16)" }}>
                     <div style={{ color: "#64748b", fontSize: "11px", fontWeight: "700", marginBottom: "4px" }}>TOPLAM ACİL OLAY</div>
                     <div style={{ color: "#dc2626", fontSize: "34px", lineHeight: 1, fontWeight: "800" }}>{emergencySummary.total.toLocaleString("tr-TR")}</div>
@@ -2547,7 +2569,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
               )
             ) : (
               resilienceDetailsOpen ? <>
-                <div style={{ padding: "8px 12px", display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: "7px 10px" }}>
+                <div className="resilience-district-detail" style={{ padding: "8px 12px", display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: "7px 10px" }}>
                   <div>
                     <div style={{ fontSize: "12px", color: "#0f766e", fontWeight: "800" }}>{resilienceDistrictId ? `${rankedNeighborhoods.length} mahalle` : "Mahalle Bazlı dirençlilik skorunu görmek için ilçe seçin"}</div>
                   </div>
@@ -2824,7 +2846,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
       </button>
       {guideOpen && <>
         {guideStep < 0 ? <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(15,23,42,0.56)", backdropFilter: "blur(3px)" }} /> : guideTargetRect && <div style={{ position: "fixed", left: guideTargetRect.left, top: guideTargetRect.top, width: guideTargetRect.width, height: guideTargetRect.height, zIndex: 1000, borderRadius: "16px", border: "2px solid #f59e0b", boxShadow: "0 0 0 9999px rgba(15,23,42,0.58), 0 0 28px rgba(245,158,11,0.62)", pointerEvents: "none" }} />}
-        <div role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 1001, left: "50%", top: guideStep >= 0 && guideTargetRect && guideTargetRect.top > window.innerHeight / 2 ? "24px" : "auto", bottom: guideStep >= 0 && guideTargetRect && guideTargetRect.top > window.innerHeight / 2 ? "auto" : "24px", transform: "translateX(-50%)", width: "min(370px, calc(100vw - 32px))", maxHeight: "calc(100vh - 48px)", overflowY: "auto", padding: "18px", borderRadius: "16px", background: "rgba(255,255,255,0.97)", color: "#0f172a", boxShadow: "0 16px 42px rgba(15,23,42,0.32)" }}>
+        <div role="dialog" aria-modal="true" style={{ position: "fixed", zIndex: 1001, left: "50%", top: guideStep >= 0 && (USER_GUIDE_STEPS[guideStep]?.analysisPanelDemo || USER_GUIDE_STEPS[guideStep]?.analysisCardId || (guideTargetRect && guideTargetRect.top > window.innerHeight / 2)) ? "24px" : "auto", bottom: guideStep >= 0 && (USER_GUIDE_STEPS[guideStep]?.analysisPanelDemo || USER_GUIDE_STEPS[guideStep]?.analysisCardId || (guideTargetRect && guideTargetRect.top > window.innerHeight / 2)) ? "auto" : "24px", transform: "translateX(-50%)", width: "min(370px, calc(100vw - 32px))", maxHeight: "calc(100vh - 48px)", overflowY: "auto", padding: "18px", borderRadius: "16px", background: "rgba(255,255,255,0.97)", color: "#0f172a", boxShadow: "0 16px 42px rgba(15,23,42,0.32)" }}>
           {guideStep < 0 ? <>
             <div style={{ color: "#dc2626", fontSize: "11px", fontWeight: "900", letterSpacing: "0.08em" }}>KOR-İZ KULLANICI REHBERİ</div>
             <div style={{ fontSize: "21px", fontWeight: "800", marginTop: "6px" }}>Haritayı 1 dakikada keşfedin</div>
