@@ -214,6 +214,7 @@ function AnalysisPanel({
   const [socioInfoOpen, setSocioInfoOpen] = useState(false);
   const [criticalFacilityInfoOpen, setCriticalFacilityInfoOpen] = useState(false);
   const [logisticsInfoOpen, setLogisticsInfoOpen] = useState(false);
+  const [recommendedAssemblyInfoOpen, setRecommendedAssemblyInfoOpen] = useState(false);
   const [sinkholeLanduseTableOpen, setSinkholeLanduseTableOpen] = useState(false);
   const [sinkholeLanduseTablePosition, setSinkholeLanduseTablePosition] = useState(() => ({
     left: typeof window === "undefined" ? 24 : Math.max(12, Math.floor((window.innerWidth - 960) / 2)),
@@ -476,6 +477,15 @@ height: `${panelHeight}px`,
                   style={{ width: 20, height: 20, padding: 0, borderRadius: "50%", border: "1px solid #94a3b8", background: "#ffffff", color: "#475569", cursor: "pointer", fontWeight: 800, lineHeight: 1 }}
                 >ⓘ</button>
               )}
+              {activeCard.id === "recommended-assembly" && (
+                <button
+                  type="button"
+                  aria-label="AFAD ön elemesi yöntemi hakkında bilgi"
+                  title="Hesaplama yöntemi ve göstergeler"
+                  onClick={() => setRecommendedAssemblyInfoOpen((open) => !open)}
+                  style={{ width: 20, height: 20, padding: 0, borderRadius: "50%", border: "1px solid #fcd34d", background: "#fffbeb", color: "#b45309", cursor: "pointer", fontWeight: 800, lineHeight: 1 }}
+                >ⓘ</button>
+              )}
             </div>
             {activeCard.id === "logistics" && logisticsInfoOpen && (
               <div style={{ marginTop: 8, padding: "11px", borderRadius: 11, background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#14532d", fontSize: 11, lineHeight: 1.52, maxHeight: 250, overflowY: "auto" }}>
@@ -516,6 +526,20 @@ height: `${panelHeight}px`,
               <div style={{ marginTop: 8, padding: "10px 11px", borderRadius: 10, background: "#fff7ed", border: "1px solid #fed7aa", color: "#7c2d12", fontSize: 11, lineHeight: 1.5 }}>
                 <strong style={{ display: "block", marginBottom: 4 }}>Bu analiz neyi gösterir?</strong>
                 Fay uzunluğu ve obruk varlığıyla hesaplanan jeolojik tehlike puanı (1–5), alt ve en alt sosyo-ekonomik grupların oranıyla hesaplanan kırılganlık puanıyla (1–5) birleştirilir. Toplam puan 4–9 aralığındadır; amaç müdahale, sakınım ve kaynak önceliği için ilçe ölçeğinde karar desteği sağlamaktır. Bu, mevcut mahalle dirençlilik skorundan bağımsız bir analizdir.
+              </div>
+            )}
+            {activeCard.id === "recommended-assembly" && recommendedAssemblyInfoOpen && (
+              <div style={{ marginTop: 8, padding: "12px", borderRadius: 11, background: "#fffaf0", border: "1px solid #fde68a", color: "#78350f", fontSize: 11, lineHeight: 1.56, maxHeight: 300, overflowY: "auto" }}>
+                <strong style={{ display: "block", marginBottom: 6, fontSize: 12 }}>AFAD odaklı ön eleme neyi anlatır?</strong>
+                <p style={{ margin: "0 0 8px" }}>Bu kart, resmî toplanma alanı kararı vermez. Mevcut park alanları içinden, ilk aşamada açık ve kullanılabilir olma ihtimali daha yüksek parçaları belirleyen bir karar destek ön elemesidir. Son karar için saha incelemesi, mülkiyet, zemin, erişim ve yetkili kurum değerlendirmesi gerekir.</p>
+                <strong>1. Güvenli park parçası seçimi</strong>
+                <p style={{ margin: "3px 0 8px" }}>Park geometrileri bina ayak izlerinden en az 30 m uzağa çekilerek değerlendirilir. Fay ve obruk risk katmanlarıyla çakışan bölümler elenir; geriye kalan parçalar öneri alan adayıdır.</p>
+                <strong>2. Alan ve nüfus karşılaştırması</strong>
+                <p style={{ margin: "3px 0 8px" }}><b>Referans ihtiyaç</b>, mahallenin 2025 nüfusu × kişi başına 1,29 m² olarak hesaplanan teorik açık alan gereksinimidir. <b>Güvenli alan</b>, ön elemeden geçen park parçalarının toplam m² değeridir.</p>
+                <strong>3. İhtiyatlı kapasite ve karşılama</strong>
+                <p style={{ margin: "3px 0 8px" }}>Açık alanın tamamının aynı anda kullanılabileceği varsayılmaz. Geçişler, toplanma düzeni, engelsiz ulaşım ve belirsizlikler için güvenli alanın %60’ı ihtiyatlı kullanım alanı kabul edilir. Bu alan 1,29 m²’ye bölünerek <b>ihtiyatlı kapasite</b> elde edilir. <b>İhtiyatlı karşılama</b> ise bu kapasitenin mahalle nüfusuna oranıdır.</p>
+                <strong>Grafikler nasıl okunur?</strong>
+                <p style={{ margin: "3px 0" }}>İlk grafik mahalle nüfusunu ihtiyatlı kapasiteyle; ikinci grafik referans ihtiyacı güvenli alanla karşılaştırır. Bir mahalleye haritadan tıkladığında bu kart o mahallenin güncel senaryo değerleriyle dolar.</p>
               </div>
             )}
             <div style={{ color: "#64748b", fontSize: 13, marginTop: 4, lineHeight: 1.3 }}>{activeCard.summary}</div>
@@ -674,6 +698,22 @@ function AnalysisInfo({ card, activeAnalysisLayer, setActiveAnalysisLayer, recom
             Bu alanlar resmî toplanma alanı değildir. Bina yüksekliği yerine 30 m sabit uzaklık kullanılmıştır; saha incelemesi ve yetkili kurum değerlendirmesi gerektirir.
           </div>
 
+          {!assemblyScenarioLoading && !selectedAssemblyScenario && (
+            <div style={{ margin: "4px 4px 10px", padding: "11px", borderRadius: 10, background: "linear-gradient(135deg, #fffdf6, #ffffff)", border: "1px solid #fde68a", color: "#78350f" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, paddingBottom: 7, borderBottom: "2px solid #d97706" }}>
+                <div><div style={{ fontSize: 12, fontWeight: 800 }}>Mahalle Kapasite Senaryosu</div><div style={{ fontSize: 9, color: "#a16207", marginTop: 2 }}>Grafikleri görmek için haritadan bir mahalle seçin</div></div>
+                <span style={{ fontSize: 8, letterSpacing: "0.06em", fontWeight: 800, color: "#92400e", border: "1px solid #fcd34d", background: "#fffbeb", borderRadius: 4, padding: "3px 5px" }}>SEÇİM BEKLENİYOR</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, marginTop: 9 }}>
+                {[
+                  ["1", "Mahalle seç", "Mahalle sınırına tıkla"],
+                  ["2", "Veriyi gör", "Nüfus ve alan grafikleri"],
+                  ["3", "Karşılaştır", "İhtiyatlı karşılama oranı"],
+                ].map(([step, title, text]) => <div key={step} style={{ padding: "7px", borderRadius: 8, background: "rgba(255,255,255,0.78)", border: "1px solid rgba(245,158,11,0.20)" }}><div style={{ color: "#d97706", fontSize: 11, fontWeight: 900 }}>{step}</div><div style={{ marginTop: 2, fontSize: 9, fontWeight: 800, color: "#78350f" }}>{title}</div><div style={{ marginTop: 2, fontSize: 8, lineHeight: 1.3, color: "#a16207" }}>{text}</div></div>)}
+              </div>
+              <div style={{ marginTop: 8, fontSize: 9, lineHeight: 1.4, color: "#92400e" }}>Bilgi simgesinden; 1,29 m²/kişi referansını, %60 ihtiyatlı kullanım varsayımını ve ön eleme yöntemini ayrıntılı inceleyebilirsiniz.</div>
+            </div>
+          )}
           {(assemblyScenarioLoading || selectedAssemblyScenario) && (
             <div style={{ margin: "4px 4px 10px", padding: "11px", borderRadius: 10, background: "#ffffff", border: "1px solid #cbd5e1", color: "#0f172a", boxShadow: "0 6px 18px rgba(15,23,42,0.08)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, paddingBottom: 7, borderBottom: "2px solid #0f766e" }}>
