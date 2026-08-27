@@ -1,5 +1,7 @@
 import os
-from dataclasses import dataclass, field
+import threading
+import time
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
 
@@ -11,16 +13,40 @@ from app.agent.tools import build_tool_registry
 from app.resilience import build_region_summary
 
 
+SUMMARY_CACHE_TTL_SECONDS = max(0, int(os.getenv("GIS_SUMMARY_CACHE_TTL", "600")))
+_summary_cache: dict[tuple[int, str], tuple[float, dict[str, Any]]] = {}
+_summary_locks = {
+    "district": threading.Lock(),
+    "mahalle": threading.Lock(),
+}
+
+
+def get_cached_region_summary(engine: Any, level: str) -> dict[str, Any]:
+    normalized = "mahalle" if level == "neighborhood" else "district"
+    cache_key = (id(engine), normalized)
+    now = time.monotonic()
+    cached = _summary_cache.get(cache_key)
+    if cached and cached[0] > now:
+        return cached[1]
+
+    # Aynı özet ilk kez istenirken yalnızca bir iş parçacığı hesaplasın.
+    with _summary_locks[normalized]:
+        now = time.monotonic()
+        cached = _summary_cache.get(cache_key)
+        if cached and cached[0] > now:
+            return cached[1]
+
+        summary = build_region_summary(engine, normalized)
+        _summary_cache[cache_key] = (time.monotonic() + SUMMARY_CACHE_TTL_SECONDS, summary)
+        return summary
+
+
 @dataclass
 class GISContext:
     engine: Any
-    _summary_cache: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     def get_region_summary(self, level: str) -> dict[str, Any]:
-        normalized = "mahalle" if level == "neighborhood" else "district"
-        if normalized not in self._summary_cache:
-            self._summary_cache[normalized] = build_region_summary(self.engine, normalized)
-        return self._summary_cache[normalized]
+        return get_cached_region_summary(self.engine, level)
 
 
 @lru_cache(maxsize=1)
