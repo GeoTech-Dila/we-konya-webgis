@@ -8,17 +8,14 @@ import AgentChat from "./components/AgentChat";
 const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:8000";
 const EMPTY_FC = { type: "FeatureCollection", features: [] };
-const IS_LOCALHOST = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-const LIGHT_BASEMAP_TILES = IS_LOCALHOST
-  ? ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"]
-  : [
-      "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-      "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-      "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-    ];
-const LIGHT_BASEMAP_ATTRIBUTION = IS_LOCALHOST
-  ? "© OpenStreetMap contributors"
-  : "© OpenStreetMap contributors © CARTO";
+const LIGHT_BASEMAP_TILES = ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"];
+const LIGHT_BASEMAP_ATTRIBUTION = "© OpenStreetMap contributors";
+const LIGHT_BASEMAP_PAINT = {
+  "raster-saturation": -1,
+  "raster-contrast": -0.18,
+  "raster-brightness-min": 0.32,
+  "raster-brightness-max": 0.96,
+};
 // Türkçe karakterler ve büyük/küçük harf farkı arama sonucunu etkilemesin.
 const normalizeSearchText = (value = "") => String(value)
   .toLocaleLowerCase("tr-TR")
@@ -851,7 +848,7 @@ console.log(
             attribution: LIGHT_BASEMAP_ATTRIBUTION,
           },
         },
-        layers: [{ id: "carto-light-layer", type: "raster", source: "carto-light" }],
+        layers: [{ id: "carto-light-layer", type: "raster", source: "carto-light", paint: LIGHT_BASEMAP_PAINT }],
       },
       center: primary.getCenter().toArray(),
       zoom: primary.getZoom(),
@@ -963,7 +960,7 @@ console.log(
           },
         },
         layers: [
-          { id: "carto-light-layer", type: "raster", source: "carto-light", layout: { visibility: "visible" } },
+          { id: "carto-light-layer", type: "raster", source: "carto-light", layout: { visibility: "visible" }, paint: LIGHT_BASEMAP_PAINT },
           { id: "osm-streets-layer", type: "raster", source: "osm-streets", layout: { visibility: "none" } },
           { id: "esri-world-imagery-layer", type: "raster", source: "esri-world-imagery", layout: { visibility: "none" } },
         ],
