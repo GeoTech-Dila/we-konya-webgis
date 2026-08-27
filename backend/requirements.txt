@@ -4,6 +4,7 @@ sqlalchemy
 psycopg2-binary
 geoalchemy2
 python-dotenv
+google-genai>=1.0.0
 geopandas
 shapely
 pyproj

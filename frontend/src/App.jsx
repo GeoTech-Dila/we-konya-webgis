@@ -2,11 +2,23 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import AnalysisPanel from "./components/AnalysisPanel";
+import AgentChat from "./components/AgentChat";
 
 
 const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:8000";
 const EMPTY_FC = { type: "FeatureCollection", features: [] };
+const IS_LOCALHOST = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const LIGHT_BASEMAP_TILES = IS_LOCALHOST
+  ? ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"]
+  : [
+      "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+      "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+      "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+    ];
+const LIGHT_BASEMAP_ATTRIBUTION = IS_LOCALHOST
+  ? "© OpenStreetMap contributors"
+  : "© OpenStreetMap contributors © CARTO";
 // Türkçe karakterler ve büyük/küçük harf farkı arama sonucunu etkilemesin.
 const normalizeSearchText = (value = "") => String(value)
   .toLocaleLowerCase("tr-TR")
@@ -834,12 +846,9 @@ console.log(
         sources: {
           "carto-light": {
             type: "raster",
-            tiles: [
-              "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-              "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-              "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-            ],
+            tiles: LIGHT_BASEMAP_TILES,
             tileSize: 256,
+            attribution: LIGHT_BASEMAP_ATTRIBUTION,
           },
         },
         layers: [{ id: "carto-light-layer", type: "raster", source: "carto-light" }],
@@ -934,13 +943,9 @@ console.log(
         sources: {
           "carto-light": {
             type: "raster",
-            tiles: [
-              "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-              "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-              "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-            ],
+            tiles: LIGHT_BASEMAP_TILES,
             tileSize: 256,
-            attribution: "© OpenStreetMap contributors © CARTO",
+            attribution: LIGHT_BASEMAP_ATTRIBUTION,
           },
           "osm-streets": {
             type: "raster",
@@ -3344,6 +3349,7 @@ border: "1px solid rgba(255,255,255,0.22)", borderRadius: "16px",
         activeAnalysisLayer={activeAnalysisLayer}
         setActiveAnalysisLayer={setActiveAnalysisLayer}
       />
+      <AgentChat apiUrl={API_URL} />
       <div className="quick-actions" aria-label="Hızlı araçlar">
         <button className="data-sources-button" type="button" onClick={() => setDataSourcesOpen(true)} title="Veri kaynakları tablosunu aç">
           ▤ <span>Veri Kaynakları</span>
@@ -3450,4 +3456,3 @@ function normalizeEmergencyGeojson(data) {
 }
 
 export default App;
-

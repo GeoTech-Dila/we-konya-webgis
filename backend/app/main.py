@@ -16,7 +16,11 @@ from PIL import Image
 import rasterio
 from rasterio.enums import Resampling
 from rasterio.windows import from_bounds
+from dotenv import load_dotenv
 from app.resilience import build_region_summary
+from app.agent.router import router as agent_router
+
+load_dotenv()
 
 app = FastAPI()
 
@@ -55,6 +59,9 @@ engine = create_engine(
     max_overflow=0,
     connect_args=connect_args,
 )
+
+app.state.db_engine = engine
+app.include_router(agent_router)
 
 
 def bbox_filter(bbox):
@@ -1614,4 +1621,3 @@ def buildings_unreachable(bbox: str | None = None):
 
     with engine.connect() as conn:
         return conn.execute(query, params).scalar()
-
